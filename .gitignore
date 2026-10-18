@@ -1,0 +1,33 @@
+# Okazo : fichiers jamais envoyés sur GitHub
+
+# Secrets (mots de passe, clés) : seuls les modèles .env.example sont suivis
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dépendances et fichiers produits
+node_modules/
+dist/
+.next/
+.expo/
+build/
+coverage/
+*.tsbuildinfo
+
+# Copies de travail générées par setup.sh (recréées depuis annonces-web et annonces-mobile)
+/web/
+/mobile/
+
+# Journaux locaux
+*.log
+
+# Photos de démonstration (157 Mo, retéléchargées par annonces-api/scripts/demo-photos.mjs) ;
+# les crédits, les recherches et la liste des photos écartées restent suivis
+Maquettes/photos-demo/*.jpg
+
+# Système
+.DS_Store
+Thumbs.db
+desktop.ini

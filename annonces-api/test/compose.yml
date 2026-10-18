@@ -1,0 +1,48 @@
+# Base et Redis jetables pour les tests (ports différents du développement, données en mémoire).
+# Démarrage : docker compose -f test/compose.yml up -d --wait
+name: annonces-test
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: annonces
+      POSTGRES_PASSWORD: annonces
+      POSTGRES_DB: annonces_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../db/migrations/002_account_deletion.sql:/docker-entrypoint-initdb.d/02-account-deletion.sql:ro
+      - ../db/migrations/003_messaging.sql:/docker-entrypoint-initdb.d/03-messaging.sql:ro
+      - ../db/migrations/004_category_names.sql:/docker-entrypoint-initdb.d/04-category-names.sql:ro
+      - ../db/migrations/005_categories_leboncoin.sql:/docker-entrypoint-initdb.d/05-categories-leboncoin.sql:ro
+      - ../db/migrations/006_category_forms.sql:/docker-entrypoint-initdb.d/06-category-forms.sql:ro
+      - ../db/migrations/007_cart.sql:/docker-entrypoint-initdb.d/07-cart.sql:ro
+      - ../db/migrations/008_saved_searches.sql:/docker-entrypoint-initdb.d/08-saved-searches.sql:ro
+      - ../db/migrations/009_job_applications.sql:/docker-entrypoint-initdb.d/09-job-applications.sql:ro
+      - ../db/migrations/010_reviews.sql:/docker-entrypoint-initdb.d/10-reviews.sql:ro
+      - ../db/migrations/011_offers.sql:/docker-entrypoint-initdb.d/11-offers.sql:ro
+      - ../db/migrations/012_districts.sql:/docker-entrypoint-initdb.d/12-districts.sql:ro
+      - ../db/migrations/013_identities.sql:/docker-entrypoint-initdb.d/13-identities.sql:ro
+      - ../db/migrations/014_hand_delivery.sql:/docker-entrypoint-initdb.d/14-hand-delivery.sql:ro
+      - ../db/migrations/015_email_accounts.sql:/docker-entrypoint-initdb.d/15-email-accounts.sql:ro
+      - ../db/migrations/016_payment_wallets.sql:/docker-entrypoint-initdb.d/16-payment-wallets.sql:ro
+      - ../db/migrations/017_terms_acceptance.sql:/docker-entrypoint-initdb.d/17-terms-acceptance.sql:ro
+    healthcheck:
+      # Pendant l'initialisation (schéma et migrations), PostgreSQL n'écoute que sur un socket local,
+      # puis redémarre : il n'est prêt qu'une fois joignable en réseau.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U annonces -d annonces_test"]
+      interval: 1s
+      timeout: 3s
+      retries: 60
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30

@@ -1,0 +1,169 @@
+# Plateforme de petites annonces (nom provisoire : « Annonces »)
+
+Ce fichier résume le contexte et les décisions prises avec le porteur du projet dans une longue conversation sur claude.ai. **Lis-le en entier avant toute modification.** Mets-le à jour quand une décision change.
+
+## Le projet
+
+- Petites annonces entre particuliers pour l'Afrique francophone, **zone franc CFA XAF**. Lancement pilote au **Cameroun** (Douala, Yaoundé), au **Gabon** (Libreville) et au **Congo-Brazzaville** ; puis Tchad, Centrafrique et Guinée équatoriale. La Côte d'Ivoire (XOF) viendra en phase 2.
+- Alternative à Facebook Marketplace. Concurrent principal déjà installé : CoinAfrique. **Différenciation : la confiance et la lutte contre la fraude.**
+- **Périmètre (décision du 11 octobre 2026) : application mobile d’abord, sur le modèle de LeBonCoin.** Vendre et revendre toutes sortes d’articles, mais aussi proposer des **services à la personne** et trouver un **emploi** (offres et petits boulots). S’inspirer au maximum de LeBonCoin pour les fonctionnalités et les parcours, en gardant notre propre direction artistique (maquettes validées, police Roboto Slab SemiBold dans l’app).
+- Revenus : Google AdSense sur le site (en place), AdMob sur mobile (pas encore), puis annonces boostées payées par Mobile Money (phase 2).
+
+**Priorités du porteur, dans l'ordre :**
+1. **Éviter la fraude au maximum.**
+2. **Latence minimale** : réseaux lents, téléphones d'entrée de gamme, forfaits chers.
+3. **Accès libre** : tout le monde parcourt la plateforme et les annonces **sans compte**. Le compte n'est demandé que pour agir : contacter un vendeur (le moment de l'achat), écrire, ajouter un favori, signaler, publier.
+
+## Nom de la marque : **Okazo** (définitif, décision du porteur du 14 octobre 2026)
+
+- Nom : **Okazo**, signature « Achetez · Vendez · Près de chez vous ». Logo : un « O » qui réunit une maison (les biens), une étiquette (achat/vente) et un repère de localisation (proximité), en bleu ; maquette dans `Maquettes/okazo/okazo-maquette.webp`.
+- Réglé à quelques endroits seulement : `APP_NAME` (`annonces-api/.env`, `deploy/.env` ; texte des SMS, nom interdit aux comptes), `NEXT_PUBLIC_SITE_NAME` (site) et `BRAND` dans `mobile/app.config.ts` (nom, slug et schéma `okazo`, identifiant `com.okazo.app` **à confirmer avant la première publication sur les stores**, il ne pourra plus changer). **Ne jamais écrire le nom en dur ailleurs.**
+- Logo **provisoire** découpé dans la maquette (`Maquettes/okazo/`) : `okazo-logo.png` (mot, fond transparent : en-tête et pied de page du site, accueil de l'application), icône 1024 px (application), `app/icon.png` et `app/apple-icon.png` (site). **À remplacer par les fichiers source du graphiste** (SVG, ou PNG de 1024 px au moins) avant la bêta : l'icône actuelle est agrandie depuis 254 px.
+- Noms écartés autrefois : « leboncoin », « Kaba », « WariM », « Zando », « Troka », « Laba ». La recherche d'antériorité OAPI pour « Okazo » reste à faire.
+- Les identifiants techniques (cookies `app_*`, clés `app.*`, base `annonces`, buckets `annonces-*`, dossiers `annonces-*`) sont neutres : ne pas les renommer.
+
+## État actuel : à lire absolument
+
+**Première exécution faite le 4 octobre 2026 (Claude Code, sur l'ordinateur du porteur) :**
+- `api` : dépendances installées, `npm run typecheck` et `npm run build` passent, **105 tests automatiques** passent sur une vraie base (`npm run test:db` puis `npm test`, voir `api/README.md`). L'API n'a pas encore été lancée à la main de bout en bout avec MinIO et un vrai client.
+- `web` : projet créé par `setup.sh` (Next.js 16.3), `next build` et `npm run lint` passent. Pas encore ouvert dans un navigateur face à l'API.
+- `mobile` : projet créé par `setup.sh` (Expo SDK 57), `tsc` passe et `expo export --platform android` produit le paquet. Pas encore lancé sur un téléphone.
+
+Appris à l'exécution (à garder en tête) :
+- **fastify** est fixé à la version utilisée par `@nestjs/platform-fastify` (bloc `overrides` de `api/package.json`) ; deux copies différentes cassent la compilation. Le correctif de sécurité 5.12.5 n'existe officiellement qu'avec Nest 12.
+- **Expo SDK 57** : le modèle range ses écrans dans `src/app/`, qui passe avant notre `app/` ; `setup.sh` supprime donc tout `src/` du modèle. La navigation est intégrée à expo-router : importer `useFocusEffect` et `useIsFocused` depuis `expo-router`, `useHeaderHeight` depuis `expo-router/react-navigation`, **jamais** `@react-navigation/*` (contexte différent, plantage à l'exécution). `StyleSheet.absoluteFillObject` n'existe plus (`absoluteFill`).
+- `expo install` ne sait pas écrire dans `app.config.ts` : tout module qui demande un plugin s'y ajoute à la main.
+
+Points d'API de bibliothèques écrits de mémoire (vérifiés par la compilation et les tests pour `api` ; pour `web` et `mobile`, seulement par la compilation) :
+- **Drizzle** : `.for('update')`, `onConflictDoUpdate`, `onConflictDoNothing({ target })`, `generatedAlwaysAsIdentity()`, `customType` pour `bit(64)`, `db.execute(sql…)` qui renvoie des lignes avec postgres-js, et le type `Tx` dans `api/src/db/db.module.ts`.
+- **AWS SDK v3** : URL présignée PUT avec `signableHeaders` (content-type, content-length) ; options `requestChecksumCalculation` et `responseChecksumValidation: 'WHEN_REQUIRED'` (indispensables pour R2 et MinIO).
+- **BullMQ** : `upsertJobScheduler` ; connexion par options et non par instance ioredis.
+- **Next.js 15+** : `params` et `searchParams` sont des Promise ; sortie `standalone` ; `export const revalidate` avec les pages ISR.
+- **Expo** : nouvelle API d'`expo-image-manipulator` (`ImageManipulator.manipulate(...).renderAsync()`), `mediaTypes: ['images']` d'`expo-image-picker`, `router.dismiss(n)` d'expo-router, `app.config.ts`.
+- **@fastify/helmet** avec NestJS 11 (typage de `app.register`).
+
+## Structure du dépôt
+
+```
+api/     NestJS 11 + Fastify, Drizzle, PostgreSQL 16, Redis, BullMQ, stockage S3 (Cloudflare R2 ; MinIO en local), sharp
+web/     Next.js (App Router), rendu serveur et ISR, aucun framework CSS (globals.css)
+mobile/  Expo, expo-router, React Query (cache disque 24 h), expo-image, SecureStore
+deploy/  compose.yml de production, Cloudflare Tunnel, scripts (installation serveur, déploiement, sauvegardes)
+```
+
+Chaque dossier a un README détaillé. Celui de `deploy/` est le guide de mise en production pas à pas.
+
+## Base de données
+
+- **La source de vérité est le SQL** : `api/db/schema.sql`, puis `api/db/migrations/002_account_deletion.sql`, `003_messaging.sql` et `004_category_names.sql` (« Électronique », nom des maquettes). Les migrations sont appliquées et suivies par `api/db/migrate.sh` (table `schema_migrations`).
+- `api/src/db/schema.ts` (Drizzle) est un **miroir partiel**, uniquement pour les requêtes. **Ne jamais utiliser `drizzle-kit push` ni de migrations générées.** Toute évolution passe par un nouveau fichier `00X_….sql`.
+- Des règles métier vivent aussi dans des **déclencheurs SQL** : limite d'annonces par jour, identité exigée pour certaines catégories, une annonce naît toujours en `pending_review`, application automatique des sanctions, seuil de 3 signalements, passage au niveau « identité ».
+
+## Conventions
+
+- **Tout en français** : interface, messages d'erreur, commentaires du code. Les erreurs de l'API ont la forme `{ code, message }`, avec un `code` stable en anglais et un `message` en français clair, destiné à l'utilisateur.
+- Ton de l'interface : simple, direct, sans jargon, sans excuses inutiles. Les états vides et les erreurs disent ce qui se passe et quoi faire.
+- **Police : Inter partout** (décision du porteur du 18 octobre 2026, d'après sa maquette ; remplace Roboto Slab, Google Sans et Ubuntu, et les règles de police plus bas). Application : `Typography.tsx` choisit le fichier Inter de la graisse demandée (400 à 800) ; site : `next/font` Inter, les anciennes variables `--font-slab`, `--font-title`, `--font-ubuntu` pointent sur Inter.
+- **Maquettes du 18 octobre 2026 (accueil de l'application et page d'annonce), à reproduire à l'identique** : cartes d'annonces arrondies avec badge « 🔥 À la une », lieu (icône repère) | date (icône calendrier) ; onglets Accueil, Panier, Publier, Messages, **Profil** (onglet actif souligné) ; signature « Achetez · Vendez · Près de chez vous » sous le logo ; page d'annonce : cadres « Caractéristiques » et « Description » avec bandeau, pastille bleu marine et icône, étiquette du type d'annonce, caractéristiques sur deux colonnes avec icônes (`DetailCard`, `FactGrid`, site et application), emplacement publicitaire encadré, barre du bas (icône prix, prix, « À débattre », « Contacter » qui ouvre le choix écrire / WhatsApp / appeler dans l'application).
+- Prix : entiers en FCFA (`price_xaf`, le XAF n'a pas de centimes), affichés avec une espace fine insécable comme séparateur de milliers.
+- **Titres des annonces en Google Sans SemiBold 600** (choix du porteur, 12 octobre 2026, à la place de Roboto Condensed ; police libre OFL publiée sur Google Fonts), dans l’application (`TITLE_FONT` de `mobile/src/theme.ts`) et sur le site (`--font-title`, chargée par `next/font` dans `web/app/layout.tsx`, servie par le site) : listes, cartes et page d’annonce.
+- Design : application mobile en **Roboto Slab SemiBold 600** (composants `Text`/`TextInput` de `mobile/src/components/Typography.tsx`, jamais ceux de `react-native`) ; site en **Roboto Slab partout** (décision du porteur, 12 octobre 2026 : **rien qui ressemble à Arial, Calibri ou Segoe UI**, y compris boutons, champs et replis : Georgia en secours), titres d’annonces en Google Sans, liste des pays en Ubuntu. Palette dans `mobile/src/theme.ts` et `web/app/globals.css`. Le prix est en **gras foncé** (`PriceTag`, l'ancienne étiquette safran est abandonnée) ; dans l'application, il est en **Roboto Slab ExtraBold** (`PRICE_FONT`), seule exception au SemiBold. Le vert WhatsApp est `#177A43`, pour garder un contraste suffisant.
+- Maquette validée par le porteur (mobile et web) : à respecter pour tout nouvel écran.
+- **Nouvelle direction artistique (11 octobre 2026), APPLIQUÉE le 12 octobre** (application : accueil, barre d'onglets, écrans catégorie et « Toutes les catégories » ; site : couleurs, grille de catégories, prix), d'après une maquette d'accueil mobile fournie dans la conversation (à déposer dans `Maquettes/`) :
+  - Bleu de marque vif (icônes, liens « Voir tout », bouton Publier) et bleu marine pour le nom ; fonds bleu très pâle sur les cartes et pastilles. **On garde Roboto Slab SemiBold** (choix du porteur) et le **nom provisoire « Annonces »** : le logo de la maquette (maison + étiquette + « K » de Kaba) n'est PAS appliqué tant que le nom n'est pas validé juridiquement.
+  - Accueil : nom à gauche, sélecteur de ville (« 📍 Douala ▾ ») et cloche de notifications à droite ; barre de recherche arrondie avec icône de filtres ; **grille d'icônes bleues** 4 × 2 (Véhicules, Immobilier, Électronique, Maison, Mode, Services, Emploi, Autres) sur tuiles bleu pâle ; sections « Annonces près de vous » (cartes horizontales avec grande photo et cœur en surimpression), « Catégories populaires » (cartes photo avec nombre d'annonces), « Dernières annonces » (liste), chacune avec « Voir tout › ».
+  - Barre d'onglets (décision du porteur, 12 octobre 2026) : **Accueil, Panier, Publier (gros bouton rond bleu « + » au centre), Messages, Compte**. Le Panier remplace les Favoris ; les **Favoris passent dans Compte** (une fois connecté).
+  - Site (décision du 12 octobre 2026) : dans l’en-tête, **favoris, messages, panier et compte** (ou connexion) sont **toujours visibles**, en **icônes pleines** bleues sur pastille bleu pâle (hors connexion, favoris et messages mènent à la connexion). **Toutes les icônes du site sont les icônes pleines Ionicons de l’application** (paquet `ionicons`, composant `Ion`, dessin en masque) : catégories comprises, jamais d’icônes au trait. Sur la page d’annonce (site et application), **Caractéristiques et Description sont chacune dans un cadre aux coins arrondis**.
+  - Pages de liste du site (décision du 12 octobre 2026) : même en-tête que l’accueil, la recherche avec le **choix du pays** puis la **grille d’icônes bleues** (catégorie en cours en bleu plein, tuile « Toutes »), au lieu des puces de texte. Une recherche lancée depuis une page de liste garde la catégorie (et la ville si le pays ne change pas) : `/recherche?cat=&ville=&depuis=`. **Pays de la barre de recherche** (13 octobre 2026) : liste à drapeaux (`SearchCountry`, comme à la connexion) ; choisir un pays ouvre **tout de suite** la même catégorie dans ce pays, avec ses villes, en gardant le texte tapé (sans JavaScript : liste native et « Rechercher »).
+  - Refonte UI du site (12 octobre 2026, sur le modèle de LeBonCoin) : cartes d'annonces en grille avec grande photo carrée (2 colonnes sur téléphone, 4 sur ordinateur, fond bleu pâle et icône quand il n'y a pas de photo) ; accueil avec bandeau de recherche (titre seul, **sans texte d'accroche ni puces : le porteur les a refusés**), catégories en **petites tuiles, comme dans l’application : 7 catégories (même ordre que l’appli) + « Autres »** vers la page « Toutes les catégories » (`/[pays]/categories`), noms en gras, jamais de défilement ni de coupure (pages de liste : « Toutes » en tête, catégorie en cours en bleu plein, « Autres » si elle n’est pas dans la grille), « Catégories populaires » (`GET /categories/popular`) en **petits ronds bleu pâle avec l’icône** (à peine plus grands que l’icône), nom et nombre d’annonces dessous ; icône Véhicules : voiture vue de côté, « Vous avez consulté » (navigateur seulement), dernières annonces ; pied de page en colonnes. Page d'annonce : galerie (vignettes, plein écran), visuel de catégorie sans photo, barre « Contacter » fixée en bas sur téléphone, annonces similaires. Sur téléphone, l'en-tête tient sur une ligne (« + » rond pour publier).
+  - Connexion et inscription du site (12 octobre 2026) : **bandeau bleu en haut comme l’accueil**, formulaire dans une carte blanche ; pays choisi dans une **liste déroulante à drapeaux** (drapeaux dessinés en SVG, `Flag`, car les émojis drapeaux ne s’affichent pas sous Windows), **aucun indicatif affiché** ; choix SMS ou WhatsApp en **sélecteur ovale**, libellés en gras.
+  - Polices et survol (décision du 12 octobre 2026) : choix du pays en **Roboto Slab**, la liste déroulée des pays en **Ubuntu**, fil d’Ariane en **Roboto Slab gras** ; au survol, un texte n’est **jamais souligné**, il passe en bleu. **Aucun lien ni bouton-lien n'est souligné**, même hors survol (15 octobre 2026), et ils sont en Roboto Slab SemiBold ; le fil d'Ariane est un peu plus grand, **dans un cadre ovale** bleu pâle (page en cours en bleu) ; « Signaler cette annonce » est un bouton ovale (`pill-btn`). « Annonces similaires » en rangée qui défile horizontalement (site et application). **Rien ne déborde d’une carte sur sa voisine** (13 octobre 2026) : prix avec unité sur une ou deux lignes, « À débattre » (majuscule) dessous, puis **lieu et date côte à côte** (« Akwa, Douala · le 3 oct. », sans grand espace ; lieu coupé avec « … »). **Cartes alignées ligne par ligne** (subgrid CSS) : dans une même rangée, prix, « à débattre » et « lieu · date » sont à la même hauteur ; sans « à débattre », la ligne reste vide.
+  - Prix en gras foncé (appliqué). Pas encore fait : la section « Catégories populaires » (cartes photo avec nombre d'annonces, demande un comptage côté API). L’icône de filtres de la recherche est faite (étape 3).
+
+## Décisions à ne pas défaire sans en parler au porteur
+
+**Sessions et sécurité**
+- Connexion par **code reçu par SMS ou par WhatsApp** (au choix ; OTP haché dans Redis, 5 min, 5 essais, usage unique). Limites par numéro, par IP, plus un **plafond quotidien global** contre le « SMS pumping » (commun aux deux canaux).
+- **Modes de connexion (décision du porteur, 15 octobre 2026)** : **téléphone** (code par SMS ou WhatsApp), **e-mail et mot de passe**, ou **Google**. **Facebook est retiré** des écrans (`/auth/methods` renvoie toujours `facebook: false` ; le code de vérification reste dans l'API). Écran de connexion (site et application) : titre « Connexion ou inscription », sélecteur ovale **Téléphone / E-mail**, puis Google en dessous. Le champ numéro commence par une **liste déroulante d'indicatifs à drapeaux** (drapeau + « +237 » ; la liste montre drapeau, pays et indicatif) : `CountrySelect showDial` sur le site, `DialCodePicker` + `Flag` (images PNG, `src/assets/flags/`) dans l'application.
+- **E-mail et mot de passe (migration 015)** : l'adresse est **confirmée par un code à 6 chiffres envoyé par e-mail AVANT la création du compte** (personne ne s'inscrit avec l'adresse d'un autre ; demande gardée 15 min dans Redis). Mot de passe : 8 caractères au moins, une lettre et un chiffre, haché avec **scrypt** (`src/auth/password.ts`). Connexion limitée à 10 essais par adresse et 50 par IP en 15 min ; même message d'erreur que l'adresse existe ou non ; « Mot de passe oublié » envoie un code (réponse identique si l'adresse est inconnue) et ferme toutes les sessions ouvertes. Un compte par e-mail n'a pas de numéro : comme pour Google, `PhoneRequiredGuard` exige un numéro vérifié pour agir. E-mails : `MAIL_PROVIDER=console` (journaux de l'API, « Mail[dev] ») ; **fournisseur réel à choisir avant la bêta** (interdit en production sans fournisseur). Routes du site : `/api/auth/email/[action]`.
+- **Connexion avec Google ou Facebook (décision du porteur, 12 octobre 2026, migration 013)** : le jeton est vérifié par l'API auprès du fournisseur (jamais le profil envoyé par le client) ; compte retrouvé par le compte lié (`user_identities`), jamais par l'e-mail. Un compte créé ainsi n'a **pas de numéro** : il peut parcourir et garder des favoris, mais `PhoneRequiredGuard` exige un **numéro vérifié** (SMS ou WhatsApp, une seule fois) pour publier, contacter, écrire, faire une offre, postuler ou donner un avis. Le numéro reste la clé anti-fraude (un numéro banni ne revient pas avec un nouveau compte Google). Un numéro déjà pris par un autre compte est refusé (pas de fusion automatique) ; on associe Google ou Facebook depuis Mon compte. Configuration : `GOOGLE_CLIENT_IDS`, `FACEBOOK_APP_ID/SECRET`, `WHATSAPP_*` (API), `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_FACEBOOK_APP_ID` (site), `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID`, `EXPO_PUBLIC_FACEBOOK_APP_ID` (application) ; boutons masqués tant que ce n'est pas configuré. Dans l'application, Google et Facebook ne marchent que dans la version installée (pas Expo Go).
+- Jeton d'accès de 15 min, jeton de rafraîchissement opaque **haché en base**, renouvelé à chaque usage. Réutiliser un ancien jeton révoque toutes les sessions, sauf réessai réseau de moins de 30 s.
+- Site web : jetons uniquement en **cookies httpOnly**, et le navigateur passe par le relais `/api/proxy`. Le relais transmet l'IP réelle du visiteur ; l'API n'accepte `X-Forwarded-For` que des relais listés dans `TRUSTED_PROXIES` (réseau Docker privé en production ; jamais `trustProxy: true`). Remplace `TRUST_PROXY_HOPS` depuis le 4 octobre 2026 : fastify 5.12.5 ignore désormais un nombre de relais (faille de falsification d'IP), ce qui aurait donné la même IP à tous les visiteurs.
+- Mobile : un seul renouvellement de session à la fois, et les routes publiques partent sans jeton pour rester cacheables par le CDN.
+
+**Anti-fraude**
+- Pipeline de modération (worker BullMQ) : photos converties en WebP sans métadonnées, empreintes SHA-256 et dHash, règles dans `api/src/moderation/rules.service.ts`. **En cas de panne, l'annonce reste `pending_review` : elle n'est jamais publiée par erreur.**
+- Toute modification d'annonce repasse en modération, et la modification est **bloquée pendant l'analyse**.
+- Le numéro du vendeur n'est **jamais** dans une page ou une réponse publique : il est donné au clic, à un utilisateur connecté, avec une limite par jour. La préférence « messagerie uniquement » interdit totalement sa diffusion.
+- Photos : **deux buckets**. `listings/` est public ; `pending/` et `verifications/` sont privés. Les photos traitées sont nommées par l'identifiant de la photo, jamais par sa position.
+- Pièces d'identité : prises à l'appareil photo uniquement (pas de galerie), lues par les modérateurs via des liens de 5 minutes.
+- Sanctions : seul un admin peut bannir ou lever un bannissement. Un modérateur suspend 30 jours au plus et ne peut sanctionner ni un modérateur, ni un admin, ni lui-même. Un bannissement coupe l'accès immédiatement (clé Redis vérifiée par `JwtAuthGuard`).
+- Le nom de la marque seul est interdit comme nom affiché, mais autorisé dans un nom complet (une marque peut être un nom de famille).
+- Messagerie : avertissements automatiques au destinataire (paiement à l'avance, transfert d'argent, lien, **demande de code SMS**). Les modérateurs ne peuvent lire **que les conversations signalées**.
+- Suppression de compte : anonymisation, pas d'effacement brut. Un compte supprimé sous sanction laisse son numéro « à surveiller ».
+
+**Performance et accès**
+- Mises en cache explicites : en-têtes `Cache-Control` publics pour le CDN, ISR côté site, cache disque côté mobile, pagination par curseur, lignes de hauteur fixe.
+- Pages publiques du site : **aucune lecture de cookie côté serveur**, sinon le cache ISR est cassé. Tout ce qui est personnel se fait côté navigateur.
+- AdSense ne se charge **qu'après le choix** cookies du visiteur (refus : publicités non personnalisées). Aucune publicité sur les pages de connexion, de compte, d'erreur ou d'administration.
+
+## Commandes utiles
+
+Vraies photos pour les données fictives : `node scripts/demo-photos.mjs` après le seed (photos libres de Wikimedia Commons, gardées avec leurs crédits dans `Maquettes/photos-demo/` ; `exclusions.json` y liste les photos écartées à la relecture). Données fictives (base locale uniquement) : `cd api && node scripts/seed-demo.mjs` (48 vendeurs, environ 370 annonces avec visuels d’illustration, 140 avis ; comptes en +237 6990xxxxx) ; `node scripts/seed-demo.mjs --reset` les efface, photos comprises.
+
+```bash
+# API
+cd api && cp .env.example .env && docker compose up -d && npm install && npm run typecheck && npm run start:dev
+# Tests de l'API (base jetable sur les ports 5433 et 6380)
+cd api && npm run test:db && npm test
+# Site : depuis le dossier source, crée le projet Next.js à jour dans ../web puis y copie le code
+cd annonces-web && bash setup.sh
+# Mobile : idem, crée ../mobile
+cd annonces-mobile && bash setup.sh
+# Rôle admin ou modérateur en local, après une première connexion
+docker compose exec postgres psql -U annonces -d annonces -c "update users set role='admin' where phone_e164='+237…'"
+```
+
+En développement, `SMS_PROVIDER=console` affiche le code OTP dans les journaux de l'API.
+
+Démonstration en partage d'écran (13 octobre 2026) : site sur http://localhost:3001 ; application mobile **dans un navigateur** sur http://localhost:8082 (Expo web, format téléphone avec F12 puis Ctrl+Maj+M). Il faut `http://localhost:8082` dans `CORS_ORIGINS` de l'API. Sur le web, SecureStore n'existe pas : `src/lib/secureStore.ts` garde alors la session dans le navigateur (rien ne change sur téléphone). Google et Facebook ne marchent pas dans cette version. Conteneurs locaux : `PG_PORT=5434 REDIS_PORT=6381 MINIO_PORT=9010 MINIO_CONSOLE_PORT=9011 docker compose up -d` (le port 9000 est pris par un autre projet du poste).
+
+## Reste à faire
+
+**Fonctionnalités à développer avant les tests (choisies par le porteur le 11 octobre 2026, dans cet ordre)**
+1. ~~Catégories complètes façon LeBonCoin et « Je propose / Je recherche »~~ : **fait** (migration 005). Identité vérifiée exigée pour PROPOSER dans Véhicules, Immobilier, Offres d’emploi, Garde d’enfants, Ménage et aide à domicile (jamais pour une demande). Photos facultatives pour Emploi et Services.
+2. ~~Champs propres à chaque catégorie~~ : **fait** (migration 006, formulaires décrits dans `categories.attributes_schema`, générés par `api/db/forms/category-forms.js` ; l'API valide, renvoie `facts`, `priceLabel`, `priceUnit` et accepte les filtres `a_<champ>`, `a_<champ>_min/_max`). Conseils de sécurité propres à l'emploi et aux services. Les écrans de filtres viennent avec l'étape 3.
+3. ~~Recherche façon LeBonCoin~~ : **fait** (migration 008). Tri (récentes, prix croissant ou décroissant ; les tris par prix écartent les annonces sans prix), filtres (type, catégorie, lieu, prix, état, champs de la catégorie) avec nombre de résultats en direct (`GET /listings/count`), recherches sauvegardées (`/me/searches`, 20 au plus) avec le nombre de nouvelles annonces depuis la dernière ouverture. Mobile : écran Recherche, panneau Filtres, « Mes recherches » dans Compte. Site : bloc « Filtres et tri » (formulaire GET, adresses en français : `tri`, `prix_min`, `prix_max`, `etat`, `type`, `a_<champ>`), pages filtrées non indexées, page `/recherches`. Les alertes push viendront avec les notifications (après la bêta).
+4. ~~Dépôt d’annonce en étapes~~ : **fait** (mobile et site, `ListingForm` avec `stepped`). Six étapes : Catégorie (et « Je vends / Je recherche »), Photos (l’envoi continue pendant les étapes suivantes), Détails (champs de la catégorie, titre, description, état), Prix, Lieu, Récapitulatif avec « Modifier » sur chaque bloc. On ne passe à l’étape suivante que si la précédente est correcte ; le brouillon garde l’étape (reprise au plus tard aux Photos, qui ne sont pas gardées). La modification d’une annonce reste sur une seule page.
+5. ~~Candidature aux offres d’emploi~~ : **fait** (migration 009, module `api/src/applications`). « Postuler » remplace « Écrire au vendeur » sur les annonces « Je propose » de la catégorie Emploi. Message de 20 caractères au moins et CV facultatif (PDF, JPEG ou PNG, 5 Mo) dans le dossier PRIVÉ `cvs/`, lu par le seul recruteur via un lien de 5 minutes. Une candidature par personne et par offre, 20 par jour. La candidature ouvre aussi une conversation (« Candidature (CV joint) » + message). Le recruteur voit les candidatures depuis Mes annonces ou sa propre offre, les retient ou les écarte ; ouvrir la liste les marque vues. Le candidat suit le statut dans « Mes candidatures ». Supprimer son compte efface ses candidatures et ses CV. Dans les conversations d’emploi, l’avertissement rappelle qu’un recruteur ne demande jamais d’argent.
+6. ~~Avis et notes~~ : **fait** (migration 010, module `api/src/reviews`). Un avis (1 à 5 étoiles, commentaire facultatif de 10 à 500 caractères, sans numéro ni lien) se donne depuis une conversation, un par personne et par conversation, acheteur et vendeur se notant l’un l’autre. Conditions anti-faux avis : les deux personnes ont écrit, et l’échange a commencé il y a au moins 24 h (ou l’annonce est marquée vendue) ; pas d’avis entre personnes qui se sont bloquées. Moyenne et nombre d’avis tenus à jour sur `users` par un déclencheur, affichés sur l’annonce et le profil public (répartition des notes, avis récents). Un avis peut être signalé (« faux avis », « insultant ») : la modération le masque si le signalement est fondé, et il ne compte plus dans la moyenne. Suppression de compte : la note reste, le texte est effacé.
+7. ~~« Faire une offre »~~ : **fait** (seuil de 30 % confirmé par le porteur le 12 octobre 2026) (migration 011, module `api/src/offers`). L’acheteur propose un prix depuis l’annonce ou la conversation (annonce « Je propose » en ligne avec un prix, hors Emploi, pas gratuite) : montant inférieur au prix affiché et au moins 30 % de ce prix (règle `OFFER_MIN_RATIO`, à ajuster avec le porteur), message facultatif, propositions à -5 / -10 / -15 %. Une seule offre en attente par conversation, valable 48 h (puis « expirée »). Le vendeur accepte ou refuse, l’acheteur peut retirer ; chaque étape est un message de la conversation (`messages.kind`, `messages.offer_id`) et la carte de l’offre se met à jour. Aucun argent ne passe par l’application : une offre acceptée fixe le prix, le paiement se fait à la rencontre.
+   - Avis (complément) : pour une offre d’emploi, l’auteur est affiché « Recruteur » ou « Candidat » (au lieu de Vendeur / Acheteur).
+8. ~~Quartier dans la localisation~~ : **fait** (migration 012). Table `districts` (quartiers par ville, première liste de 87 quartiers pour les 6 villes, **à compléter avec le porteur**), `listings.district_id` facultatif ; la clé étrangère composite (district_id, city_id) garantit en base que le quartier est dans la ville. `GET /geo/districts?cityId=`. Choix facultatif à l’étape Lieu du dépôt (« Ne pas préciser »), filtre `districtId` (site : paramètre `quartier`, dans une ville seulement), affichage « Akwa, Douala ». Jamais d’adresse précise. Changer de ville retire le quartier.
+
+**Les 8 fonctionnalités choisies le 11 octobre 2026 sont faites.**
+
+**Paiement électronique accepté** (décision du porteur, 15 octobre 2026 ; migration 016) : le vendeur coche les portefeuilles qu'il accepte (étape Prix du dépôt, facultatif) ; **le paiement se fait entre acheteur et vendeur, à la remise : aucun argent ne passe par Okazo** (le vrai paiement en ligne reste en phase 2). Portefeuilles par pays dans la table `country_wallets` : Cameroun MTN MoMo et Orange Money ; Gabon Airtel Money et Moov Money ; Congo MTN MoMo et Airtel Money ; Tchad Airtel et Moov ; Centrafrique Orange et Moov ; **Côte d'Ivoire (créée inactive) Wave, Orange, MTN, Moov**. `listings.payment_methods` (seulement « Je propose » hors Emploi, et parmi ceux du pays). Affichage : page d'annonce (« Paiement électronique accepté » + logos), récapitulatif, filtre « Paiement électronique » (site : `paiement=mtn_momo` ; API : `wallet=`). **Logos officiels** des opérateurs sur leur couleur de marque (MTN sur jaune, Moov sur bleu), nom du portefeuille écrit à côté, validés par le porteur : sources dans `Maquettes/logos-paiement/SOURCES.md` ; à remplacer par les kits de marque officiels avant le lancement. Composants `Wallets.tsx` (site et application).
+
+**Remise en main propre** (demande du porteur, 13 octobre 2026, comme sur LeBonCoin ; migration 014) : `listings.hand_delivery` (NULL = non concerné : emploi, services, immobilier et demandes). Au dépôt, étape Lieu, « Mode de remise » : cochée par défaut. Affichée sur la page d’annonce (icône main bleue), filtre « Remise en main propre » (site : `main_propre=1` ; API : `handDelivery=true`). Les annonces d’objets existantes sont passées à « oui ».
+
+**Panier (décision du 12 octobre 2026, par étapes)**
+- Maintenant : **liste d'achats sans paiement**. On ajoute des articles au panier, regroupés par vendeur ; depuis le panier on contacte chaque vendeur ou on lui fait une offre. Aucun argent ne passe par l'application (modèle LeBonCoin).
+- Phase 2 : **vrai achat en ligne** (Mobile Money, argent bloqué jusqu'à la réception, livraison, litiges), avec un prestataire de paiement et ses obligations légales.
+
+**Ensuite**
+1. Lancer l'ensemble en local et le parcourir pour de vrai : API + MinIO, site dans un navigateur, application sur un téléphone avec Expo Go.
+2. Régler le seuil de détection des photos volées sur de vraies photos (voir `api/README.md`, « Photos volées : seuil à régler »).
+3. Plus tard : passer à Nest 12 pour revenir à la version de fastify livrée avec Nest.
+
+**Publicité (décision du 12 octobre 2026)** : AdSense sur le site dès que le site est en ligne (compte à créer ; en développement, des emplacements de test pointillés montrent la place réservée, toutes les 12 annonces et sur la page d’annonce) ; AdMob dans l’application au moment de construire la vraie application avant la bêta (impossible dans Expo Go).
+
+**Cache et réseau de l’application (12 octobre 2026)** : `src/lib/network.ts` (NetInfo) : bandeau « Hors connexion », React Query attend le retour du réseau ; conversations relues depuis le téléphone hors connexion, messages écrits hors connexion envoyés au retour du réseau ; préchargement de l’annonce et de sa première photo quand une carte est à l’écran ; « Économie de données » dans Compte (automatique en 2G/3G) : pas de préchargement, galerie en miniatures, photos envoyées plus légères.
+
+**Après la bêta**
+- Notifications push (annonce en ligne ou refusée, nouveau message).
+- Photo de profil.
+- Annonces boostées payées par Mobile Money, puis paiement sécurisé (séquestre).
+- AdMob dans l'application.
+
+**Décisions en attente du porteur** (ne pas trancher à sa place) : le nom définitif, le fournisseur SMS (seul Twilio est intégré, en exemple), le compte WhatsApp Business (Meta) et l’application Facebook (Meta Developers) à créer, l'hébergeur (à choisir après des mesures de latence depuis Douala et Libreville), la politique de confidentialité et les conditions d'utilisation validées par un juriste (**acceptation prouvée** (migration 017) : case à cocher explicite après la connexion et à chaque nouvelle version ; chaque acceptation est gardée dans `terms_acceptances` (version, date, IP, appareil) ; `PhoneRequiredGuard` refuse d'abord avec `TERMS_REQUIRED` tant que la version en vigueur n'est pas acceptée, puis `PHONE_REQUIRED` ; pages `/conditions/accepter` (site) et `accept-terms` (application). **Pour publier de nouvelles CGU : changer ensemble `TERMS_VERSION` (API) et `CGU_VERSION` (`web/lib/site.ts`)** ; **projet de CGU rédigé le 15 octobre 2026** : page `/conditions`, version `CGU_VERSION` dans `web/lib/site.ts` ; droit camerounais, juridictions de Douala, réclamation et règlement amiable préalables, statut d'intermédiaire, limitation de responsabilité, règles contre les arnaques, coopération avec les autorités ; identité de l'éditeur et plafond de responsabilité entre crochets, textes de loi à vérifier listés en commentaire du fichier).

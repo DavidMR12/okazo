@@ -1,0 +1,46 @@
+{
+  "name": "annonces-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch",
+    "typecheck": "tsc --noEmit && tsc -p test/tsconfig.json",
+    "test": "jest",
+    "test:db": "docker compose -f test/compose.yml up -d --wait"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/s3-request-presigner": "^3.750.0",
+    "@fastify/helmet": "^13.0.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/platform-fastify": "^11.0.0",
+    "bullmq": "^5.0.0",
+    "dotenv": "^16.4.0",
+    "drizzle-orm": "^0.45.3",
+    "fastify": "5.12.5",
+    "ioredis": "^5.4.0",
+    "libphonenumber-js": "^1.11.0",
+    "postgres": "^3.4.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0",
+    "sharp": "^0.35.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.2.7",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.14",
+    "typescript": "^5.6.0"
+  },
+  "overrides": {
+    "fastify": "$fastify"
+  }
+}

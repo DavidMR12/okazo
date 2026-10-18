@@ -1,0 +1,15 @@
+{
+  "cli": { "appVersionSource": "remote" },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.votre-domaine.com" }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.votre-domaine.com" }
+    }
+  },
+  "submit": { "production": {} }
+}

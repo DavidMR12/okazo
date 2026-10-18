@@ -1,0 +1,138 @@
+# Production : un serveur, tout en conteneurs. Aucun port ouvert : le trafic arrive par Cloudflare Tunnel.
+# Structure attendue du dépôt : api/  web/  mobile/  deploy/ (ce dossier)
+name: annonces
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+x-api-env: &api-env
+  NODE_ENV: production
+  PORT: "3000"
+  TRUSTED_PROXIES: uniquelocal # cloudflared et web, sur le réseau Docker privé
+  DATABASE_URL: postgres://annonces:${POSTGRES_PASSWORD}@postgres:5432/annonces
+  REDIS_URL: redis://redis:6379
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+  OTP_SECRET: ${OTP_SECRET}
+  OTP_DAILY_GLOBAL_CAP: ${OTP_DAILY_GLOBAL_CAP:-5000}
+  SMS_PROVIDER: ${SMS_PROVIDER}
+  TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+  TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+  TWILIO_FROM: ${TWILIO_FROM:-}
+  CORS_ORIGINS: https://${DOMAIN}
+  APP_NAME: ${APP_NAME}
+  S3_ENDPOINT: https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+  S3_REGION: auto
+  S3_BUCKET: ${R2_PUBLIC_BUCKET}
+  S3_PRIVATE_BUCKET: ${R2_PRIVATE_BUCKET}
+  S3_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+  S3_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+  S3_FORCE_PATH_STYLE: "false"
+  MEDIA_PUBLIC_BASE_URL: https://media.${DOMAIN}
+
+services:
+  # API publique (mobile et site). Ne fait pas tourner les tâches de fond.
+  api:
+    build: ../api
+    image: annonces-api:latest
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      RUN_MODERATION_WORKER: "false"
+      RUN_MAINTENANCE_WORKER: "false"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    logging: *logging
+
+  # Même image, dédiée aux tâches de fond : modération des annonces, expirations, fin des suspensions.
+  # Un traitement d'images lourd ne ralentit donc jamais les réponses de l'API.
+  worker:
+    image: annonces-api:latest
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      RUN_MODERATION_WORKER: "true"
+      RUN_MAINTENANCE_WORKER: "true"
+      MODERATION_CONCURRENCY: "2"
+    depends_on:
+      api: { condition: service_healthy }
+    logging: *logging
+
+  web:
+    build:
+      context: ../web
+      args:
+        NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+        NEXT_PUBLIC_SITE_NAME: ${APP_NAME}
+        NEXT_PUBLIC_DEFAULT_COUNTRY: ${DEFAULT_COUNTRY:-cm}
+        NEXT_PUBLIC_MEDIA_ORIGIN: https://media.${DOMAIN}
+        NEXT_PUBLIC_ADSENSE_CLIENT: ${ADSENSE_CLIENT:-}
+        NEXT_PUBLIC_ADSENSE_SLOT_FEED: ${ADSENSE_SLOT_FEED:-}
+        NEXT_PUBLIC_ADSENSE_SLOT_LISTING: ${ADSENSE_SLOT_LISTING:-}
+    image: annonces-web:latest
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:3000 # réseau interne : ne repasse pas par Internet
+    depends_on:
+      api: { condition: service_healthy }
+    logging: *logging
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: annonces
+      POSTGRES_DB: annonces
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "effective_cache_size=2GB", "-c", "max_connections=100"]
+    shm_size: 256mb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U annonces -d annonces"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
+  # Limites anti-abus et files de tâches. « noeviction » : exigé par BullMQ (aucune tâche perdue).
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
+  # Connexion sortante vers Cloudflare : le serveur n'expose aucun port web.
+  # Fixez une version précise (ex. cloudflare/cloudflared:2026.9.0) après le premier déploiement.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on: [api, web]
+    logging: *logging
+
+  # Outil : applique les migrations SQL (lancé par scripts/deploy.sh)
+  migrate:
+    image: postgres:16
+    profiles: ["tools"]
+    environment:
+      DATABASE_URL: postgres://annonces:${POSTGRES_PASSWORD}@postgres:5432/annonces
+    volumes:
+      - ../api/db:/db:ro
+    entrypoint: ["sh", "/db/migrate.sh"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  redisdata:
