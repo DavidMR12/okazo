@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Text } from '../../../src/components/Typography';
 import { api, ApiError } from '../../../src/api/client';
 import type { PriceType } from '../../../src/api/types';
@@ -8,6 +8,7 @@ import { ListingForm, ListingValues } from '../../../src/components/ListingForm'
 import { Message } from '../../../src/components/Message';
 import { colors, space, type } from '../../../src/theme';
 import type { AdType } from '../../../src/lib/adType';
+import { dialog } from '../../../src/components/Dialog';
 
 interface Editable {
   id: string;
@@ -22,6 +23,8 @@ interface Editable {
   categoryId: number;
   cityId: number;
   districtId: number | null;
+  cityOther: string | null;
+  districtOther: string | null;
   handDelivery: boolean | null;
   paymentMethods: string[];
   attributes: Record<string, unknown>;
@@ -63,6 +66,8 @@ export default function EditListingScreen() {
         categoryId: v.categoryId,
         cityId: v.cityId,
         districtId: v.districtId,
+        cityOther: v.cityOther,
+        districtOther: v.districtOther,
         handDelivery: v.handDelivery,
         paymentMethods: v.paymentMethods,
         title: v.title,
@@ -76,7 +81,7 @@ export default function EditListingScreen() {
     });
     void qc.invalidateQueries({ queryKey: ['my-listings'] });
     void qc.invalidateQueries({ queryKey: ['listing', id] });
-    Alert.alert('Modifications envoyées', "L’annonce repasse par une vérification rapide avant d’être de nouveau en ligne.", [{ text: 'OK', onPress: () => router.back() }]);
+    dialog('Modifications envoyées', "L’annonce repasse par une vérification rapide avant d’être de nouveau en ligne.", [{ text: 'OK', onPress: () => router.back() }]);
   };
 
   return (
@@ -89,6 +94,8 @@ export default function EditListingScreen() {
         categoryId: l.categoryId,
         cityId: l.cityId,
         districtId: l.districtId,
+        cityOther: l.cityOther ?? undefined,
+        districtOther: l.districtOther ?? undefined,
         handDelivery: l.handDelivery ?? undefined,
         paymentMethods: l.paymentMethods ?? [],
         priceType: l.priceType,

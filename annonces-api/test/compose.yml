@@ -30,6 +30,8 @@ services:
       - ../db/migrations/015_email_accounts.sql:/docker-entrypoint-initdb.d/15-email-accounts.sql:ro
       - ../db/migrations/016_payment_wallets.sql:/docker-entrypoint-initdb.d/16-payment-wallets.sql:ro
       - ../db/migrations/017_terms_acceptance.sql:/docker-entrypoint-initdb.d/17-terms-acceptance.sql:ro
+      - ../db/migrations/018_other_place.sql:/docker-entrypoint-initdb.d/18-other-place.sql:ro
+      - ../db/migrations/019_endless_sessions.sql:/docker-entrypoint-initdb.d/19-endless-sessions.sql:ro
     healthcheck:
       # Pendant l'initialisation (schéma et migrations), PostgreSQL n'écoute que sur un socket local,
       # puis redémarre : il n'est prêt qu'une fois joignable en réseau.

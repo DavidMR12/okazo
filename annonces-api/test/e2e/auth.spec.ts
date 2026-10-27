@@ -202,12 +202,25 @@ describe('Connexion par SMS et sessions', () => {
       expect(r2.status).toBe(200);
     });
 
-    it('réessai réseau récent avec l’ancien jeton : refusé, mais la session continue', async () => {
+    it('réponse perdue puis réessai récent avec l’ancien jeton : nouveau jeton, l’appareil reste connecté', async () => {
       const s = await login(ctx);
       const r1 = await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } });
       const retry = await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } });
-      expect(retry.status).toBe(401);
+      expect(retry.status).toBe(200);
+      expect((await call(ctx, 'GET', '/auth/me', { token: retry.body.accessToken })).status).toBe(200);
+      expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: retry.body.refreshToken } })).status).toBe(200);
       expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: r1.body.refreshToken } })).status).toBe(200);
+    });
+
+    it('session sans fin : échéance à 10 ans, repoussée à chaque renouvellement', async () => {
+      const s = await login(ctx);
+      const r1 = await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } });
+      const [{ days }] = await rows<{ days: number }>(
+        ctx,
+        sql`select floor(extract(epoch from (expires_at - now())) / 86400)::int as days from refresh_tokens where user_id = ${s.userId} and revoked_at is null`,
+      );
+      expect(r1.status).toBe(200);
+      expect(days).toBeGreaterThanOrEqual(3649);
     });
 
     it('réutilisation tardive d’un ancien jeton (vol probable) : toutes les sessions sont coupées', async () => {
@@ -215,8 +228,8 @@ describe('Connexion par SMS et sessions', () => {
       const other = await login(ctx, s.phone, fingerprint(2)); // deuxième appareil
       const r1 = await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } });
 
-      // L'ancien jeton a été remplacé il y a plus de 30 s
-      await ctx.db.execute(sql`update refresh_tokens set revoked_at = now() - interval '1 minute' where revoked_at is not null`);
+      // L'ancien jeton a été remplacé il y a plus de 2 min
+      await ctx.db.execute(sql`update refresh_tokens set revoked_at = now() - interval '3 minutes' where revoked_at is not null`);
       const stolen = await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } });
       expect(stolen.status).toBe(401);
 
@@ -224,17 +237,29 @@ describe('Connexion par SMS et sessions', () => {
       expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: other.refreshToken } })).status).toBe(401);
     });
 
-    it('deux renouvellements simultanés du même jeton : un seul nouveau jeton émis', async () => {
+    it('renouvellements simultanés du même jeton (plusieurs onglets) : tous réussissent, aucune déconnexion', async () => {
       const s = await login(ctx);
       const results = await Promise.all(
         Array.from({ length: 4 }, () => call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } })),
       );
-      expect(results.filter((r) => r.status === 200)).toHaveLength(1);
-      const [{ n }] = await rows<{ n: number }>(
-        ctx,
-        sql`select count(*)::int as n from refresh_tokens where user_id = ${s.userId} and revoked_at is null`,
-      );
-      expect(n).toBe(1);
+      expect(results.every((r) => r.status === 200)).toBe(true);
+      for (const r of results) {
+        expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: r.body.refreshToken } })).status).toBe(200);
+      }
+    });
+
+    it('jeton retiré par une déconnexion : jamais renouvelé, même aussitôt', async () => {
+      const s = await login(ctx);
+      await call(ctx, 'POST', '/auth/logout', { body: { refreshToken: s.refreshToken } });
+      expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } })).status).toBe(401);
+    });
+
+    it('après « Se déconnecter », un ancien jeton remplacé il y a quelques secondes ne rouvre pas la session', async () => {
+      const s = await login(ctx);
+      const r1 = await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } });
+      await call(ctx, 'POST', '/auth/logout', { body: { refreshToken: r1.body.refreshToken } });
+      expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: s.refreshToken } })).status).toBe(401);
+      expect((await call(ctx, 'POST', '/auth/refresh', { body: { refreshToken: r1.body.refreshToken } })).status).toBe(401);
     });
 
     it('refuse un jeton expiré ou inconnu', async () => {

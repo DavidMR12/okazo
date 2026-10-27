@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Linking, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { api, ApiError } from '../../../src/api/client';
 import { useListingApplications, useSetApplicationStatus } from '../../../src/api/hooks';
 import type { ReceivedApplication } from '../../../src/api/types';
@@ -12,6 +12,7 @@ import { VerifiedBadge } from '../../../src/components/VerifiedBadge';
 import { EMPLOYER_STATUS } from '../../../src/lib/applications';
 import { memberSince, relativeTime } from '../../../src/lib/format';
 import { colors, space, type } from '../../../src/theme';
+import { dialog } from '../../../src/components/Dialog';
 
 /** Candidatures reçues pour une offre d'emploi : lire, ouvrir le CV, répondre, retenir ou écarter. */
 export default function ListingApplicationsScreen() {
@@ -30,7 +31,7 @@ export default function ListingApplicationsScreen() {
       const { url } = await api<{ url: string }>(`/me/applications/${a.id}/cv`, { auth: true });
       await Linking.openURL(url);
     } catch (e) {
-      Alert.alert('CV', e instanceof ApiError ? e.message : 'Impossible d’ouvrir le CV.');
+      dialog('CV', e instanceof ApiError ? e.message : 'Impossible d’ouvrir le CV.');
     } finally {
       setOpening(null);
     }
@@ -38,7 +39,7 @@ export default function ListingApplicationsScreen() {
   const decide = (a: ReceivedApplication, status: 'shortlisted' | 'rejected') =>
     setStatus.mutate(
       { id: a.id, status: a.status === status ? 'viewed' : status }, // retoucher annule
-      { onError: (e) => Alert.alert('Candidature', e instanceof ApiError ? e.message : 'Action impossible.') },
+      { onError: (e) => dialog('Candidature', e instanceof ApiError ? e.message : 'Action impossible.') },
     );
 
   return (

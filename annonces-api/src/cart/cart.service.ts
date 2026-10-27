@@ -77,7 +77,7 @@ export class CartService {
         attributes: listings.attributes,
         status: listings.status,
         expiresAt: listings.expiresAt,
-        city: cities.name,
+        city: sql<string>`coalesce(${listings.cityOther}, ${cities.name})`,
         sellerId: users.id,
         sellerName: users.displayName,
         sellerLevel: users.verificationLevel,

@@ -9,6 +9,8 @@ import { AppState, Platform } from 'react-native';
 import { AuthProvider } from '../src/auth/AuthProvider';
 import { PERSIST_MAX_AGE, persister, queryClient } from '../src/lib/queryClient';
 import { OfflineBanner } from '../src/components/OfflineBanner';
+import { PillTitle } from '../src/components/Blocks';
+import { DialogHost } from '../src/components/Dialog';
 import { startNetworkWatch } from '../src/lib/network';
 
 // Réseau suivi dès le démarrage : React Query attend le retour de la connexion au lieu d'échouer
@@ -66,7 +68,8 @@ export default function RootLayout() {
           <Stack.Screen name="accept-terms" options={{ title: 'Conditions d’utilisation', presentation: 'modal' }} />
           <Stack.Screen name="report" options={{ title: 'Signaler', presentation: 'modal' }} />
           <Stack.Screen name="my-listings" options={{ title: 'Mes annonces' }} />
-          <Stack.Screen name="favorites" options={{ title: 'Mes favoris' }} />
+          <Stack.Screen name="favorites" options={{ title: 'Mes favoris', headerTitle: () => <PillTitle text="Mes favoris" />, headerTitleAlign: 'center' }} />
+          <Stack.Screen name="help" options={{ title: 'Aide et contact', headerTitle: () => <PillTitle text="Aide et contact" />, headerTitleAlign: 'center' }} />
           <Stack.Screen name="categories" options={{ title: 'Toutes les catégories' }} />
           <Stack.Screen name="search" options={{ title: 'Rechercher' }} />
           <Stack.Screen name="saved-searches" options={{ title: 'Mes recherches' }} />
@@ -83,6 +86,7 @@ export default function RootLayout() {
           <Stack.Screen name="listing/edit/[id]" options={{ title: 'Modifier l’annonce' }} />
         </Stack>
         <OfflineBanner />
+        <DialogHost />
       </AuthProvider>
     </PersistQueryClientProvider>
   );

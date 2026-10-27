@@ -36,6 +36,8 @@ export function PublishForm({ categories, citiesByCountry, walletsByCountry }: {
         categoryId: v.categoryId,
         cityId: v.cityId,
         districtId: v.districtId ?? undefined,
+        cityOther: v.cityOther ?? undefined,
+        districtOther: v.districtOther ?? undefined,
         handDelivery: v.handDelivery,
         paymentMethods: v.paymentMethods,
         title: v.title,

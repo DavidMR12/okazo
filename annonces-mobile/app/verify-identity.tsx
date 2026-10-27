@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../src/components/Typography';
 import { api, ApiError } from '../src/api/client';
 import { useMyVerification } from '../src/api/hooks';
@@ -13,6 +13,8 @@ import { Chip } from '../src/components/Chip';
 import { Message } from '../src/components/Message';
 import { compressImage, uploadVerificationPhotos } from '../src/lib/upload';
 import { colors, space, type } from '../src/theme';
+import { dialog } from '../src/components/Dialog';
+import { ensureCamera } from '../src/lib/permissions';
 
 type DocKind = 'id_card' | 'passport' | 'driver_license';
 const DOCS: { value: DocKind; label: string }[] = [
@@ -34,11 +36,7 @@ export default function VerifyIdentityScreen() {
    * qu’une image récupérée sur Internet.
    */
   const capture = async (which: 'doc' | 'selfie') => {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert('Appareil photo', "Autorisez l’accès à l’appareil photo dans les réglages du téléphone.");
-      return;
-    }
+    if (!(await ensureCamera('Okazo a besoin de l’appareil photo pour photographier votre pièce d’identité et votre visage.'))) return;
     const res = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
       quality: 1,
@@ -52,7 +50,7 @@ export default function VerifyIdentityScreen() {
       const c = await compressImage(a.uri, a.width, a.height, 1600, 0.82);
       (which === 'doc' ? setDoc : setSelfie)(c.uri);
     } catch {
-      Alert.alert('Photo', 'Impossible de traiter la photo. Réessayez.');
+      dialog('Photo', 'Impossible de traiter la photo. Réessayez.');
     } finally {
       setBusy(null);
     }
@@ -65,9 +63,9 @@ export default function VerifyIdentityScreen() {
       const [documentKey, selfieKey] = await uploadVerificationPhotos(doc, selfie);
       await api('/verifications', { method: 'POST', auth: true, body: { documentKind: kind, documentKey, selfieKey } });
       void qc.invalidateQueries({ queryKey: ['my-verification'] });
-      Alert.alert('Demande envoyée', 'Notre équipe vérifie vos documents sous 48 h.', [{ text: 'OK', onPress: () => router.back() }]);
+      dialog('Demande envoyée', 'Notre équipe vérifie vos documents sous 48 h.', [{ text: 'OK', onPress: () => router.back() }]);
     } catch (e) {
-      Alert.alert('Vérification', e instanceof ApiError ? e.message : "Envoi impossible. Vérifiez votre connexion et réessayez.");
+      dialog('Vérification', e instanceof ApiError ? e.message : "Envoi impossible. Vérifiez votre connexion et réessayez.");
     } finally {
       setBusy(null);
     }

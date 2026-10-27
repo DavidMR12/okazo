@@ -23,7 +23,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // Logo Okazo provisoire, découpé dans la maquette : à remplacer par le fichier source (1024 px) avant les stores
   icon: './src/assets/okazo-icon.png',
   web: { favicon: './src/assets/okazo-favicon.png' },
-  ios: { bundleIdentifier: BRAND.appId, supportsTablet: false },
+  ios: {
+    bundleIdentifier: BRAND.appId,
+    supportsTablet: false,
+    // Application en français : boutons des fenêtres du système (« Autoriser », « Refuser ») en français
+    infoPlist: { CFBundleDevelopmentRegion: 'fr', CFBundleAllowMixedLocalizations: true },
+  },
+  // Textes des demandes d'autorisation en français (aussi pour un téléphone réglé dans une autre langue)
+  locales: { fr: './src/locales/fr.json', en: './src/locales/fr.json' },
   android: { package: BRAND.appId },
   plugins: [
     'expo-router',

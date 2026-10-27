@@ -14,6 +14,7 @@ export function Button({
   disabled = false,
   style,
   icon,
+  bold = false,
 }: {
   label: string;
   onPress: () => void;
@@ -22,6 +23,7 @@ export function Button({
   disabled?: boolean;
   style?: ViewStyle;
   icon?: ComponentProps<typeof Ionicons>['name'];
+  bold?: boolean; // libellé en gras (« Se connecter » des écrans réservés aux comptes connectés)
 }) {
   const filled = variant !== 'secondary';
   const bg = { primary: colors.primary, danger: colors.danger, whatsapp: colors.whatsapp, secondary: colors.bg }[variant];
@@ -47,7 +49,7 @@ export function Button({
           {icon ? <Ionicons name={icon} size={20} color={filled ? colors.bg : colors.primary} /> : null}
           {/* Une seule ligne : Roboto Slab est large, le texte rétrécit un peu plutôt que de passer à la ligne */}
           <Text
-            style={[styles.label, { color: filled ? colors.bg : colors.primary }]}
+            style={[styles.label, bold && styles.bold, { color: filled ? colors.bg : colors.primary }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
@@ -65,4 +67,5 @@ const styles = StyleSheet.create({
   outline: { borderWidth: 1.5, borderColor: colors.primary },
   content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, maxWidth: '100%' },
   label: { fontSize: 16, textAlign: 'center', flexShrink: 1 },
+  bold: { fontWeight: '800' },
 });

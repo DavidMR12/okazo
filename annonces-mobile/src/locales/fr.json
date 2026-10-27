@@ -1,0 +1,11 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Okazo",
+    "NSCameraUsageDescription": "Autorisez l’appareil photo pour photographier vos articles et vérifier votre identité.",
+    "NSPhotoLibraryUsageDescription": "Autorisez l’accès à vos photos pour les ajouter à vos annonces.",
+    "NSMicrophoneUsageDescription": "Le micro n’est utilisé que si vous filmez avec l’appareil photo."
+  },
+  "android": {
+    "app_name": "Okazo"
+  }
+}

@@ -16,9 +16,10 @@ export interface Tokens { accessToken: string; refreshToken: string }
 export function setSessionCookies(res: NextResponse, t: Tokens) {
   const base = { httpOnly: true, secure, sameSite: 'lax' as const, path: '/api' };
   res.cookies.set(COOKIE.access, t.accessToken, { ...base, maxAge: 14 * 60 }); // jeton de 15 min côté API
-  res.cookies.set(COOKIE.refresh, t.refreshToken, { ...base, maxAge: 30 * 86400 });
+  // Session sans fin : 400 jours (le maximum des navigateurs), repoussés à chaque renouvellement (toutes les 15 min d'usage)
+  res.cookies.set(COOKIE.refresh, t.refreshToken, { ...base, maxAge: 400 * 86400 });
   // Indicateur lisible par la page, sans valeur secrète : sert seulement à afficher « Mon compte »
-  res.cookies.set(COOKIE.signedIn, '1', { secure, sameSite: 'lax', path: '/', maxAge: 30 * 86400 });
+  res.cookies.set(COOKIE.signedIn, '1', { secure, sameSite: 'lax', path: '/', maxAge: 400 * 86400 });
 }
 
 export function clearSessionCookies(res: NextResponse) {

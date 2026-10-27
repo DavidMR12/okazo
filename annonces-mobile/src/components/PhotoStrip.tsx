@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './Typography';
 import type { Photo } from '../hooks/usePhotoUploads';
 import { colors, space } from '../theme';
+import { dialog } from './Dialog';
 
 const SIZE = 96;
 
@@ -28,7 +29,7 @@ export function PhotoStrip({
     if (index > 0) buttons.push({ text: 'Mettre en photo principale', onPress: () => onMakeCover(p.id) });
     buttons.push({ text: 'Retirer', style: 'destructive', onPress: () => onRemove(p.id) });
     buttons.push({ text: 'Annuler', style: 'cancel' });
-    Alert.alert('Photo', p.status === 'error' ? p.error : undefined, buttons);
+    dialog('Photo', p.status === 'error' ? p.error : undefined, buttons);
   };
 
   return (

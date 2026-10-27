@@ -134,6 +134,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
   tokenHash: text('token_hash').notNull().unique(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  replacedAt: timestamp('replaced_at', { withTimezone: true }), // remplacé par renouvellement (et non retiré par une déconnexion), migration 019
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -157,6 +158,8 @@ export const listings = pgTable('listings', {
   countryCode: char('country_code', { length: 2 }).notNull(),
   cityId: integer('city_id').notNull(),
   districtId: integer('district_id'), // quartier, facultatif (migration 012)
+  cityOther: text('city_other'), // ville hors liste, saisie (ville « Autres villes », migration 018)
+  districtOther: text('district_other'), // quartier hors liste, saisi (sans district_id, migration 018)
   handDelivery: boolean('hand_delivery'), // remise en main propre ; null = non concerné (migration 014)
   paymentMethods: text('payment_methods').array().notNull().default(sql`'{}'::text[]`), // portefeuilles acceptés (migration 016)
   title: text('title').notNull(),

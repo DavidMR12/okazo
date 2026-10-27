@@ -6,6 +6,10 @@ import { BRAND_NAME } from '../../src/brand';
 import { useCartIds, useUnreadCount } from '../../src/api/hooks';
 import { PublishTabButton } from '../../src/components/PublishTabButton';
 import { colors, FONT } from '../../src/theme';
+import { PillTitle } from '../../src/components/Blocks';
+
+// Titre centré dans un ovale (« Mon panier », « Messages », « Mon compte » : demande du porteur, 20 octobre 2026)
+const pillHeader = (text: string) => ({ headerTitle: () => <PillTitle text={text} />, headerTitleAlign: 'center' as const });
 
 type IconName = keyof typeof Ionicons.glyphMap;
 const icon = (name: IconName, active: IconName) =>
@@ -42,7 +46,7 @@ export default function TabsLayout() {
       {/* L'accueil dessine son propre en-tête (nom, lieu, notifications) */}
       <Tabs.Screen name="index" options={{ title: BRAND_NAME, headerShown: false, tabBarLabel: label('Accueil'), tabBarIcon: icon('home-outline', 'home') }} />
       {/* Le panier remplace les favoris (les favoris sont dans Compte) */}
-      <Tabs.Screen name="cart" options={{ title: 'Mon panier', tabBarLabel: label('Panier'), tabBarIcon: icon('cart-outline', 'cart'), tabBarBadge: cartCount || undefined }} />
+      <Tabs.Screen name="cart" options={{ title: 'Mon panier', ...pillHeader('Mon panier'), tabBarLabel: label('Panier'), tabBarIcon: icon('cart-outline', 'cart'), tabBarBadge: cartCount || undefined }} />
       {/* Gros bouton rond bleu « + » au centre */}
       <Tabs.Screen
         name="publish"
@@ -54,9 +58,9 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="messages"
-        options={{ title: 'Messages', tabBarLabel: label('Messages'), tabBarIcon: icon('chatbubble-outline', 'chatbubble'), tabBarBadge: unread.data ? unread.data : undefined }}
+        options={{ title: 'Messages', ...pillHeader('Messages'), tabBarLabel: label('Messages'), tabBarIcon: icon('chatbubble-outline', 'chatbubble'), tabBarBadge: unread.data ? unread.data : undefined }}
       />
-      <Tabs.Screen name="account" options={{ title: 'Mon compte', tabBarLabel: label('Profil'), tabBarIcon: icon('person-outline', 'person') }} />
+      <Tabs.Screen name="account" options={{ title: 'Mon compte', ...pillHeader('Mon compte'), tabBarLabel: label('Profil'), tabBarIcon: icon('person-outline', 'person') }} />
     </Tabs>
   );
 }

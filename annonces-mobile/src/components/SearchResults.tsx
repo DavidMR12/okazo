@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiError } from '../api/client';
 import { useCategories, useCities, useSaveSearch } from '../api/hooks';
 import type { FeedFilters } from '../api/types';
@@ -12,6 +12,7 @@ import { Chip } from './Chip';
 import { FiltersSheet } from './FiltersSheet';
 import { ListingFeed } from './ListingFeed';
 import { Text, TextInput } from './Typography';
+import { dialog } from './Dialog';
 
 const SORTS = [
   { value: 'recent', label: 'Plus récentes' },
@@ -59,9 +60,9 @@ export function SearchResults({ initial, autoFocus, openFilters }: { initial: Fe
       {
         onSuccess: () => {
           setSaved(true);
-          Alert.alert('Recherche sauvegardée', `« ${name} »\nRetrouvez-la dans Compte, puis Mes recherches : les nouvelles annonces y sont signalées.`);
+          dialog('Recherche sauvegardée', `« ${name} »\nRetrouvez-la dans Compte, puis Mes recherches : les nouvelles annonces y sont signalées.`);
         },
-        onError: (e) => Alert.alert('Recherche', e instanceof ApiError ? e.message : 'Sauvegarde impossible.'),
+        onError: (e) => dialog('Recherche', e instanceof ApiError ? e.message : 'Sauvegarde impossible.'),
       },
     );
   };

@@ -4,6 +4,8 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { arrowBack, chevronForward, ellipsisVertical, send as sendIcon, shieldCheckmarkOutline } from 'ionicons/icons';
+import { Ion } from '@/components/Ion';
 import { PriceTag } from '@/components/PriceTag';
 import { OfferCard } from '@/components/OfferCard';
 import { OfferForm } from '@/components/OfferForm';
@@ -12,6 +14,7 @@ import { call, ClientError } from '@/lib/client';
 import { listingPath } from '@/lib/format';
 import { MESSAGE_WARNINGS } from '@/lib/messageWarnings';
 import type { ChatMessage, ConversationMeta, ConversationPayload } from '@/lib/types';
+import { confirmDialog } from '@/components/Dialog';
 
 const POLL_MS = 4000;
 let tempId = -1;
@@ -78,7 +81,7 @@ export default function ConversationPage() {
   }, [id, merge]);
 
   const actOnOffer = async (offerId: string, action: 'accept' | 'decline' | 'withdraw') => {
-    if (action === 'accept' && !window.confirm('Accepter cette offre ? L’acheteur sera prévenu. Marquez l’annonce vendue après la vente.')) return;
+    if (action === 'accept' && !(await confirmDialog('Accepter cette offre ?', { message: 'L’acheteur sera prévenu. Marquez l’annonce vendue après la vente.', confirm: 'Accepter' }))) return;
     setActing(offerId);
     try {
       await call(`/offers/${offerId}/${action}`, { method: 'POST' });
@@ -127,7 +130,7 @@ export default function ConversationPage() {
   };
 
   const report = async (reason: 'scam' | 'harassment') => {
-    if (!window.confirm(reason === 'scam' ? 'Signaler une tentative d’arnaque ?' : 'Signaler un comportement insultant ?')) return;
+    if (!(await confirmDialog(reason === 'scam' ? 'Signaler une tentative d’arnaque ?' : 'Signaler un comportement insultant ?', { confirm: 'Signaler', danger: true }))) return;
     try {
       const r = await call<{ message: string }>(`/conversations/${id}/report`, { method: 'POST', body: { reason } });
       setNotice(r.message);
@@ -138,7 +141,7 @@ export default function ConversationPage() {
 
   const toggleBlock = async () => {
     if (!meta?.other) return;
-    if (!meta.iBlocked && !window.confirm(`Bloquer ${meta.other.displayName} ? Vous ne pourrez plus vous écrire.`)) return;
+    if (!meta.iBlocked && !(await confirmDialog(`Bloquer ${meta.other.displayName} ?`, { message: 'Vous ne pourrez plus vous écrire.', confirm: 'Bloquer', danger: true }))) return;
     try {
       await call(`/users/${meta.other.id}/block`, { method: meta.iBlocked ? 'DELETE' : 'POST' });
       setMeta({ ...meta, iBlocked: !meta.iBlocked });
@@ -167,10 +170,14 @@ export default function ConversationPage() {
   return (
     <div className="chat container">
       <header className="chat-head">
-        <Link href="/messages" className="muted">← Messages</Link>
-        <h1 className="chat-title">{meta.other?.displayName ?? 'Utilisateur supprimé'}</h1>
+        <Link href="/messages" className="chat-back" aria-label="Retour aux messages"><Ion icon={arrowBack} size={20} /></Link>
+        <span className="chat-avatar" aria-hidden>{(meta.other?.displayName ?? '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')}</span>
+        <span className="chat-who">
+          <h1 className="chat-title">{meta.other?.displayName ?? 'Utilisateur supprimé'}</h1>
+          <span className="chat-role">{meta.role === 'seller' ? 'Intéressé par votre annonce' : 'Vendeur'}</span>
+        </span>
         <details className="chat-menu">
-          <summary aria-label="Signaler ou bloquer">⋯</summary>
+          <summary aria-label="Signaler ou bloquer"><Ion icon={ellipsisVertical} size={20} /></summary>
           <div className="chat-menu-list">
             <button type="button" onClick={() => void report('scam')}>Signaler une arnaque</button>
             <button type="button" onClick={() => void report('harassment')}>Signaler un comportement insultant</button>
@@ -182,10 +189,11 @@ export default function ConversationPage() {
       {meta.listing ? (
         <Link href={listingPath(meta.listing)} className="chat-listing">
           {meta.listing.thumbnailUrl ? <img src={meta.listing.thumbnailUrl} alt="" /> : <span className="inbox-thumb" />}
-          <span className="stack" style={{ gap: 4 }}>
-            <span>{meta.listing.title}</span>
+          <span className="chat-listing-info">
+            <strong>{meta.listing.title}</strong>
             <PriceTag priceType={meta.listing.priceType} priceXaf={meta.listing.priceXaf} />
           </span>
+          <Ion icon={chevronForward} size={18} className="account-chevron" />
         </Link>
       ) : null}
 
@@ -195,7 +203,7 @@ export default function ConversationPage() {
 
       <div className="chat-scroll" aria-live="polite">
         {hasOlder ? <button type="button" className="link-button chat-older" onClick={() => void loadOlder()}>Messages plus anciens</button> : null}
-        <p className="chat-safety">{meta?.listing?.parentSlug === 'emploi' ? 'Restez sur la messagerie. Un vrai recruteur ne demande jamais d’argent (frais de dossier, formation, tenue…) : dans ce cas, signalez la conversation.' : 'Restez sur la messagerie jusqu’à la rencontre. Ne payez jamais à l’avance et vérifiez l’article avant de payer.'}</p>
+        <p className="chat-safety"><Ion icon={shieldCheckmarkOutline} size={16} /> {meta?.listing?.parentSlug === 'emploi' ? 'Restez sur la messagerie. Un vrai recruteur ne demande jamais d’argent (frais de dossier, formation, tenue…) : dans ce cas, signalez la conversation.' : 'Restez sur la messagerie jusqu’à la rencontre. Ne payez jamais à l’avance et vérifiez l’article avant de payer.'}</p>
         {msgs.map((m) => {
           const mine = m.senderId === myId;
           if (m.kind === 'offer') return <OfferCard key={m.id} message={m} mine={mine} isSeller={meta.role === 'seller'} busy={acting === m.offer?.id} onAction={(oid, a) => void actOnOffer(oid, a)} />;
@@ -227,8 +235,8 @@ export default function ConversationPage() {
       {canWrite ? (
         <form className="chat-composer" onSubmit={submit}>
           <label htmlFor="msg" className="visually-hidden">Votre message</label>
-          <textarea id="msg" value={text} maxLength={2000} rows={1} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} placeholder="Votre message" />
-          <button type="submit" className="btn" disabled={!text.trim()}>Envoyer</button>
+          <textarea id="msg" value={text} maxLength={2000} rows={1} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} placeholder="Écrivez votre message…" />
+          <button type="submit" className="chat-send" disabled={!text.trim()} aria-label="Envoyer"><Ion icon={sendIcon} size={20} /></button>
         </form>
       ) : (
         <p className="chat-closed muted">{meta.iBlocked ? 'Vous avez bloqué cette personne.' : "Ce compte n'est plus actif."}</p>

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '../src/components/Typography';
 import { ApiError } from '../src/api/client';
 import { useListingAction, useMyListings } from '../src/api/hooks';
@@ -9,6 +9,7 @@ import type { MyListing } from '../src/api/types';
 import { Message } from '../src/components/Message';
 import { PriceTag } from '../src/components/PriceTag';
 import { colors, space, type } from '../src/theme';
+import { dialog } from '../src/components/Dialog';
 
 const EDITABLE: MyListing['status'][] = ['active', 'rejected', 'expired'];
 
@@ -27,7 +28,7 @@ export default function MyListingsScreen() {
   const action = useListingAction();
 
   const run = (id: string, kind: 'sold' | 'delete') =>
-    action.mutate({ id, action: kind }, { onError: (e) => Alert.alert('Annonce', e instanceof ApiError ? e.message : 'Action impossible.') });
+    action.mutate({ id, action: kind }, { onError: (e) => dialog('Annonce', e instanceof ApiError ? e.message : 'Action impossible.') });
 
   const confirm = (item: MyListing) => {
     const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
@@ -35,7 +36,7 @@ export default function MyListingsScreen() {
     if (item.status === 'active') buttons.push({ text: 'Marquer comme vendue', onPress: () => run(item.id, 'sold') });
     buttons.push({ text: 'Supprimer', style: 'destructive', onPress: () => run(item.id, 'delete') });
     buttons.push({ text: 'Annuler', style: 'cancel' });
-    Alert.alert(item.title, undefined, buttons);
+    dialog(item.title, undefined, buttons);
   };
 
   if (listings.isPending) return <ActivityIndicator style={{ marginTop: space.xxl }} color={colors.primary} />;

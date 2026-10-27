@@ -10,7 +10,7 @@ import type { AdType } from '@/lib/adType';
 
 interface Editable {
   id: string; adType: AdType; status: string; rejectionReason: string | null; title: string; description: string;
-  priceType: PriceType; priceXaf: number | null; condition: string | null; categoryId: number; cityId: number; districtId: number | null; handDelivery: boolean | null; paymentMethods: string[]; attributes: Record<string, unknown>;
+  priceType: PriceType; priceXaf: number | null; condition: string | null; categoryId: number; cityId: number; districtId: number | null; cityOther: string | null; districtOther: string | null; handDelivery: boolean | null; paymentMethods: string[]; attributes: Record<string, unknown>;
   editable: boolean; photos: { key: string; processed: boolean; url: string | null }[];
 }
 interface Me { countryCode: string; verificationLevel: 'phone' | 'identity' }
@@ -45,7 +45,7 @@ export function EditListing({ id, categories, citiesByCountry, walletsByCountry 
     await call(`/listings/${id}`, {
       method: 'PATCH',
       body: {
-        adType: v.adType, categoryId: v.categoryId, cityId: v.cityId, districtId: v.districtId, handDelivery: v.handDelivery, paymentMethods: v.paymentMethods, title: v.title, description: v.description,
+        adType: v.adType, categoryId: v.categoryId, cityId: v.cityId, districtId: v.districtId, cityOther: v.cityOther, districtOther: v.districtOther, handDelivery: v.handDelivery, paymentMethods: v.paymentMethods, title: v.title, description: v.description,
         priceType: v.priceType, priceXaf: v.priceXaf, condition: v.condition, attributes: v.attributes, photos: v.photoKeys,
       },
     });
@@ -76,7 +76,7 @@ export function EditListing({ id, categories, citiesByCountry, walletsByCountry 
       walletsByCountry={walletsByCountry}
       identityVerified={me.verificationLevel === 'identity'}
       initial={{
-        adType: l.adType, attributes: Object.fromEntries(Object.entries(l.attributes ?? {}).map(([k, v]) => [k, String(v)])), title: l.title, description: l.description, categoryId: l.categoryId, cityId: l.cityId, districtId: l.districtId, handDelivery: l.handDelivery ?? undefined, paymentMethods: l.paymentMethods ?? [],
+        adType: l.adType, attributes: Object.fromEntries(Object.entries(l.attributes ?? {}).map(([k, v]) => [k, String(v)])), title: l.title, description: l.description, categoryId: l.categoryId, cityId: l.cityId, districtId: l.districtId, cityOther: l.cityOther ?? undefined, districtOther: l.districtOther ?? undefined, handDelivery: l.handDelivery ?? undefined, paymentMethods: l.paymentMethods ?? [],
         priceType: l.priceType, price: l.priceXaf ? String(l.priceXaf) : '', condition: l.condition ?? undefined,
       }}
       initialPhotos={l.photos.map((p) => ({ key: p.key, url: p.url }))}

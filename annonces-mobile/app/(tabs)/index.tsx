@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError } from '../../src/api/client';
 import { useCategories, useCountries, useFavoriteIds, useFeed, useMe, useToggleFavorite, useUnreadCount } from '../../src/api/hooks';
@@ -16,6 +16,7 @@ import { Text } from '../../src/components/Typography';
 import { setPendingAction } from '../../src/lib/pendingAction';
 import { Place, setPlace, usePlace } from '../../src/lib/place';
 import { colors, space } from '../../src/theme';
+import { dialog } from '../../src/components/Dialog';
 
 /**
  * Accueil (direction artistique d'octobre 2026) : nom et lieu en haut, recherche, grille de catégories,
@@ -117,7 +118,7 @@ function Nearby({ place }: { place: Place }) {
         router.push('/login');
         return;
       }
-      toggle.mutate({ id, on }, { onError: (e) => Alert.alert('Favoris', e instanceof ApiError ? e.message : 'Action impossible.') });
+      toggle.mutate({ id, on }, { onError: (e) => dialog('Favoris', e instanceof ApiError ? e.message : 'Action impossible.') });
     },
     [status, toggle],
   );

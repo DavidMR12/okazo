@@ -65,6 +65,8 @@ export interface ListingDetail {
 export interface Me {
   id: string;
   phone: string | null; // null : compte créé avec Google ou Facebook, numéro pas encore vérifié
+  email?: string | null; // connexion par e-mail (migration 015)
+  termsVersion?: string | null; // version des CGU acceptée (migration 017)
   identities?: ('google' | 'facebook')[];
   countryCode: string;
   cityId: number | null;

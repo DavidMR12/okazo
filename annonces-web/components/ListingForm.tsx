@@ -2,8 +2,9 @@
 
 /* eslint-disable @next/next/no-img-element -- aperçus locaux (blob:) et miniatures déjà optimisées */
 import { DragEvent, FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { HeartIcon, ImageIcon, LockIcon, RetryIcon, UploadIcon } from '@/components/icons';
+import { LockIcon, RetryIcon, UploadIcon } from '@/components/icons';
 import { PriceTag } from '@/components/PriceTag';
+import { ListingCard } from '@/components/ListingCard';
 import { call, ClientError } from '@/lib/client';
 import { AttributeFields } from '@/components/AttributeFields';
 import { AdType, adTypeLabels, descriptionPlaceholder, PHOTO_OPTIONAL_PARENTS, titlePlaceholder } from '@/lib/adType';
@@ -12,6 +13,9 @@ import type { Category, City, District, PriceType } from '@/lib/types';
 import { usePhotoUploads } from '@/lib/usePhotoUploads';
 import { WalletList, WalletLogo, walletName } from './Wallets';
 import { SITE_NAME } from '@/lib/site';
+import { confirmDialog } from '@/components/Dialog';
+import { trashOutline } from 'ionicons/icons';
+import { Ion } from '@/components/Ion';
 
 export interface ListingDraft {
   adType: AdType;
@@ -22,6 +26,8 @@ export interface ListingDraft {
   categoryId?: number;
   cityId?: number;
   districtId?: number | null;
+  cityOther?: string; // ville saisie, avec la ville « Autres villes »
+  districtOther?: string; // quartier saisi ; défini (même vide) = « Autre quartier » choisi
   handDelivery?: boolean; // remise en main propre ; absent = oui (choix par défaut)
   paymentMethods?: string[]; // portefeuilles électroniques acceptés
   priceType: PriceType;
@@ -40,6 +46,8 @@ export interface ListingValues {
   categoryId: number;
   cityId: number;
   districtId: number | null;
+  cityOther: string | null; // seulement avec la ville « Autres villes »
+  districtOther: string | null;
   handDelivery?: boolean; // seulement pour un objet proposé (voir HAND_DELIVERY_EXCLUDED)
   paymentMethods: string[]; // portefeuilles acceptés, parmi ceux du pays (vide : non précisé)
   title: string;
@@ -50,6 +58,12 @@ export interface ListingValues {
   photoKeys: string[];
 }
 
+/** Ville « Autres villes » de chaque pays (slug de l'API) : le vendeur saisit le nom de sa ville. */
+export const OTHER_CITY_SLUG = 'autre';
+// Ville ou quartier saisis : mêmes règles que l'API (lettres, 2 à 60 caractères, pas de chiffres)
+const PLACE_NAME = /^[\p{L}\p{M}][\p{L}\p{M} '’.()-]*$/u;
+const placeError = (v: string, what: string) =>
+  v.trim().length < 2 ? `Indiquez le nom de votre ${what}.` : !PLACE_NAME.test(v.trim()) ? 'Lettres uniquement, sans chiffres.' : null;
 const PRICE_TYPES: { value: PriceType; label: string }[] = [
   { value: 'fixed', label: 'Prix fixe' },
   { value: 'negotiable', label: 'À débattre' },
@@ -196,7 +210,8 @@ export function ListingForm({
   const priceRequired = d.priceType === 'fixed' || d.priceType === 'negotiable';
   const priceTitle = form ? (d.adType === 'request' ? form.price.requestLabel : form.price.label) : 'Prix';
   const uploading = photos.photos.length > 0 && !photos.ready && !photos.hasErrors;
-  const cityName = cities.find((c) => c.id === d.cityId)?.name ?? 'Votre ville';
+  const isOtherCity = cities.find((c) => c.id === d.cityId)?.slug === OTHER_CITY_SLUG;
+  const cityName = (isOtherCity ? d.cityOther?.trim() : cities.find((c) => c.id === d.cityId)?.name) || 'Votre ville';
   const hasDraft = !!(d.title.trim() || d.description.trim() || d.price || d.categoryId || photos.photos.length);
 
   const errors = useMemo(() => {
@@ -207,6 +222,14 @@ export function ListingForm({
     if (d.description.trim().length < 10) e.description = 'Décrivez votre article en quelques phrases.';
     if (!d.categoryId) e.category = 'Choisissez une catégorie.';
     if (!d.cityId) e.city = 'Choisissez une ville.';
+    else if (isOtherCity) {
+      const m = placeError(d.cityOther ?? '', 'ville');
+      if (m) e.city = m;
+    }
+    if (d.districtOther !== undefined && !d.districtId && d.districtOther.trim()) {
+      const m = placeError(d.districtOther, 'quartier');
+      if (m) e.city = m;
+    }
     if (priceRequired && !(Number(d.price) > 0)) e.price = 'Indiquez un prix.';
     // Champs de la catégorie (recherchés ici plutôt que reçus : le compilateur React peut ainsi mémoriser le calcul)
     const p = categories.find((c) => c.id === d.parentId);
@@ -222,7 +245,7 @@ export function ListingForm({
     }
     if (f && !f.price.types.includes(d.priceType)) e.price = 'Choisissez un type de prix.';
     return e;
-  }, [d, photos.photos.length, priceRequired, categories]);
+  }, [d, photos.photos.length, priceRequired, categories, isOtherCity]);
   const err = (k: string) => (showErrors && errors[k] ? <p className="error" id={`err-${k}`}>{errors[k]}</p> : null);
 
   // Champs de la catégorie remplis, lisibles : « Marque : Toyota », « Kilométrage : 98 000 km »
@@ -292,6 +315,8 @@ export function ListingForm({
         categoryId: d.categoryId!,
         cityId: d.cityId!,
         districtId: d.districtId ?? null,
+        cityOther: isOtherCity ? (d.cityOther ?? '').trim() : null,
+        districtOther: !d.districtId && d.districtOther?.trim() ? d.districtOther.trim() : null,
         handDelivery: askHandDelivery ? handDelivery : undefined,
         paymentMethods: askWallets ? wallets : [],
         title: d.title.trim(),
@@ -504,25 +529,43 @@ export function ListingForm({
             </div>
             <div className="chip-wrap">
               {cities.map((c) => (
-                <button key={c.id} type="button" className="chip" aria-pressed={d.cityId === c.id} onClick={() => setD((x) => ({ ...x, cityId: c.id, districtId: x.cityId === c.id ? x.districtId : null }))}>{c.name}</button>
+                <button key={c.id} type="button" className="chip" aria-pressed={d.cityId === c.id}
+                  onClick={() => setD((x) => (x.cityId === c.id ? x : { ...x, cityId: c.id, districtId: null, districtOther: undefined }))}>
+                  {c.slug === OTHER_CITY_SLUG ? 'Autre ville' : c.name}
+                </button>
               ))}
             </div>
+            {isOtherCity ? (
+              <div className="field place-other">
+                <label htmlFor="city-other">Nom de votre ville</label>
+                <input id="city-other" value={d.cityOther ?? ''} maxLength={60} autoComplete="address-level2" placeholder="Ex. : Kribi, Bafoussam, Limbé…" onChange={(e) => set('cityOther', e.target.value)} />
+              </div>
+            ) : null}
             {err('city')}
           </section>
         ) : null}
 
-        {at('place') && d.cityId && districts.length ? (
+        {at('place') && d.cityId && (districts.length || isOtherCity) ? (
           <section className="stack" aria-labelledby="h-district">
             <div>
               <h2 id="h-district">Quartier</h2>
               <p className="muted" style={{ margin: 0 }}>Facultatif. Il aide les acheteurs proches ; votre adresse n’est jamais affichée.</p>
             </div>
-            <div className="chip-wrap">
-              <button type="button" className="chip" aria-pressed={!d.districtId} onClick={() => set('districtId', null)}>Ne pas préciser</button>
-              {districts.map((x) => (
-                <button key={x.id} type="button" className="chip" aria-pressed={d.districtId === x.id} onClick={() => set('districtId', x.id)}>{x.name}</button>
-              ))}
-            </div>
+            {districts.length ? (
+              <div className="chip-wrap">
+                <button type="button" className="chip" aria-pressed={!d.districtId && d.districtOther === undefined} onClick={() => setD((x) => ({ ...x, districtId: null, districtOther: undefined }))}>Ne pas préciser</button>
+                {districts.map((x) => (
+                  <button key={x.id} type="button" className="chip" aria-pressed={d.districtId === x.id} onClick={() => setD((y) => ({ ...y, districtId: x.id, districtOther: undefined }))}>{x.name}</button>
+                ))}
+                <button type="button" className="chip" aria-pressed={!d.districtId && d.districtOther !== undefined} onClick={() => setD((x) => ({ ...x, districtId: null, districtOther: x.districtOther ?? '' }))}>Autre quartier</button>
+              </div>
+            ) : null}
+            {!d.districtId && (d.districtOther !== undefined || !districts.length) ? (
+              <div className="field place-other">
+                <label htmlFor="district-other">Nom du quartier</label>
+                <input id="district-other" value={d.districtOther ?? ''} maxLength={60} placeholder="Ex. : Ndogpassi" onChange={(e) => set('districtOther', e.target.value)} />
+              </div>
+            ) : null}
           </section>
         ) : null}
 
@@ -585,7 +628,7 @@ export function ListingForm({
               {askWallets && wallets.length ? <WalletList codes={wallets} /> : null}
             </RecapBlock>
             <RecapBlock title="Lieu" onEdit={() => { setFromRecap(true); goTo(4); }}>
-              <p>{[districts.find((x) => x.id === d.districtId)?.name, cities.find((c) => c.id === d.cityId)?.name].filter(Boolean).join(', ') || '—'}</p>
+              <p>{[districts.find((x) => x.id === d.districtId)?.name ?? (d.districtOther?.trim() || null), isOtherCity ? d.cityOther?.trim() : cities.find((c) => c.id === d.cityId)?.name].filter(Boolean).join(', ') || '—'}</p>
               {askHandDelivery ? <p className="muted">{handDelivery ? 'Remise en main propre' : 'Pas de remise en main propre'}</p> : null}
             </RecapBlock>
           </div>
@@ -607,9 +650,11 @@ export function ListingForm({
         )}
         {isRecap ? <p className="muted" style={{ margin: 0 }}>Chaque annonce est vérifiée avant sa mise en ligne, en général en quelques minutes.</p> : null}
         {draftKey && (!stepped || step === 0 || isRecap) ? (
-          <button type="button" className="pill-btn" style={{ alignSelf: 'flex-start' }}
-            onClick={() => { if (window.confirm('Effacer le brouillon ?')) clearDraft(); }}>
-            Effacer le brouillon
+          <button type="button" className="clear-draft"
+            onClick={async () => {
+              if (await confirmDialog('Effacer le brouillon ?', { message: 'Le texte, les choix et les photos saisis seront supprimés. Cette action est définitive.', confirm: 'Effacer', danger: true })) clearDraft();
+            }}>
+            <span className="clear-draft-icon"><Ion icon={trashOutline} size={18} /></span> Effacer le brouillon
           </button>
         ) : null}
       </form>
@@ -617,18 +662,25 @@ export function ListingForm({
       <aside className="stack publish-aside">
         <div className="panel-flush">
           <div className="panel-head">Aperçu dans les listes</div>
-          <div className="card" style={{ padding: '12px 16px', borderBottom: 0 }}>
-            {photos.photos[0]?.preview ? <img src={photos.photos[0].preview} alt="" className="card-thumb" /> : <span className="card-thumb card-thumb-empty" aria-hidden><ImageIcon /></span>}
-            <span className="card-body">
-              <span className="card-title">{d.title.trim() || 'Titre de votre annonce'}</span>
-              {priceRequired && !(Number(d.price) > 0) ? (
-                <span className="price"><span className="price-tag">… FCFA</span></span>
-              ) : (
-                <PriceTag priceType={d.priceType} priceXaf={priceRequired ? Number(d.price) : null} unit={priceUnit} />
-              )}
-              <span className="card-meta muted"><span>{cityName}</span><span>à l’instant</span></span>
-            </span>
-            <span className="preview-heart" aria-hidden><HeartIcon /></span>
+          <div className="preview-tile tile-grid">
+            <ListingCard
+              preview
+              item={{
+                id: 'apercu',
+                adType: d.adType,
+                title: d.title.trim() || 'Titre de votre annonce',
+                priceType: d.priceType,
+                priceXaf: priceRequired && Number(d.price) > 0 ? Number(d.price) : null,
+                priceUnit: priceUnit ?? null,
+                condition: d.condition ?? null,
+                categoryId: d.categoryId ?? 0,
+                city: cityName,
+                district: districts.find((x) => x.id === d.districtId)?.name ?? (d.districtOther?.trim() || null),
+                publishedAt: new Date().toISOString(),
+                boosted: false,
+                thumbnailUrl: photos.photos[0]?.preview ?? null,
+              }}
+            />
           </div>
         </div>
         <div className="panel stack">

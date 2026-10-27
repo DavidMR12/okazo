@@ -9,6 +9,7 @@ import { ServiceWorker } from '@/components/ServiceWorker';
 import { getCountries } from '@/lib/api';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
+import { DialogHost } from '@/components/Dialog';
 
 // Tout le site en Inter, police sans empattement de la maquette du porteur (18 octobre 2026 ; remplace Roboto Slab,
 // Google Sans et Ubuntu). Fichier servi par le site, sans appel à Google.
@@ -74,6 +75,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </div>
         </footer>
         <ConsentBanner />
+        <DialogHost />
         <AdsLoader />
         <ServiceWorker />
       </body>

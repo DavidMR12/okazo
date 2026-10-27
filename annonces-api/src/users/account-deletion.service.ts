@@ -1,5 +1,5 @@
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { and, eq, isNull, ne } from 'drizzle-orm';
+import { and, eq, isNull, ne, sql } from 'drizzle-orm';
 import Redis from 'ioredis';
 import { OtpService } from '../auth/otp.service';
 import { env } from '../config/env';
@@ -111,8 +111,8 @@ export class AccountDeletionService {
       await tx.update(conversations).set({ lastMessagePreview: 'Message supprimé' }).where(eq(conversations.lastSenderId, userId));
       await tx
         .update(refreshTokens)
-        .set({ revokedAt: new Date() })
-        .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)));
+        .set({ revokedAt: sql`coalesce(${refreshTokens.revokedAt}, now())`, replacedAt: null })
+        .where(eq(refreshTokens.userId, userId));
 
       await tx
         .update(users)

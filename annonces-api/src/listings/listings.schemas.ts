@@ -13,11 +13,22 @@ const adType = z.enum(['offer', 'request']);
 export const WALLETS = ['mtn_momo', 'orange_money', 'airtel_money', 'moov_money', 'wave'] as const;
 const paymentMethods = z.array(z.enum(WALLETS)).max(WALLETS.length);
 
+// Ville ou quartier hors liste (migration 018) : lettres, espaces, tirets, apostrophes ; pas de chiffres
+// (sinon un numéro de téléphone passerait par là sans modération).
+const placeName = z
+  .string()
+  .trim()
+  .min(2, 'Nom trop court.')
+  .max(60, 'Nom trop long.')
+  .regex(/^[\p{L}\p{M}][\p{L}\p{M} '’.()-]*$/u, 'Lettres uniquement, sans chiffres.');
+
 export const createListingSchema = z.object({
   adType: adType.default('offer'),
   categoryId: z.number().int().positive(),
   cityId: z.number().int().positive(),
   districtId: z.number().int().positive().nullable().optional(), // quartier de la ville, facultatif
+  cityOther: placeName.nullable().optional(), // obligatoire avec la ville « Autres villes »
+  districtOther: placeName.nullable().optional(), // quartier hors liste, sans districtId
   handDelivery: z.boolean().optional(), // remise en main propre (objets proposés seulement)
   paymentMethods: paymentMethods.default([]),
   title: z.string().trim().min(5).max(120),
@@ -41,6 +52,8 @@ export const updateListingSchema = z
     categoryId: z.number().int().positive().optional(),
     cityId: z.number().int().positive().optional(),
     districtId: z.number().int().positive().nullable().optional(), // null : retirer le quartier
+    cityOther: placeName.nullable().optional(),
+    districtOther: placeName.nullable().optional(),
     handDelivery: z.boolean().optional(),
     paymentMethods: paymentMethods.optional(),
     // Liste complète et ordonnée des photos : clés existantes (listings/…) à garder, et nouvelles clés (pending/…)

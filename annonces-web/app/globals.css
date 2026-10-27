@@ -921,3 +921,289 @@ body, button, input, textarea, select { font-family: var(--font-inter), system-u
   .bar-tag, .bar-sep { display: none; }
   .mobile-bar .bar-btn { padding: 0 12px; }
 }
+
+
+/* ===== Page « Mon compte » : cadres de la page d'annonce (demande du porteur, 19 octobre 2026) ===== */
+.account { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 18px; }
+.account > * { min-width: 0; }
+.account-hero { display: flex; align-items: center; gap: 18px; padding: 20px; border-radius: 20px; background: linear-gradient(135deg, var(--navy), var(--primary)); color: #fff; box-shadow: 0 6px 22px rgba(30, 58, 138, 0.18); flex-wrap: wrap; }
+.account-avatar { flex: none; width: 68px; height: 68px; border-radius: 50%; background: rgba(255, 255, 255, 0.16); border: 2px solid rgba(255, 255, 255, 0.5); display: grid; place-items: center; font-size: 1.5rem; font-weight: 800; letter-spacing: 0.02em; }
+.account-who { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px; }
+.account-name { font-size: 1.3rem; font-weight: 800; overflow-wrap: anywhere; }
+.account-line { display: inline-flex; align-items: center; gap: 7px; font-size: 0.95rem; opacity: 0.92; overflow-wrap: anywhere; }
+.account-line .ion { color: #fff; flex: none; }
+.account-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.account-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); font-size: 0.82rem; font-weight: 600; }
+.account-badge .ion { color: #fff; }
+.account-badge.ok { background: #DDF5E9; color: var(--trust); }
+.account-badge.ok .ion { color: var(--trust); }
+.account-hero .account-publish { background: #fff; color: var(--primary); border-color: #fff; display: inline-flex; align-items: center; gap: 8px; }
+.account-hero .account-publish .ion { color: var(--primary); }
+.account-status { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--tint); color: var(--navy); font-weight: 600; }
+
+.account-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.account-tile { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--tint-line); border-radius: 14px; text-decoration: none; color: var(--ink); min-width: 0; transition: background 0.15s, border-color 0.15s; }
+.account-tile:hover { background: var(--tint); border-color: #C9D6EE; }
+.account-tile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.account-tile-text strong { font-weight: 700; }
+.account-tile-text span { font-size: 0.86rem; color: var(--ink-muted); }
+.account-chevron { color: var(--ink-muted); flex: none; }
+
+.account-name-form { margin-bottom: 14px; }
+.account-inline { display: flex; gap: 10px; }
+.account-inline input { flex: 1; min-width: 0; }
+.account-inline .btn { flex: none; }
+.account-switch { display: flex; align-items: center; gap: 16px; padding: 14px; border: 1px solid var(--tint-line); border-radius: 14px; cursor: pointer; }
+.account-switch-text { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.account-switch input { appearance: none; -webkit-appearance: none; flex: none; width: 48px; height: 28px; border-radius: 14px; background: #C9D3E3; position: relative; cursor: pointer; transition: background 0.15s; margin: 0; }
+.account-switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); transition: transform 0.15s; }
+.account-switch input:checked { background: var(--primary); }
+.account-switch input:checked::after { transform: translateX(20px); }
+.account-switch input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+.account-rows { display: flex; flex-direction: column; }
+.account-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; flex-wrap: wrap; }
+.account-row + .account-row { border-top: 1px solid var(--line); }
+.account-row .btn { display: inline-flex; align-items: center; gap: 8px; }
+.account-row .btn .ion { color: var(--primary); }
+
+.account-danger { border: 1px solid #F2D4D0; border-radius: 16px; padding: 4px 16px; background: #FFF8F7; }
+.account-danger summary { display: flex; align-items: center; gap: 8px; padding: 10px 0; cursor: pointer; color: var(--danger); font-weight: 700; list-style: none; }
+.account-danger summary::-webkit-details-marker { display: none; }
+.account-danger summary .ion { color: var(--danger); }
+.account-danger[open] { padding-bottom: 16px; }
+
+@media (max-width: 560px) {
+  .account-hero { padding: 16px; }
+  .account-hero .account-publish { width: 100%; justify-content: center; }
+  .account-inline { flex-direction: column; }
+  .account-tiles { grid-template-columns: 1fr; }
+}
+
+/* Ville ou quartier hors liste : champ sous les choix (19 octobre 2026) */
+.place-other { max-width: 420px; }
+
+
+/* ===== Panier, favoris, messagerie : même direction artistique que « Mon compte » (20 octobre 2026) ===== */
+.account-wide { max-width: 1040px; }
+.page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.count-badge { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--tint); color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+
+.empty-card { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 36px 20px; border: 1px dashed #C9D6EE; border-radius: 20px; background: linear-gradient(160deg, #F6F9FF 55%, #EAF1FD); }
+.empty-card p { margin: 0; max-width: 420px; color: var(--ink-muted); }
+.empty-icon { width: 64px; height: 64px; border-radius: 50%; background: #fff; color: var(--primary); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(30, 58, 138, 0.1); }
+.empty-icon .ion { color: var(--primary); }
+.empty-card .btn { display: inline-flex; align-items: center; gap: 8px; }
+
+/* Encadré de sécurité (icône + texte) */
+.compose-safety { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 16px; background: var(--tint); border: 1px solid var(--tint-line); }
+.compose-safety > span:last-child { display: flex; flex-direction: column; gap: 3px; font-size: 0.92rem; color: var(--ink-muted); }
+.compose-safety strong { color: var(--navy); }
+.compose-safety .fact-icon { background: #fff; }
+
+/* Écrire au vendeur */
+.compose-listing { display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid #E6EDF8; border-radius: 20px; background: var(--bg); box-shadow: 0 4px 18px rgba(30, 58, 138, 0.06); text-decoration: none; color: var(--ink); min-width: 0; }
+.compose-thumb { flex: none; width: 88px; height: 88px; border-radius: 14px; object-fit: cover; display: grid; place-items: center; }
+.compose-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.compose-title { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compose-meta { display: inline-flex; align-items: center; gap: 5px; font-size: 0.86rem; color: var(--ink-muted); }
+.compose-meta .ion { color: var(--ink-muted); }
+.compose-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.compose-chip { border: 1px solid var(--tint-line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; text-align: left; }
+.compose-chip:hover { background: var(--tint); }
+.compose-chip[aria-pressed='true'] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.compose-box { position: relative; border: 1.5px solid #C9D6EE; border-radius: 16px; background: #FBFCFF; transition: border-color 0.15s, box-shadow 0.15s; }
+.compose-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12); background: #fff; }
+.compose-box textarea { display: block; width: 100%; min-height: 140px; border: 0; outline: none; resize: vertical; background: transparent; padding: 14px 16px 30px; font: inherit; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.compose-count { position: absolute; right: 14px; bottom: 8px; font-size: 0.78rem; color: var(--ink-muted); }
+.compose-send { width: 100%; margin-top: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.compose-send .ion { color: #fff; }
+
+/* Liste des conversations */
+.seg { display: inline-flex; padding: 4px; border-radius: 14px; background: var(--tint); gap: 4px; align-self: flex-start; max-width: 100%; overflow-x: auto; }
+.seg-btn { border: 0; background: transparent; border-radius: 10px; padding: 8px 16px; font: inherit; font-weight: 600; color: var(--ink-muted); cursor: pointer; white-space: nowrap; }
+.seg-btn[aria-selected='true'] { background: #fff; color: var(--primary); box-shadow: 0 2px 8px rgba(30, 58, 138, 0.1); }
+.inbox-card { list-style: none; margin: 0; padding: 6px; border: 1px solid #E6EDF8; border-radius: 20px; background: var(--bg); box-shadow: 0 4px 18px rgba(30, 58, 138, 0.06); }
+.inbox-card li + li { border-top: 1px solid var(--line); }
+.inbox-item { display: flex; align-items: center; gap: 14px; padding: 12px 10px; border-radius: 14px; text-decoration: none; color: var(--ink); }
+.inbox-item:hover { background: var(--tint); }
+.inbox-media { position: relative; flex: none; width: 60px; height: 60px; }
+.inbox-photo { width: 60px; height: 60px; border-radius: 14px; object-fit: cover; display: grid; place-items: center; }
+.inbox-avatar { position: absolute; right: -6px; bottom: -6px; width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 0.7rem; font-weight: 800; display: grid; place-items: center; border: 2px solid #fff; }
+.inbox-item .inbox-name { font-weight: 700; }
+.inbox-time { font-size: 0.8rem; color: var(--ink-muted); white-space: nowrap; }
+.inbox-listing { font-size: 0.88rem; color: var(--ink-muted); }
+.role-tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; margin-right: 4px; }
+.role-tag.buyer { background: #E7F0FF; color: var(--primary); }
+.role-tag.seller { background: #E3F6EC; color: var(--trust); }
+.inbox-item.unread { background: #F5F8FF; }
+.inbox-item.unread .inbox-preview { font-weight: 700; color: var(--ink); }
+
+/* Conversation */
+.chat-head { padding: 10px 12px; border: 1px solid #E6EDF8; border-radius: 18px; background: var(--bg); box-shadow: 0 4px 18px rgba(30, 58, 138, 0.06); margin-top: 8px; }
+.chat-back { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--tint); flex: none; }
+.chat-back .ion { color: var(--primary); }
+.chat-avatar { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 800; display: grid; place-items: center; }
+.chat-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.chat-who .chat-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-role { font-size: 0.82rem; color: var(--ink-muted); }
+.chat-menu summary { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; }
+.chat-menu summary:hover { background: var(--tint); }
+.chat-menu summary .ion { color: var(--ink); }
+.chat-listing { margin-top: 10px; border-color: #E6EDF8; border-radius: 16px; background: var(--tint); color: var(--ink); }
+.chat-listing img, .chat-listing .inbox-thumb { width: 54px; height: 54px; border-radius: 12px; }
+.chat-listing-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.chat-listing-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-safety { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--tint); border-radius: 12px; padding: 8px 12px; align-self: center; max-width: 560px; }
+.chat-safety .ion { color: var(--primary); flex: none; }
+.theirs .bubble { background: #EEF2F8; }
+.mine .bubble { box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2); }
+.chat-composer { align-items: center; padding: 10px; margin-bottom: 12px; border: 1px solid #E6EDF8; border-top: 1px solid #E6EDF8; border-radius: 22px; background: var(--bg); box-shadow: 0 -2px 18px rgba(30, 58, 138, 0.08); }
+.chat-composer textarea { border-color: transparent; background: #F4F7FC; }
+.chat-composer textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+.chat-send { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--primary); display: grid; place-items: center; cursor: pointer; }
+.chat-send .ion { color: #fff; }
+.chat-send:disabled { opacity: 0.45; cursor: default; }
+
+/* Panier */
+.seller-band { text-decoration: none; color: var(--ink); }
+.seller-initials { font-weight: 800; font-size: 0.95rem; }
+.seller-band-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.seller-band-text strong { font-size: 1.1rem; }
+.seller-band-text span { font-size: 0.85rem; color: var(--ink-muted); }
+.item-list { list-style: none; margin: 0; padding: 8px 6px 0; }
+.item-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+.item-row + .item-row { border-top: 1px solid var(--line); }
+.item-row.unavailable { opacity: 0.55; }
+.item-link { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--ink); }
+.item-thumb { flex: none; width: 76px; height: 76px; border-radius: 14px; object-fit: cover; display: grid; place-items: center; }
+.item-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-meta { display: inline-flex; align-items: center; gap: 4px; font-size: 0.84rem; color: var(--ink-muted); }
+.item-meta .ion { color: var(--ink-muted); }
+.item-off { font-weight: 700; color: var(--ink-muted); }
+.icon-btn { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #FFF1F0; display: grid; place-items: center; cursor: pointer; }
+.icon-btn .ion { color: var(--danger); }
+.icon-btn:hover { background: #FFE2DF; }
+.seller-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 6px 6px; border-top: 1px solid var(--line); margin-top: 6px; }
+.seller-total { color: var(--ink-muted); }
+.seller-total strong { color: var(--ink); font-size: 1.15rem; margin-left: 6px; }
+.seller-foot .btn { display: inline-flex; align-items: center; gap: 8px; }
+.seller-foot .btn .ion { color: #fff; }
+.cart-total { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-radius: 18px; background: linear-gradient(135deg, var(--navy), var(--primary)); color: #fff; font-size: 1.05rem; }
+.cart-total strong { font-size: 1.35rem; }
+
+/* Favoris */
+.fav-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.fav-card { position: relative; border: 1px solid #E6EDF8; border-radius: 18px; background: var(--bg); overflow: hidden; box-shadow: 0 4px 18px rgba(30, 58, 138, 0.06); transition: transform 0.15s, box-shadow 0.15s; }
+.fav-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30, 58, 138, 0.12); }
+.fav-card.unavailable { opacity: 0.6; }
+.fav-link { display: flex; flex-direction: column; text-decoration: none; color: var(--ink); }
+.fav-photo { position: relative; aspect-ratio: 4 / 3; background: var(--tint); display: grid; place-items: center; }
+.fav-photo img { width: 100%; height: 100%; object-fit: cover; }
+.fav-status { position: absolute; left: 10px; bottom: 10px; padding: 4px 10px; border-radius: 999px; background: rgba(15, 23, 42, 0.75); color: #fff; font-size: 0.8rem; font-weight: 700; }
+.fav-body { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; min-width: 0; }
+.fav-heart { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: #fff; display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+.fav-heart .ion { color: #E0245E; }
+
+@media (max-width: 560px) {
+  .compose-thumb { width: 72px; height: 72px; }
+  .item-thumb { width: 64px; height: 64px; }
+  .seller-foot .btn { width: 100%; justify-content: center; }
+  .fav-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .chat-role { display: none; }
+}
+/* Prix dans les cartes étroites (favoris, panier, messagerie) : « À débattre » passe à la ligne, jamais coupé */
+.fav-body .price, .item-text .price, .compose-info .price, .chat-listing-info .price { flex-wrap: wrap; row-gap: 0; }
+.fav-body .price-note, .item-text .price-note, .compose-info .price-note, .chat-listing-info .price-note { white-space: nowrap; }
+.fav-body .price-tag, .item-text .price-tag { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+
+/* ===== Titres dans un ovale, rangées ovales, icônes en filigrane (demande du porteur, 20 octobre 2026) ===== */
+.pill-title { align-self: center; text-align: center; font-size: 1.35rem; font-weight: 800; color: var(--navy); padding: 9px 26px; border-radius: 999px; border: 1.5px solid var(--tint-line); background: var(--tint); }
+.page-head { flex-direction: column; justify-content: center; }
+.page-head .count-badge { align-self: center; }
+
+.empty-card { position: relative; overflow: hidden; border-radius: 28px; gap: 18px; }
+.empty-card > :not(.decor) { position: relative; }
+.empty-tall { min-height: 420px; justify-content: center; }
+.empty-halo { width: 108px; height: 108px; border-radius: 50%; background: #E4ECFC; display: grid; place-items: center; }
+.empty-halo .empty-icon { width: 78px; height: 78px; box-shadow: 0 6px 18px rgba(30, 58, 138, 0.14); }
+.empty-card .btn { font-weight: 800; border-radius: 999px; min-width: 220px; justify-content: center; }
+.decor { position: absolute; inset: 0; pointer-events: none; }
+.decor-spot { position: absolute; display: block; line-height: 0; }
+.decor-spot .ion { color: var(--primary); }
+.decor-footer { position: relative; overflow: hidden; min-height: 220px; border-radius: 28px; background: linear-gradient(160deg, #F6F9FF 55%, #EAF1FD); display: grid; place-items: center; padding: 20px 28px; text-align: center; }
+.decor-footer p { position: relative; margin: 0; max-width: 420px; color: var(--ink-muted); }
+
+.pill-rows { display: flex; flex-direction: column; gap: 10px; }
+.pill-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 20px 10px 10px; border: 1px solid var(--tint-line); border-radius: 999px; background: var(--bg); color: var(--ink); text-decoration: none; font: inherit; text-align: left; cursor: default; }
+a.pill-row, button.pill-row { cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color: #C9D6EE; }
+.pill-icon { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--tint); display: grid; place-items: center; }
+.pill-icon .ion { color: var(--navy); }
+.soon-tag { flex: none; padding: 4px 10px; border-radius: 999px; background: #FFF4D6; color: #8A5A00; font-size: 0.72rem; font-weight: 800; }
+.offers-note { margin: 12px 0 0; text-align: center; font-size: 0.82rem; color: var(--ink-muted); }
+/* Les tuiles de « Mon activité » et la suppression du compte prennent aussi la forme ovale */
+.account-tile { border-radius: 999px; padding: 10px 18px 10px 10px; }
+.account-tile .fact-icon { border-radius: 50%; }
+.account-danger { border-radius: 28px; }
+
+/* Aide */
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq { border: 1px solid var(--tint-line); border-radius: 22px; padding: 12px 18px; }
+.faq summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; color: var(--ink-muted); font-weight: 800; }
+.faq[open] summary::after { content: '–'; }
+.faq p { margin: 8px 0 0; color: var(--ink-muted); line-height: 1.55; }
+.tips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.tips li { display: flex; gap: 10px; align-items: flex-start; }
+.tips .ion { color: var(--trust); flex: none; margin-top: 2px; }
+.help-text { margin: 0; color: var(--ink-muted); line-height: 1.55; }
+.help-contact { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; }
+.help-contact .ion { color: #fff; }
+
+@media (max-width: 560px) {
+  .pill-row { border-radius: 26px; }
+  .account-tile { border-radius: 26px; }
+}
+
+/* ===== Boîte de confirmation d'Okazo (remplace window.confirm) et « Effacer le brouillon » (20 octobre 2026) ===== */
+.dialog-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.45); display: grid; place-items: center; padding: 20px; animation: dialog-fade 0.15s ease-out; }
+.dialog { width: 100%; max-width: 400px; background: var(--bg); border-radius: 26px; padding: 26px 24px 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25); animation: dialog-pop 0.18s ease-out; }
+.dialog h2 { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--ink); }
+.dialog p { margin: 0; color: var(--ink-muted); line-height: 1.5; }
+.dialog-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--tint); display: grid; place-items: center; margin-bottom: 4px; }
+.dialog-icon .ion { color: var(--primary); }
+.dialog-icon.danger { background: #FFF1F0; }
+.dialog-icon.danger .ion { color: var(--danger); }
+.dialog-actions { display: flex; gap: 10px; width: 100%; margin-top: 14px; }
+.dialog-btn { flex: 1; min-height: 48px; border-radius: 999px; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; border: 1.5px solid transparent; padding: 0 16px; }
+.dialog-btn.cancel { background: var(--bg); border-color: var(--tint-line); color: var(--ink); }
+.dialog-btn.cancel:hover { background: var(--tint); }
+.dialog-btn.primary { background: var(--primary); color: #fff; }
+.dialog-btn.danger { background: var(--danger); color: #fff; }
+.dialog-btn:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+@keyframes dialog-fade { from { opacity: 0; } }
+@keyframes dialog-pop { from { opacity: 0; transform: scale(0.96); } }
+
+.clear-draft { align-self: center; display: inline-flex; align-items: center; gap: 10px; padding: 8px 20px 8px 8px; border-radius: 999px; border: 1px solid #F2D4D0; background: #FFF8F7; color: var(--danger); font: inherit; font-weight: 700; cursor: pointer; }
+.clear-draft-icon { width: 32px; height: 32px; border-radius: 50%; background: #FFE9E6; display: grid; place-items: center; }
+.clear-draft .ion { color: var(--danger); }
+.clear-draft:hover { background: #FFE9E6; }
+
+/* Aperçu de l'annonce à la publication : la vraie carte des listes (20 octobre 2026) */
+.preview-tile.tile-grid { grid-template-columns: minmax(0, 1fr); padding: 14px 16px 0; max-width: 280px; margin: 0 auto; }
+.preview-tile .tile { pointer-events: none; }
+.card-heart.preview-only { display: grid; place-items: center; color: var(--ink-muted); }
+/* « À débattre » ne se coupe jamais en deux : s'il manque de place, il passe entier à la ligne */
+.price { flex-wrap: wrap; row-gap: 0; }
+.price-note { white-space: nowrap; }
+
+/* « Avant de payer » : bleu pâle avec bouclier, comme les autres encadrés de conseils (27 octobre 2026) */
+.safety-tips { background: var(--tint); border: 1px solid var(--tint-line); border-radius: 16px; }
+.safety-tips strong { display: flex; align-items: center; gap: 12px; color: var(--navy); }
+.safety-icon { flex: none; width: 40px; height: 40px; border-radius: 10px; background: #fff; display: grid; place-items: center; }
+.safety-icon .ion { color: var(--navy); }
+.safety-tips p { color: var(--ink-muted); }

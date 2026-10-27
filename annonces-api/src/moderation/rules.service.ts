@@ -53,7 +53,7 @@ export class RulesService {
 
   // --- Mots-clés et domaines (table blocklist, modifiable sans redéploiement) ---
   private async textRules(listing: ListingRow): Promise<RuleHit[]> {
-    const text = normalize(`${listing.title} ${listing.description}`);
+    const text = normalize(`${listing.title} ${listing.description} ${listing.cityOther ?? ''} ${listing.districtOther ?? ''}`);
     const hits: RuleHit[] = [];
 
     for (const r of await this.loadTextRules()) {

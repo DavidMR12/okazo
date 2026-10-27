@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { Text, TextInput } from '../src/components/Typography';
 import { api, ApiError } from '../src/api/client';
 import { useAuth } from '../src/auth/AuthProvider';
 import { Button } from '../src/components/Button';
 import { colors, space, type } from '../src/theme';
+import { dialog } from '../src/components/Dialog';
 
 export default function DeleteAccountScreen() {
   const { forgetSession } = useAuth();
@@ -19,14 +20,14 @@ export default function DeleteAccountScreen() {
       await api('/me/delete/request', { method: 'POST', auth: true });
       setCodeSent(true);
     } catch (e) {
-      Alert.alert('Suppression du compte', e instanceof ApiError ? e.message : 'Envoi du code impossible.');
+      dialog('Suppression du compte', e instanceof ApiError ? e.message : 'Envoi du code impossible.');
     } finally {
       setLoading(false);
     }
   };
 
   const remove = () =>
-    Alert.alert('Supprimer définitivement ?', 'Cette action est irréversible.', [
+    dialog('Supprimer définitivement ?', 'Cette action est irréversible.', [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer',
@@ -37,9 +38,9 @@ export default function DeleteAccountScreen() {
             await api('/me', { method: 'DELETE', body: { code }, auth: true });
             await forgetSession();
             router.dismissAll();
-            Alert.alert('Compte supprimé', 'Vos données personnelles ont été effacées.');
+            dialog('Compte supprimé', 'Vos données personnelles ont été effacées.');
           } catch (e) {
-            Alert.alert('Suppression du compte', e instanceof ApiError ? e.message : 'Suppression impossible.');
+            dialog('Suppression du compte', e instanceof ApiError ? e.message : 'Suppression impossible.');
           } finally {
             setLoading(false);
           }

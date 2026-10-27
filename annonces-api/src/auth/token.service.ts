@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { sha256 } from '../common/crypto';
 import { env } from '../config/env';
@@ -47,17 +47,32 @@ export class TokenService {
     return token;
   }
 
+  /**
+   * Déconnexion d'un appareil : tous ses jetons sont retirés, y compris ceux remplacés depuis moins de 2 min
+   * (replacedAt effacé : le délai de tolérance des réessais réseau ne s'applique plus).
+   */
   async revokeByToken(token: string): Promise<void> {
+    const [row] = await this.db
+      .select({ userId: refreshTokens.userId, deviceId: refreshTokens.deviceId })
+      .from(refreshTokens)
+      .where(eq(refreshTokens.tokenHash, sha256(token)))
+      .limit(1);
+    if (!row) return;
     await this.db
       .update(refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(and(eq(refreshTokens.tokenHash, sha256(token)), isNull(refreshTokens.revokedAt)));
+      .set({ revokedAt: sql`coalesce(${refreshTokens.revokedAt}, now())`, replacedAt: null })
+      .where(
+        row.deviceId
+          ? and(eq(refreshTokens.userId, row.userId), eq(refreshTokens.deviceId, row.deviceId))
+          : eq(refreshTokens.tokenHash, sha256(token)),
+      );
   }
 
+  /** Toutes les sessions coupées (vol détecté, bannissement…) : aucun ancien jeton ne peut plus être renouvelé. */
   async revokeAllForUser(userId: string): Promise<void> {
     await this.db
       .update(refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)));
+      .set({ revokedAt: sql`coalesce(${refreshTokens.revokedAt}, now())`, replacedAt: null })
+      .where(eq(refreshTokens.userId, userId));
   }
 }

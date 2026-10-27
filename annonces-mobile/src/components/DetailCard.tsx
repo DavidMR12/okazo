@@ -84,10 +84,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  band: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 14, backgroundColor: colors.tint },
+  // Si l'étiquette ne tient pas à côté du titre, elle passe entière à la ligne (jamais coupée en « Télépho… »)
+  band: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10, rowGap: 8, padding: 10, borderRadius: 14, backgroundColor: colors.tint },
   iconTile: { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
   title: { flexShrink: 0, fontSize: 17, fontWeight: '700', color: colors.ink }, // titre entier ; c'est l'étiquette qui se raccourcit
-  chip: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, backgroundColor: '#DCE8FD', flexShrink: 1, maxWidth: '42%' },
+  chip: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, backgroundColor: '#DCE8FD', maxWidth: '100%' },
   chipText: { fontSize: 13, fontWeight: '600', color: colors.primary, flexShrink: 1 },
   body: { paddingHorizontal: 8, paddingTop: 14, paddingBottom: 8 },
   grid: { flexDirection: 'row' },

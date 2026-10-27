@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiError } from '../../src/api/client';
 import { useApply, useMyApplications } from '../../src/api/hooks';
 import { useAuth } from '../../src/auth/AuthProvider';
@@ -13,6 +13,8 @@ import { Text, TextInput } from '../../src/components/Typography';
 import { CANDIDATE_STATUS } from '../../src/lib/applications';
 import { compressImage, CvType, uploadCv } from '../../src/lib/upload';
 import { colors, space, TITLE_FONT, type } from '../../src/theme';
+import { dialog } from '../../src/components/Dialog';
+import { ensureCamera } from '../../src/lib/permissions';
 
 const MIN = 20;
 interface Cv {
@@ -54,18 +56,14 @@ export default function ApplyScreen() {
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
     if (a.size && a.size > 5_000_000) {
-      Alert.alert('CV trop lourd', 'Le fichier dépasse 5 Mo. Prenez plutôt votre CV en photo.');
+      dialog('CV trop lourd', 'Le fichier dépasse 5 Mo. Prenez plutôt votre CV en photo.');
       return;
     }
     setCv({ uri: a.uri, name: a.name, type: 'application/pdf' });
   };
 
   const takePhoto = async () => {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert('Appareil photo', 'Autorisez l’accès à l’appareil photo dans les réglages du téléphone.');
-      return;
-    }
+    if (!(await ensureCamera('Okazo a besoin de l’appareil photo pour photographier votre CV.'))) return;
     const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1 });
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
@@ -81,12 +79,12 @@ export default function ApplyScreen() {
     try {
       const cvKey = cv ? await uploadCv(id, cv.uri, cv.type) : undefined;
       const res = await apply.mutateAsync({ listingId: id, message: message.trim(), cvKey });
-      Alert.alert('Candidature envoyée', 'Le recruteur la reçoit avec votre message. Suivez son statut dans Compte, puis Mes candidatures.', [
+      dialog('Candidature envoyée', 'Le recruteur la reçoit avec votre message. Suivez son statut dans Compte, puis Mes candidatures.', [
         { text: 'Voir la conversation', onPress: () => router.replace(`/conversation/${res.conversationId}`) },
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (e) {
-      Alert.alert('Candidature', e instanceof ApiError || e instanceof Error ? e.message : 'Envoi impossible. Réessayez.');
+      dialog('Candidature', e instanceof ApiError || e instanceof Error ? e.message : 'Envoi impossible. Réessayez.');
     } finally {
       setBusy(false);
     }

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Linking, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Linking, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '../../src/components/Typography';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError } from '../../src/api/client';
@@ -23,6 +23,7 @@ import { colors, PRICE_FONT, space, TITLE_FONT, type } from '../../src/theme';
 import { WalletList } from '../../src/components/Wallets';
 import { DetailCard, FactGrid } from '../../src/components/DetailCard';
 import { categoryIcon } from '../../src/lib/categoryIcons';
+import { dialog } from '../../src/components/Dialog';
 
 export default function ListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -82,6 +83,7 @@ export default function ListingScreen() {
   const l = listing.data;
   const favorited = favoriteIds.has(l.id);
   const sold = l.status === 'sold';
+  const barPriceText = `${priceLabel(l.priceType, l.priceXaf)}${(l.priceType === 'fixed' || l.priceType === 'negotiable') && l.priceUnit ? ` / ${l.priceUnit}` : ''}`;
   const inCart = cartIds.has(l.id);
   // Panier : seulement pour une offre d'un autre vendeur, jamais pour une offre d'emploi (même règle que l'API)
   const purchasable = !sold && l.adType === 'offer' && l.category.parentSlug !== 'emploi' && me.data?.id !== l.seller.id;
@@ -89,7 +91,7 @@ export default function ListingScreen() {
     if (!requireSignIn('cart')) return;
     toggleCart.mutate(
       { id: l.id, on: !inCart },
-      { onError: (e) => Alert.alert('Panier', e instanceof ApiError ? e.message : 'Action impossible.') },
+      { onError: (e) => dialog('Panier', e instanceof ApiError ? e.message : 'Action impossible.') },
     );
   };
   const imgHeight = Math.round(width * 0.75);
@@ -123,10 +125,10 @@ export default function ListingScreen() {
         try {
           await Linking.openURL(url);
         } catch {
-          Alert.alert(how === 'whatsapp' ? 'WhatsApp introuvable' : 'Appel impossible', `Numéro du vendeur : ${c.phone}`);
+          dialog(how === 'whatsapp' ? 'WhatsApp introuvable' : 'Appel impossible', `Numéro du vendeur : ${c.phone}`);
         }
       },
-      onError: (e) => Alert.alert('Contact', e instanceof ApiError ? e.message : 'Action impossible.'),
+      onError: (e) => dialog('Contact', e instanceof ApiError ? e.message : 'Action impossible.'),
     });
   };
   reachRef.current = reach;
@@ -278,7 +280,7 @@ export default function ListingScreen() {
           onPress={() => requireSignIn('report') && router.push({ pathname: '/report', params: { listingId: l.id } })}
           accessibilityRole="button"
         >
-          <Ionicons name="flag-outline" size={16} color={colors.inkMuted} />
+          <Ionicons name="flag-outline" size={16} color={colors.danger} />
           <Text style={styles.reportText}>Signaler cette annonce</Text>
         </Pressable>
 
@@ -297,8 +299,8 @@ export default function ListingScreen() {
             <Ionicons name="pricetag" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.barPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-              {priceLabel(l.priceType, l.priceXaf)}{(l.priceType === 'fixed' || l.priceType === 'negotiable') && l.priceUnit ? ` / ${l.priceUnit}` : ''}
+            <Text style={[styles.barPrice, { fontSize: barPriceSize(barPriceText) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {barPriceText}
             </Text>
             {l.priceType === 'negotiable' ? (
               <View style={styles.barNoteRow}>
@@ -309,13 +311,13 @@ export default function ListingScreen() {
           </View>
           <View style={styles.barSep} />
           {jobOffer && ownListing ? (
-            <Button label="Candidatures" onPress={() => router.push(`/listing/applications/${l.id}`)} style={{ flex: 1.15 }} />
+            <Button label="Candidatures" onPress={() => router.push(`/listing/applications/${l.id}`)} style={styles.barBtn} />
           ) : jobOffer && applied ? (
-            <Button label="Envoyée" icon="checkmark-circle-outline" variant="secondary" onPress={() => router.push('/applications')} style={{ flex: 1.15 }} />
+            <Button label="Envoyée" icon="checkmark-circle-outline" variant="secondary" onPress={() => router.push('/applications')} style={styles.barBtn} />
           ) : jobOffer ? (
-            <Button label="Postuler" icon="send-outline" onPress={applyNow} style={{ flex: 1.15 }} />
+            <Button label="Postuler" icon="send-outline" onPress={applyNow} style={styles.barBtn} />
           ) : (
-            <Button label="Contacter" icon="chatbubble-ellipses-outline" onPress={() => (l.seller.contactPreference === 'messages_only' ? write() : setContactOpen(true))} style={{ flex: 1.15 }} />
+            <Button label="Contacter" icon="chatbubble-ellipses-outline" onPress={() => (l.seller.contactPreference === 'messages_only' ? write() : setContactOpen(true))} style={styles.barBtn} />
           )}
         </View>
       ) : null}
@@ -352,6 +354,10 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Prix de la barre du bas : taille selon la longueur, pour qu'il reste entier à côté de « Contacter »
+// (adjustsFontSizeToFit ne fonctionne pas sur le web)
+const barPriceSize = (t: string) => (t.length <= 10 ? 20 : t.length <= 12 ? 18 : t.length <= 15 ? 16 : 14);
+
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingBottom: 10, backgroundColor: colors.bg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   logo: { height: 24, width: 84 },
@@ -360,11 +366,13 @@ const styles = StyleSheet.create({
   headerPlus: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   favBtn: { position: 'absolute', top: 12, right: 12, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' },
   description: { fontSize: 16, lineHeight: 24, color: colors.ink, fontWeight: '400' },
-  barTag: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center' },
+  barTag: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center' },
   barPrice: { fontSize: 20, fontFamily: PRICE_FONT, color: colors.ink },
   barNoteRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   barNote: { fontSize: 14, color: colors.inkMuted, fontWeight: '400' },
   barSep: { width: 1, height: 40, backgroundColor: colors.line },
+  // Bouton à sa largeur naturelle : le prix garde la place dont il a besoin (il n'était plus lisible : « 150 000 … »)
+  barBtn: { flex: 0, paddingHorizontal: 18, borderRadius: 14 },
   sheetBackdrop: { flex: 1, backgroundColor: 'rgba(20,27,45,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 12 },
   handover: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
@@ -389,8 +397,9 @@ const styles = StyleSheet.create({
   seller: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 20, fontWeight: '800', color: colors.primary },
-  reportLink: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.lg },
-  reportText: { fontSize: 14, color: colors.inkMuted, textDecorationLine: 'underline' },
+  // « Signaler » : bouton ovale rouge pâle, sans soulignement (comme sur le site)
+  reportLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: space.sm, marginTop: space.lg, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999, borderWidth: 1, borderColor: '#F2D4D0', backgroundColor: '#FFF8F7' },
+  reportText: { fontSize: 14, fontWeight: '700', color: colors.danger },
   callBtn: { width: 48, height: 48, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   bar: {
     position: 'absolute',
@@ -399,7 +408,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 16,
     paddingTop: 12,
     backgroundColor: colors.bg,

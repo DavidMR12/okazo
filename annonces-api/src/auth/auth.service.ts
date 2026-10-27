@@ -38,9 +38,10 @@ import { TokenService } from './token.service';
 
 type UserRow = typeof users.$inferSelect;
 
-// Sur réseau instable, un client peut réessayer avec un ancien jeton alors que le serveur
-// l'a déjà renouvelé. En dessous de ce délai, on refuse simplement sans déconnecter l'utilisateur.
-const REUSE_GRACE_MS = 30_000;
+// Sur réseau instable, la réponse d'un renouvellement peut se perdre : le serveur a remplacé le jeton,
+// mais l'appareil garde l'ancien. Dans ce délai, l'ancien jeton reçoit un nouveau jeton (l'appareil reste connecté) ;
+// au-delà, c'est traité comme un vol de session (demande du porteur, 20 octobre 2026 : ne jamais être déconnecté).
+const REUSE_GRACE_MS = 2 * 60_000;
 
 @Injectable()
 export class AuthService {
@@ -364,17 +365,22 @@ export class AuthService {
 
       if (!row) return { kind: 'invalid' } as const;
 
-      if (row.revokedAt) {
-        // Jeton déjà utilisé : possible vol de session, sauf simple réessai réseau récent
-        const recent = Date.now() - row.revokedAt.getTime() < REUSE_GRACE_MS;
-        return { kind: recent ? 'invalid' : 'reuse', userId: row.userId } as const;
+      // Jeton déjà remplacé : réessai réseau récent (on renouvelle encore) ou vol de session (tout est coupé).
+      // Un jeton retiré par une déconnexion n'est jamais renouvelé (replacedAt vide).
+      if (row.revokedAt && !row.replacedAt) return { kind: 'invalid' } as const;
+      if (row.revokedAt && Date.now() - row.revokedAt.getTime() >= REUSE_GRACE_MS) {
+        return { kind: 'reuse', userId: row.userId } as const;
       }
       if (row.expiresAt.getTime() <= Date.now()) return { kind: 'invalid' } as const;
 
       const [user] = await tx.select().from(users).where(eq(users.id, row.userId)).limit(1);
       if (!user || user.status === 'banned') return { kind: 'invalid' } as const;
 
-      await tx.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.id, row.id));
+      // Premier renouvellement : on garde l'heure du remplacement (début du délai de tolérance) ; un réessai ne la repousse pas
+      if (!row.revokedAt) {
+        const now = new Date();
+        await tx.update(refreshTokens).set({ revokedAt: now, replacedAt: now }).where(eq(refreshTokens.id, row.id));
+      }
       await tx.insert(refreshTokens).values({
         userId: user.id,
         deviceId: row.deviceId,

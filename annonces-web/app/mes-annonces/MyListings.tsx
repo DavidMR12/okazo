@@ -7,6 +7,7 @@ import { PriceTag } from '@/components/PriceTag';
 import { call, ClientError, useSignedIn } from '@/lib/client';
 import { listingPath } from '@/lib/format';
 import type { ListingStatus, PriceType } from '@/lib/types';
+import { confirmDialog } from '@/components/Dialog';
 
 interface Mine {
   id: string;
@@ -55,7 +56,7 @@ export function MyListings({ justPublished, justEdited }: { justPublished: boole
 
   const act = async (item: Mine, action: 'sold' | 'delete') => {
     const question = action === 'sold' ? `Marquer « ${item.title} » comme vendue ?` : `Supprimer « ${item.title} » ?`;
-    if (!window.confirm(question)) return;
+    if (!(await confirmDialog(question, { confirm: action === 'sold' ? 'Marquer vendue' : 'Supprimer', danger: action === 'delete' }))) return;
     try {
       if (action === 'sold') await call(`/listings/${item.id}/mark-sold`, { method: 'POST' });
       else await call(`/listings/${item.id}`, { method: 'DELETE' });

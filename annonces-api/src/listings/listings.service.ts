@@ -71,6 +71,27 @@ function assertPhotoCount(count: number, parentSlug: string | null) {
   }
 }
 
+/** Ville « Autres villes » de chaque pays (migration 018) : le nom saisi est dans city_other. */
+export const OTHER_CITY_SLUG = 'autre';
+
+// Noms affichés : la ville ou le quartier saisis remplacent « Autres villes » ou l'absence de quartier
+const CITY_NAME = sql<string>`coalesce(${listings.cityOther}, ${cities.name})`;
+const DISTRICT_NAME = sql<string | null>`coalesce((select d.name from districts d where d.id = ${listings.districtId}), ${listings.districtOther})`;
+
+/**
+ * Ville et quartier hors liste. La ville « Autres villes » exige un nom saisi ; une ville de la liste n'en garde pas.
+ * Un quartier saisi n'est gardé que si aucun quartier de la liste n'est choisi.
+ */
+function otherPlace(citySlug: string, cityOther: string | null, districtId: number | null, districtOther: string | null) {
+  if (citySlug === OTHER_CITY_SLUG && !cityOther) {
+    throw new BadRequestException({ code: 'CITY_NAME_REQUIRED', message: 'Indiquez le nom de votre ville.' });
+  }
+  return {
+    cityOther: citySlug === OTHER_CITY_SLUG ? cityOther : null,
+    districtOther: districtId ? null : districtOther,
+  };
+}
+
 @Injectable()
 export class ListingsService {
   private readonly log = new Logger(ListingsService.name);
@@ -88,13 +109,14 @@ export class ListingsService {
     const price = resolvePrice(input.priceType, input.priceXaf);
 
     const [city] = await this.db
-      .select({ id: cities.id, countryCode: cities.countryCode })
+      .select({ id: cities.id, countryCode: cities.countryCode, slug: cities.slug })
       .from(cities)
       .innerJoin(countries, eq(countries.code, cities.countryCode))
       .where(and(eq(cities.id, input.cityId), eq(cities.isActive, true), eq(countries.isActive, true)))
       .limit(1);
     if (!city) throw new BadRequestException({ code: 'CITY_NOT_AVAILABLE', message: "Cette ville n'est pas disponible." });
     const districtId = await this.checkDistrict(input.districtId ?? null, city.id);
+    const place = otherPlace(city.slug, input.cityOther ?? null, districtId, input.districtOther ?? null);
 
     // Une annonce se publie dans une sous-catégorie (catégorie sans enfants)
     const [category] = await this.db
@@ -131,6 +153,7 @@ export class ListingsService {
             countryCode: city.countryCode,
             cityId: city.id,
             districtId,
+            ...place,
             handDelivery: handDeliveryFor(input.adType, category.parentSlug, input.handDelivery),
             paymentMethods: await walletsFor(this.db, city.countryCode, input.adType, category.parentSlug, input.paymentMethods),
             title: input.title,
@@ -264,8 +287,8 @@ export class ListingsService {
       priceXaf: listings.priceXaf,
       condition: listings.condition,
       categoryId: listings.categoryId,
-      cityName: cities.name,
-      districtName: sql<string | null>`(select d.name from districts d where d.id = ${listings.districtId})`,
+      cityName: CITY_NAME,
+      districtName: DISTRICT_NAME,
       publishedAt: listings.publishedAt,
       boostUntil: listings.boostUntil,
       cursorTs: sql<string>`${listings.publishedAt}::text`,
@@ -386,8 +409,8 @@ export class ListingsService {
     const [row] = await this.db
       .select({
         l: listings,
-        cityName: cities.name,
-        districtName: sql<string | null>`(select d.name from districts d where d.id = ${listings.districtId})`,
+        cityName: CITY_NAME,
+        districtName: DISTRICT_NAME,
         categoryName: categories.name,
         // Requête avec jointures : Drizzle qualifie la colonne ("categories"."parent_id")
         categoryParentSlug: sql<string | null>`(select p.slug from categories p where p.id = ${categories.parentId})`,
@@ -559,6 +582,8 @@ export class ListingsService {
       categoryId: l.categoryId,
       cityId: l.cityId,
       districtId: l.districtId,
+      cityOther: l.cityOther,
+      districtOther: l.districtOther,
       handDelivery: l.handDelivery,
       paymentMethods: l.paymentMethods,
       attributes: l.attributes,
@@ -628,7 +653,7 @@ export class ListingsService {
     let countryCode = current.countryCode;
     if (input.cityId !== undefined && input.cityId !== current.cityId) {
       const [city] = await this.db
-        .select({ id: cities.id, countryCode: cities.countryCode })
+        .select({ id: cities.id, countryCode: cities.countryCode, slug: cities.slug })
         .from(cities)
         .innerJoin(countries, eq(countries.code, cities.countryCode))
         .where(and(eq(cities.id, input.cityId), eq(cities.isActive, true), eq(countries.isActive, true)))
@@ -640,6 +665,14 @@ export class ListingsService {
     const districtId = await this.checkDistrict(
       input.districtId !== undefined ? input.districtId : cityId === current.cityId ? current.districtId : null,
       cityId,
+    );
+    const sameCity = cityId === current.cityId;
+    const [{ slug: citySlug }] = await this.db.select({ slug: cities.slug }).from(cities).where(eq(cities.id, cityId)).limit(1);
+    const place = otherPlace(
+      citySlug,
+      input.cityOther !== undefined ? input.cityOther : sameCity ? current.cityOther : null,
+      districtId,
+      input.districtOther !== undefined ? input.districtOther : sameCity ? current.districtOther : null,
     );
 
     // ---- photos : liste complète et ordonnée (anciennes gardées + nouvelles) ----
@@ -683,6 +716,7 @@ export class ListingsService {
           categoryId,
           cityId,
           districtId,
+          ...place,
           handDelivery,
           paymentMethods,
           countryCode,

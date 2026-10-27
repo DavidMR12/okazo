@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { ReactElement, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Image } from 'expo-image';
-import { ActivityIndicator, Alert, FlatList, RefreshControl, View, ViewToken } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, View, ViewToken } from 'react-native';
 import { api } from '../api/client';
 import { isLightMode, isOnline } from '../lib/network';
 import { ApiError } from '../api/client';
@@ -13,6 +13,7 @@ import { setPendingAction, takePendingAction } from '../lib/pendingAction';
 import { colors, space } from '../theme';
 import { ListingRow, ROW_HEIGHT } from './ListingRow';
 import { Message } from './Message';
+import { dialog } from './Dialog';
 
 /** Liste d’annonces paginée (accueil, profil vendeur), avec les annonces « à la une » en tête. */
 export function ListingFeed({
@@ -49,7 +50,7 @@ export function ListingFeed({
       }
       toggle.mutate(
         { id, on },
-        { onError: (e) => Alert.alert('Favoris', e instanceof ApiError ? e.message : 'Action impossible.') },
+        { onError: (e) => dialog('Favoris', e instanceof ApiError ? e.message : 'Action impossible.') },
       );
     },
     [status, toggle],

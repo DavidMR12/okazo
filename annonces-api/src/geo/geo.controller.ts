@@ -1,5 +1,5 @@
 import { Controller, Get, Header, Inject, Query } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { Database, DB } from '../db/db.module';
@@ -48,7 +48,7 @@ export class GeoController {
       .from(cities)
       .innerJoin(countries, eq(countries.code, cities.countryCode))
       .where(and(eq(cities.isActive, true), eq(countries.isActive, true), q.country ? eq(cities.countryCode, q.country) : undefined))
-      .orderBy(asc(cities.name));
+      .orderBy(sql`${cities.slug} = 'autre'`, asc(cities.name)); // « Autres villes » en dernier
     return { cities: rows };
   }
 

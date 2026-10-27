@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useDeleteSearch, useMarkSearchSeen, useSavedSearches } from '../src/api/hooks';
 import type { SavedSearch } from '../src/api/types';
 import { Message } from '../src/components/Message';
 import { Text } from '../src/components/Typography';
 import { colors, space, type } from '../src/theme';
+import { dialog } from '../src/components/Dialog';
 
 /** Mes recherches : relancer une recherche en un geste, avec le nombre de nouvelles annonces. */
 export default function SavedSearchesScreen() {
@@ -24,7 +25,7 @@ export default function SavedSearchesScreen() {
     router.push({ pathname: '/search', params: { filters: JSON.stringify(s.query) } });
   };
   const remove = (s: SavedSearch) =>
-    Alert.alert('Supprimer cette recherche ?', s.name, [
+    dialog('Supprimer cette recherche ?', s.name, [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Supprimer', style: 'destructive', onPress: () => del.mutate(s.id) },
     ]);

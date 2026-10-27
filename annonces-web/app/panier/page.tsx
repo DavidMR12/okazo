@@ -3,7 +3,9 @@
 /* eslint-disable @next/next/no-img-element -- miniatures déjà optimisées (WebP) et servies par le CDN */
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { ImageIcon } from '@/components/icons';
+import { cartOutline, chatbubbleEllipsesOutline, imageOutline, locationOutline, searchOutline, shieldCheckmark, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
+import { DECOR_CART, Decor } from '@/components/Decor';
+import { Ion } from '@/components/Ion';
 import { PriceTag } from '@/components/PriceTag';
 import { setInCart } from '@/lib/cart';
 import { call, ClientError, useSignedIn } from '@/lib/client';
@@ -13,6 +15,8 @@ import type { PriceType } from '@/lib/types';
 interface CartItem { id: string; title: string; priceType: PriceType; priceXaf: number | null; priceUnit: string | null; city: string; available: boolean; thumbnailUrl: string | null }
 interface CartSeller { seller: { id: string; displayName: string; verificationLevel: 'phone' | 'identity' }; items: CartItem[]; total: number }
 interface Cart { sellers: CartSeller[]; count: number; total: number }
+
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
 
 /** Panier : liste d'achats regroupée par vendeur. Aucun paiement sur le site : on écrit à chaque vendeur. */
 export default function CartPage() {
@@ -54,54 +58,79 @@ export default function CartPage() {
 
   if (signedIn === false) {
     return (
-      <div className="narrow stack">
-        <h1>Votre panier</h1>
-        <p>Connectez-vous, puis ajoutez des articles au panier pour les retrouver ici et contacter les vendeurs.</p>
-        <Link href="/connexion?retour=/panier" className="btn">Se connecter</Link>
+      <div className="account">
+        <h1 className="pill-title">Votre panier</h1>
+        <div className="empty-card empty-tall">
+          <Decor icons={DECOR_CART} />
+          <span className="empty-halo"><span className="empty-icon"><Ion icon={cartOutline} size={34} /></span></span>
+          <p>Connectez-vous, puis ajoutez des articles au panier pour les retrouver ici et contacter les vendeurs.</p>
+          <Link href="/connexion?retour=/panier" className="btn">Se connecter</Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container section stack" style={{ maxWidth: 760 }}>
-      <h1>Votre panier</h1>
-      <p className="muted">Aucun paiement sur le site : écrivez à chaque vendeur et payez à la remise de l’article, après l’avoir vérifié.</p>
+    <div className="account">
+      <div className="page-head">
+        <h1 className="pill-title">Votre panier</h1>
+        {cart?.count ? <span className="count-badge">{cart.count} article{cart.count > 1 ? 's' : ''}</span> : null}
+      </div>
       {error ? <p className="error" role="alert">{error}</p> : null}
-      {!cart ? <p className="muted">Chargement…</p> : null}
+      {!cart && !error ? <p className="muted">Chargement…</p> : null}
       {cart && !cart.count ? (
-        <div className="stack">
+        <div className="empty-card empty-tall">
+          <Decor icons={DECOR_CART} />
+          <span className="empty-halo"><span className="empty-icon"><Ion icon={cartOutline} size={34} /></span></span>
           <p>Votre panier est vide. Cliquez sur « Ajouter au panier » sur une annonce pour la retrouver ici.</p>
-          <p><Link href="/" className="btn btn-secondary">Voir les annonces</Link></p>
+          <Link href="/" className="btn btn-secondary"><Ion icon={searchOutline} size={18} /> Voir les annonces</Link>
         </div>
       ) : null}
 
       {cart?.sellers.map((g) => (
-        <section key={g.seller.id} className="panel stack" aria-label={`Articles de ${g.seller.displayName}`}>
-          <Link href={`/vendeur/${g.seller.id}`} className="seller">
-            <strong>{g.seller.displayName}</strong>
-            {g.seller.verificationLevel === 'identity' ? <span className="verified">Identité vérifiée</span> : null}
+        <section key={g.seller.id} className="detail-card" aria-label={`Articles de ${g.seller.displayName}`}>
+          <Link href={`/vendeur/${g.seller.id}`} className="detail-band seller-band">
+            <span className="detail-icon seller-initials" aria-hidden>{initials(g.seller.displayName)}</span>
+            <span className="seller-band-text">
+              <strong>{g.seller.displayName}</strong>
+              <span>{g.items.length} article{g.items.length > 1 ? 's' : ''} de ce vendeur</span>
+            </span>
+            {g.seller.verificationLevel === 'identity' ? <span className="detail-chip"><Ion icon={shieldCheckmark} size={15} /> Identité vérifiée</span> : null}
           </Link>
-          <ul className="my-list">
+          <ul className="item-list">
             {g.items.map((i) => (
-              <li key={i.id} className="my-item" style={{ opacity: i.available ? 1 : 0.5 }}>
-                {i.thumbnailUrl ? <img src={i.thumbnailUrl} alt="" width={64} height={64} className="inbox-thumb" /> : <span className="inbox-thumb card-thumb-empty" aria-hidden><ImageIcon size={22} /></span>}
-                <span className="stack" style={{ gap: 4 }}>
-                  <Link href={listingPath(i)}>{i.title}</Link>
-                  {i.available ? <PriceTag priceType={i.priceType} priceXaf={i.priceXaf} unit={i.priceUnit} /> : <span className="muted">Plus disponible</span>}
-                </span>
-                <span className="my-actions">
-                  <button type="button" className="link-button" onClick={() => void remove(i.id)}>Retirer</button>
-                </span>
+              <li key={i.id} className={`item-row${i.available ? '' : ' unavailable'}`}>
+                <Link href={listingPath(i)} className="item-link">
+                  {i.thumbnailUrl ? <img src={i.thumbnailUrl} alt="" className="item-thumb" /> : <span className="item-thumb card-thumb-empty" aria-hidden><Ion icon={imageOutline} size={22} /></span>}
+                  <span className="item-text">
+                    <strong className="item-title">{i.title}</strong>
+                    {i.available ? <PriceTag priceType={i.priceType} priceXaf={i.priceXaf} unit={i.priceUnit} /> : <span className="item-off">Plus disponible</span>}
+                    <span className="item-meta"><Ion icon={locationOutline} size={14} /> {i.city}</span>
+                  </span>
+                </Link>
+                <button type="button" className="icon-btn" onClick={() => void remove(i.id)} aria-label={`Retirer ${i.title} du panier`}><Ion icon={trashOutline} size={19} /></button>
               </li>
             ))}
           </ul>
-          {g.total ? <p style={{ margin: 0, textAlign: 'right' }}>Total : <strong>{formatXaf(g.total)}</strong></p> : null}
-          {g.items.some((i) => i.available) ? <Link href={writeHref(g)} className="btn btn-secondary">Écrire au vendeur</Link> : null}
+          <div className="seller-foot">
+            {g.total ? <span className="seller-total">Total <strong>{formatXaf(g.total)}</strong></span> : <span />}
+            {g.items.some((i) => i.available) ? <Link href={writeHref(g)} className="btn"><Ion icon={chatbubbleEllipsesOutline} size={19} /> Écrire au vendeur</Link> : null}
+          </div>
         </section>
       ))}
 
       {cart && cart.sellers.length > 1 && cart.total ? (
-        <p style={{ textAlign: 'right', fontSize: '1.1rem' }}>Total du panier : <strong>{formatXaf(cart.total)}</strong></p>
+        <div className="cart-total"><span>Total du panier</span><strong>{formatXaf(cart.total)}</strong></div>
+      ) : null}
+
+      {cart?.count ? (
+        <aside className="compose-safety">
+          <span className="fact-icon"><Ion icon={shieldCheckmarkOutline} size={20} /></span>
+          <span>
+            <strong>Aucun paiement sur le site</strong>
+            <span>Écrivez à chaque vendeur et payez à la remise de l’article, après l’avoir vérifié.</span>
+          </span>
+        </aside>
       ) : null}
     </div>
   );

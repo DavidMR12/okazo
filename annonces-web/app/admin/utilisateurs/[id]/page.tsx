@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { EMPTY_SANCTION, SanctionDraft, SanctionFields, sanctionIncomplete, sanctionPayload } from '@/components/admin/SanctionFields';
 import { fmtDate, STATUS_LABELS, useAdminMe } from '@/lib/admin';
 import { call, ClientError } from '@/lib/client';
+import { confirmDialog } from '@/components/Dialog';
 
 interface Summary {
   user: { id: string; phone: string | null; displayName: string; countryCode: string; role: string; status: string; verificationLevel: string; trustScore: number; createdAt: string; lastLoginAt: string | null };
@@ -90,7 +91,7 @@ export default function UserPage() {
                 <p className="muted" style={{ margin: '2px 0' }}>{x.reason}</p>
                 {active(x) && (x.type !== 'ban' || me?.role === 'admin') ? (
                   <button type="button" className="link-button" disabled={busy}
-                    onClick={() => window.confirm('Lever cette sanction ?') && void run(() => call(`/admin/sanctions/${x.id}/revoke`, { method: 'POST' }), 'Sanction levée.')}>
+                    onClick={async () => { if (await confirmDialog('Lever cette sanction ?', { confirm: 'Lever' })) void run(() => call(`/admin/sanctions/${x.id}/revoke`, { method: 'POST' }), 'Sanction levée.'); }}>
                     Lever la sanction
                   </button>
                 ) : null}
@@ -105,9 +106,9 @@ export default function UserPage() {
           <h2>Sanctionner</h2>
           <SanctionFields value={sanction} onChange={setSanction} idPrefix="user" />
           <button type="button" className="btn btn-danger" disabled={busy || !sanction.type || sanctionIncomplete(sanction)}
-            onClick={() => {
+            onClick={async () => {
               const p = sanctionPayload(sanction);
-              if (p && window.confirm(`Confirmer : ${SANCTION_LABELS[p.type]} pour ${u.displayName} ?`)) {
+              if (p && (await confirmDialog(`${SANCTION_LABELS[p.type]} pour ${u.displayName} ?`, { confirm: 'Appliquer', danger: true }))) {
                 void run(() => call('/admin/sanctions', { method: 'POST', body: { userId: u.id, ...p } }), 'Sanction appliquée.');
               }
             }}>

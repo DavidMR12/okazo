@@ -65,7 +65,7 @@ export class FavoritesService {
         status: listings.status,
         expiresAt: listings.expiresAt,
         sellerStatus: users.status,
-        city: cities.name,
+        city: sql<string>`coalesce(${listings.cityOther}, ${cities.name})`,
         favoritedAt: favorites.createdAt,
         cursorTs: sql<string>`${favorites.createdAt}::text`,
       })

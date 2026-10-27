@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Alert } from 'react-native';
+import {  } from 'react-native';
 import { api } from '../../src/api/client';
 import { useMe } from '../../src/api/hooks';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { ListingForm, ListingValues } from '../../src/components/ListingForm';
 import { Message } from '../../src/components/Message';
+import { dialog } from '../../src/components/Dialog';
 
 export default function PublishScreen() {
   const { status } = useAuth();
@@ -35,6 +36,8 @@ export default function PublishScreen() {
         categoryId: v.categoryId,
         cityId: v.cityId,
         districtId: v.districtId ?? undefined,
+        cityOther: v.cityOther ?? undefined,
+        districtOther: v.districtOther ?? undefined,
         handDelivery: v.handDelivery,
         paymentMethods: v.paymentMethods,
         title: v.title,
@@ -47,7 +50,7 @@ export default function PublishScreen() {
       },
     });
     void qc.invalidateQueries({ queryKey: ['my-listings'] });
-    Alert.alert('Annonce envoyée', 'Elle sera en ligne après une vérification rapide. Suivez son statut dans « Mes annonces ».', [
+    dialog('Annonce envoyée', 'Elle sera en ligne après une vérification rapide. Suivez son statut dans « Mes annonces ».', [
       { text: 'Voir mes annonces', onPress: () => router.push('/my-listings') },
       { text: 'OK' },
     ]);

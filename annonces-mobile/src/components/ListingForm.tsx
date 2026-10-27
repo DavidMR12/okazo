@@ -1,9 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from './Typography';
 import { ApiError } from '../api/client';
 import { useCategories, useCities, useCountries, useDistricts, useMe } from '../api/hooks';
@@ -18,7 +19,15 @@ import { Chip } from './Chip';
 import { PhotoStrip } from './PhotoStrip';
 import { PriceTag } from './PriceTag';
 import { WalletList, WalletLogo, walletName } from './Wallets';
+import { dialog } from './Dialog';
+import { ensureCamera, ensurePhotos } from '../lib/permissions';
 
+/** Ville « Autres villes » de chaque pays (slug de l’API) : le vendeur saisit le nom de sa ville. */
+const OTHER_CITY_SLUG = 'autre';
+// Ville ou quartier saisis : mêmes règles que l’API (lettres, 2 à 60 caractères, pas de chiffres)
+const PLACE_NAME = /^[\p{L}\p{M}][\p{L}\p{M} '’.()-]*$/u;
+const placeError = (v: string, what: string) =>
+  v.trim().length < 2 ? `Indiquez le nom de votre ${what}.` : !PLACE_NAME.test(v.trim()) ? 'Lettres uniquement, sans chiffres.' : null;
 const PRICE_TYPES: { value: PriceType; label: string }[] = [
   { value: 'fixed', label: 'Prix fixe' },
   { value: 'negotiable', label: 'À débattre' },
@@ -49,6 +58,8 @@ export interface ListingDraft {
   categoryId?: number;
   cityId?: number;
   districtId?: number | null;
+  cityOther?: string; // ville saisie, avec la ville « Autres villes »
+  districtOther?: string; // quartier saisi ; défini (même vide) = « Autre quartier » choisi
   handDelivery?: boolean; // remise en main propre ; absent = oui (choix par défaut)
   paymentMethods?: string[]; // portefeuilles électroniques acceptés
   priceType: PriceType;
@@ -67,6 +78,8 @@ export interface ListingValues {
   categoryId: number;
   cityId: number;
   districtId: number | null;
+  cityOther: string | null; // seulement avec la ville « Autres villes »
+  districtOther: string | null;
   handDelivery?: boolean; // seulement pour un objet proposé (voir HAND_DELIVERY_EXCLUDED)
   paymentMethods: string[]; // portefeuilles acceptés, parmi ceux du pays (vide : non précisé)
   title: string;
@@ -183,6 +196,7 @@ export function ListingForm({
   const uploading = photos.photos.length > 0 && !photos.ready && !photos.hasErrors;
   const priceTitle = form ? (d.adType === 'request' ? form.price.requestLabel : form.price.label) : 'Prix';
 
+  const isOtherCity = cities.data?.find((c) => c.id === d.cityId)?.slug === OTHER_CITY_SLUG;
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!photos.photos.length && !photosOptional) e.photos = 'Ajoutez au moins une photo.';
@@ -190,6 +204,14 @@ export function ListingForm({
     if (d.description.trim().length < 10) e.description = 'Décrivez votre article en quelques phrases.';
     if (!d.categoryId) e.category = 'Choisissez une catégorie.';
     if (!d.cityId) e.city = 'Choisissez une ville.';
+    else if (isOtherCity) {
+      const m = placeError(d.cityOther ?? '', 'ville');
+      if (m) e.city = m;
+    }
+    if (d.districtOther !== undefined && !d.districtId && d.districtOther.trim()) {
+      const m = placeError(d.districtOther, 'quartier');
+      if (m) e.city = m;
+    }
     if (priceRequired && !(Number(d.price) > 0)) e.price = 'Indiquez un prix.';
     for (const fl of form?.fields ?? []) {
       const v = attrs[fl.key];
@@ -201,7 +223,7 @@ export function ListingForm({
     }
     if (form && !form.price.types.includes(d.priceType)) e.price = 'Choisissez un type de prix.';
     return e;
-  }, [d, attrs, form, photos.photos.length, priceRequired, photosOptional]);
+  }, [d, attrs, form, photos.photos.length, priceRequired, photosOptional, isOtherCity]);
 
   // Champs de la catégorie remplis, lisibles : « Marque : Toyota », « Kilométrage : 98 000 km »
   const facts = (form?.fields ?? [])
@@ -229,13 +251,9 @@ export function ListingForm({
 
   const pickPhotos = () => {
     const open = async (source: 'camera' | 'library') => {
-      if (source === 'camera') {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) {
-          Alert.alert('Appareil photo', "Autorisez l’accès à l’appareil photo dans les réglages du téléphone.");
-          return;
-        }
-      }
+      // Accès expliqué en français avant la demande du système (photos : seulement sur téléphone, le web n'en demande pas)
+      if (source === 'camera' && !(await ensureCamera())) return;
+      if (source === 'library' && Platform.OS !== 'web' && !(await ensurePhotos())) return;
       const res =
         source === 'camera'
           ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1 })
@@ -248,7 +266,7 @@ export function ListingForm({
             });
       if (!res.canceled) photos.add(res.assets.map((a) => ({ uri: a.uri, width: a.width, height: a.height })));
     };
-    Alert.alert('Ajouter des photos', undefined, [
+    dialog('Ajouter des photos', undefined, [
       { text: 'Prendre une photo', onPress: () => void open('camera') },
       { text: 'Choisir dans la galerie', onPress: () => void open('library') },
       { text: 'Annuler', style: 'cancel' },
@@ -276,7 +294,7 @@ export function ListingForm({
       return;
     }
     if (photos.hasErrors) {
-      Alert.alert('Photos', "Certaines photos n’ont pas pu être envoyées. Touchez-les pour réessayer ou retirez-les.");
+      dialog('Photos', "Certaines photos n’ont pas pu être envoyées. Touchez-les pour réessayer ou retirez-les.");
       return;
     }
     if (!photos.ready) return;
@@ -288,6 +306,8 @@ export function ListingForm({
         categoryId: d.categoryId!,
         cityId: d.cityId!,
         districtId: d.districtId ?? null,
+        cityOther: isOtherCity ? (d.cityOther ?? '').trim() : null,
+        districtOther: !d.districtId && d.districtOther?.trim() ? d.districtOther.trim() : null,
         handDelivery: askHandDelivery ? handDelivery : undefined,
         paymentMethods: askWallets ? wallets : [],
         title: d.title.trim(),
@@ -306,12 +326,12 @@ export function ListingForm({
       }
     } catch (e) {
       if (e instanceof ApiError && e.code === 'IDENTITY_VERIFICATION_REQUIRED') {
-        Alert.alert('Vérification requise', e.message, [
+        dialog('Vérification requise', e.message, [
           { text: 'Vérifier mon identité', onPress: () => router.push('/verify-identity') },
           { text: 'Annuler', style: 'cancel' },
         ]);
       } else {
-        Alert.alert('Annonce', e instanceof ApiError ? e.message : `Envoi impossible.${draftKey ? ' Votre brouillon est conservé.' : ''}`);
+        dialog('Annonce', e instanceof ApiError ? e.message : `Envoi impossible.${draftKey ? ' Votre brouillon est conservé.' : ''}`);
       }
     } finally {
       setSubmitting(false);
@@ -480,20 +500,32 @@ export function ListingForm({
           <Section title="Ville" hint={stepped ? 'Les acheteurs voient la ville, jamais votre adresse.' : undefined}>
             <View style={styles.wrap}>
               {cities.data?.map((c) => (
-                <Chip key={c.id} label={c.name} selected={d.cityId === c.id} onPress={() => setD((x) => ({ ...x, cityId: c.id, districtId: x.cityId === c.id ? x.districtId : null }))} />
+                <Chip key={c.id} label={c.slug === OTHER_CITY_SLUG ? 'Autre ville' : c.name} selected={d.cityId === c.id}
+                  onPress={() => setD((x) => (x.cityId === c.id ? x : { ...x, cityId: c.id, districtId: null, districtOther: undefined }))} />
               ))}
             </View>
+            {isOtherCity ? (
+              <TextInput value={d.cityOther ?? ''} onChangeText={(v) => set('cityOther', v)} placeholder="Nom de votre ville (ex. : Kribi)" placeholderTextColor={colors.inkMuted}
+                maxLength={60} accessibilityLabel="Nom de votre ville" style={[styles.input, styles.placeOther]} />
+            ) : null}
             {err('city')}
           </Section>
         ) : null}
-        {at('place') && d.cityId && districts.data?.length ? (
+        {at('place') && d.cityId && (districts.data?.length || isOtherCity) ? (
           <Section title="Quartier" hint="Facultatif. Il aide les acheteurs proches ; votre adresse n’est jamais affichée.">
-            <View style={styles.wrap}>
-              <Chip label="Ne pas préciser" selected={!d.districtId} onPress={() => set('districtId', null)} />
-              {districts.data.map((x) => (
-                <Chip key={x.id} label={x.name} selected={d.districtId === x.id} onPress={() => set('districtId', x.id)} />
-              ))}
-            </View>
+            {districts.data?.length ? (
+              <View style={styles.wrap}>
+                <Chip label="Ne pas préciser" selected={!d.districtId && d.districtOther === undefined} onPress={() => setD((x) => ({ ...x, districtId: null, districtOther: undefined }))} />
+                {districts.data.map((x) => (
+                  <Chip key={x.id} label={x.name} selected={d.districtId === x.id} onPress={() => setD((y) => ({ ...y, districtId: x.id, districtOther: undefined }))} />
+                ))}
+                <Chip label="Autre quartier" selected={!d.districtId && d.districtOther !== undefined} onPress={() => setD((x) => ({ ...x, districtId: null, districtOther: x.districtOther ?? '' }))} />
+              </View>
+            ) : null}
+            {!d.districtId && (d.districtOther !== undefined || !districts.data?.length) ? (
+              <TextInput value={d.districtOther ?? ''} onChangeText={(v) => set('districtOther', v)} placeholder="Nom du quartier" placeholderTextColor={colors.inkMuted}
+                maxLength={60} accessibilityLabel="Nom du quartier" style={[styles.input, styles.placeOther]} />
+            ) : null}
           </Section>
         ) : null}
 
@@ -568,7 +600,7 @@ export function ListingForm({
             </RecapBlock>
             <RecapBlock title="Lieu" onEdit={() => goTo(4)}>
               <Text style={type.body}>
-                {[districts.data?.find((x) => x.id === d.districtId)?.name, cities.data?.find((c) => c.id === d.cityId)?.name].filter(Boolean).join(', ') || '—'}
+                {[districts.data?.find((x) => x.id === d.districtId)?.name ?? (d.districtOther?.trim() || null), isOtherCity ? d.cityOther?.trim() : cities.data?.find((c) => c.id === d.cityId)?.name].filter(Boolean).join(', ') || '—'}
               </Text>
               {askHandDelivery ? <Text style={type.small}>{handDelivery ? 'Remise en main propre' : 'Pas de remise en main propre'}</Text> : null}
             </RecapBlock>
@@ -585,13 +617,18 @@ export function ListingForm({
         {draftKey && (!stepped || step === 0 || isRecap) ? (
           <Pressable
             onPress={() =>
-              Alert.alert('Effacer le brouillon ?', undefined, [
+              dialog('Effacer le brouillon ?', 'Le texte, les choix et les photos saisis seront supprimés. Cette action est définitive.', [
                 { text: 'Annuler', style: 'cancel' },
                 { text: 'Effacer', style: 'destructive', onPress: clearDraft },
               ])
             }
+            style={({ pressed }) => [styles.clear, pressed && { backgroundColor: '#FFE2DF' }]}
+            accessibilityRole="button"
           >
-            <Text style={styles.clear}>Effacer le brouillon</Text>
+            <View style={styles.clearIcon}>
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </View>
+            <Text style={styles.clearText}>Effacer le brouillon</Text>
           </Pressable>
         ) : null}
       </ScrollView>
@@ -642,6 +679,7 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   subList: { paddingLeft: space.md, borderLeftWidth: 2, borderLeftColor: colors.line },
+  placeOther: { marginTop: space.sm },
   input: { borderWidth: 1.5, borderColor: colors.line, borderRadius: 10, paddingHorizontal: space.md, minHeight: 48, fontSize: 16, color: colors.ink },
   multiline: { minHeight: 120, paddingTop: space.md, textAlignVertical: 'top' },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
@@ -649,7 +687,10 @@ const styles = StyleSheet.create({
   currency: { fontSize: 18, fontWeight: '700', color: colors.inkMuted },
   notice: { backgroundColor: colors.warningBg, borderRadius: 10, padding: space.lg, gap: space.md },
   error: { color: colors.danger, fontSize: 14 },
-  clear: { textAlign: 'center', color: colors.inkMuted, fontSize: 14, textDecorationLine: 'underline', padding: space.md },
+  // « Effacer le brouillon » : bouton ovale rouge pâle, comme « Supprimer mon compte »
+  clear: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, alignSelf: 'center', marginTop: space.md, paddingVertical: 8, paddingLeft: 8, paddingRight: space.lg, borderRadius: 999, borderWidth: 1, borderColor: '#F2D4D0', backgroundColor: '#FFF8F7' },
+  clearIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFE9E6', alignItems: 'center', justifyContent: 'center' },
+  clearText: { fontSize: 15, fontWeight: '700', color: colors.danger },
   progress: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.md, gap: space.xs, borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.bg },
   bars: { flexDirection: 'row', gap: space.xs, marginTop: space.sm },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.tintLine },

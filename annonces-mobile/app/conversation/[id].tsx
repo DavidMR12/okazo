@@ -5,12 +5,13 @@ import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router
 // La navigation est intégrée à expo-router : ne pas installer @react-navigation à part (contexte différent)
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '../../src/components/Typography';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, ApiError } from '../../src/api/client';
 import { useMe } from '../../src/api/hooks';
 import type { ChatMessage, ConversationMeta, ConversationPayload } from '../../src/api/types';
+import { Avatar } from '../../src/components/Blocks';
 import { Message } from '../../src/components/Message';
 import { PriceTag } from '../../src/components/PriceTag';
 import { OfferCard } from '../../src/components/OfferCard';
@@ -20,6 +21,7 @@ import { MESSAGE_WARNINGS } from '../../src/lib/messageWarnings';
 import { isOnline, useNetwork } from '../../src/lib/network';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, space, type } from '../../src/theme';
+import { dialog } from '../../src/components/Dialog';
 
 const POLL_MS = 4000; // relevé des nouveaux messages tant que la conversation est affichée
 let tempId = -1;
@@ -116,14 +118,14 @@ export default function ConversationScreen() {
         await api(`/offers/${offerId}/${action}`, { method: 'POST', auth: true });
         refresh();
       } catch (e) {
-        Alert.alert('Offre', e instanceof ApiError ? e.message : 'Action impossible. Réessayez.');
+        dialog('Offre', e instanceof ApiError ? e.message : 'Action impossible. Réessayez.');
         refresh();
       } finally {
         setActing(null);
       }
     };
     if (action === 'accept') {
-      Alert.alert('Accepter cette offre ?', 'L’acheteur sera prévenu. Convenez ensuite d’un rendez-vous ; marquez l’annonce vendue après la vente.', [
+      dialog('Accepter cette offre ?', 'L’acheteur sera prévenu. Convenez ensuite d’un rendez-vous ; marquez l’annonce vendue après la vente.', [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Accepter', onPress: () => void run() },
       ]);
@@ -154,7 +156,7 @@ export default function ConversationScreen() {
       // Pas de réseau : le message attend et partira au retour de la connexion ; sinon, échec à réessayer
       const offline = !isOnline() || (e instanceof ApiError && e.status === 0);
       setMsgs((prev) => prev.map((m) => (m.id === temp.id ? (offline ? { ...m, queued: true } : { ...m, failed: true }) : m)));
-      if (!offline && e instanceof ApiError) Alert.alert('Message non envoyé', e.message);
+      if (!offline && e instanceof ApiError) dialog('Message non envoyé', e.message);
     }
   };
 
@@ -163,13 +165,13 @@ export default function ConversationScreen() {
     const other = meta.other;
     const report = (reason: 'scam' | 'harassment') =>
       api<{ message: string }>(`/conversations/${id}/report`, { method: 'POST', auth: true, body: { reason } })
-        .then((r) => Alert.alert('Signalement envoyé', r.message))
-        .catch((e) => Alert.alert('Signalement', e instanceof ApiError ? e.message : 'Envoi impossible.'));
+        .then((r) => dialog('Signalement envoyé', r.message))
+        .catch((e) => dialog('Signalement', e instanceof ApiError ? e.message : 'Envoi impossible.'));
     const toggleBlock = () =>
       api(`/users/${other.id}/block`, { method: meta.iBlocked ? 'DELETE' : 'POST', auth: true })
         .then(() => setMeta({ ...meta, iBlocked: !meta.iBlocked }))
-        .catch(() => Alert.alert('Action impossible', 'Réessayez.'));
-    Alert.alert(other.displayName, undefined, [
+        .catch(() => dialog('Action impossible', 'Réessayez.'));
+    dialog(other.displayName, undefined, [
       { text: "Signaler une arnaque", style: 'destructive', onPress: () => void report('scam') },
       { text: 'Signaler un comportement insultant', onPress: () => void report('harassment') },
       { text: meta.iBlocked ? 'Débloquer' : 'Bloquer cette personne', onPress: () => void toggleBlock() },
@@ -203,6 +205,16 @@ export default function ConversationScreen() {
       <Stack.Screen
         options={{
           title: meta.other?.displayName ?? 'Utilisateur supprimé',
+          // En-tête avec avatar, nom et rôle (même direction artistique que le site)
+          headerTitle: () => (
+            <View style={styles.who}>
+              <Avatar name={meta.other?.displayName ?? '?'} size={34} />
+              <View style={{ flexShrink: 1 }}>
+                <Text style={styles.whoName} numberOfLines={1}>{meta.other?.displayName ?? 'Utilisateur supprimé'}</Text>
+                <Text style={styles.whoRole}>{meta.role === 'seller' ? 'Intéressé par votre annonce' : 'Vendeur'}</Text>
+              </View>
+            </View>
+          ),
           headerRight: () => (
             <Pressable onPress={openMenu} hitSlop={12} accessibilityRole="button" accessibilityLabel="Signaler ou bloquer">
               <Ionicons name="ellipsis-horizontal-circle-outline" size={26} color={colors.ink} />
@@ -214,7 +226,7 @@ export default function ConversationScreen() {
         <Pressable style={styles.listing} onPress={() => router.push(`/listing/${meta.listing!.id}`)} accessibilityRole="button">
           <Image source={meta.listing.thumbnailUrl ?? undefined} style={styles.listingThumb} contentFit="cover" />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={type.body} numberOfLines={1}>{meta.listing.title}</Text>
+            <Text style={styles.listingTitle} numberOfLines={1}>{meta.listing.title}</Text>
             <PriceTag priceType={meta.listing.priceType} priceXaf={meta.listing.priceXaf} />
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
@@ -230,11 +242,14 @@ export default function ConversationScreen() {
         onEndReached={() => void loadOlder()}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
-          <Text style={styles.safety}>
-            {meta?.listing?.parentSlug === 'emploi'
-              ? 'Restez sur la messagerie. Un vrai recruteur ne demande jamais d’argent (frais de dossier, formation, tenue…) : dans ce cas, signalez la conversation.'
-              : 'Restez sur la messagerie jusqu’à la rencontre. Ne payez jamais à l’avance et vérifiez l’article avant de payer.'}
-          </Text>
+          <View style={styles.safety}>
+            <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
+            <Text style={styles.safetyText}>
+              {meta?.listing?.parentSlug === 'emploi'
+                ? 'Restez sur la messagerie. Un vrai recruteur ne demande jamais d’argent (frais de dossier, formation, tenue…) : dans ce cas, signalez la conversation.'
+                : 'Restez sur la messagerie jusqu’à la rencontre. Ne payez jamais à l’avance et vérifiez l’article avant de payer.'}
+            </Text>
+          </View>
         }
         renderItem={({ item }) => {
           const mine = item.senderId === myId;
@@ -293,7 +308,7 @@ export default function ConversationScreen() {
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder="Votre message"
+            placeholder="Écrivez votre message…"
             placeholderTextColor={colors.inkMuted}
             multiline
             maxLength={2000}
@@ -314,23 +329,46 @@ export default function ConversationScreen() {
 }
 
 const styles = StyleSheet.create({
-  listing: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
-  listingThumb: { width: 44, height: 44, borderRadius: 6, backgroundColor: colors.surface },
-  safety: { textAlign: 'center', fontSize: 13, color: colors.inkMuted, padding: space.lg },
+  who: { flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: 240 },
+  whoName: { fontSize: 16, fontWeight: '700', color: colors.ink },
+  whoRole: { fontSize: 12, color: colors.inkMuted },
+  listing: { flexDirection: 'row', alignItems: 'center', gap: space.md, margin: space.md, marginBottom: 0, padding: 10, borderRadius: 16, backgroundColor: colors.tint, borderWidth: 1, borderColor: colors.tintLine },
+  listingThumb: { width: 54, height: 54, borderRadius: 12, backgroundColor: colors.surface },
+  listingTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  safety: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'center', margin: space.md, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: colors.tint },
+  safetyText: { flexShrink: 1, fontSize: 13, lineHeight: 18, color: colors.inkMuted, textAlign: 'center' },
   bubbleRow: { maxWidth: '82%', gap: 4 },
   left: { alignSelf: 'flex-start' },
   right: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   bubble: { borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },
   mine: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
-  theirs: { backgroundColor: colors.surface, borderBottomLeftRadius: 4 },
+  theirs: { backgroundColor: '#EEF2F8', borderBottomLeftRadius: 4 },
   failed: { opacity: 0.6 },
   text: { fontSize: 16, lineHeight: 22, color: colors.ink },
   warning: { flexDirection: 'row', gap: 6, backgroundColor: colors.warningBg, borderRadius: 8, padding: 8 },
   warningText: { flex: 1, fontSize: 13, lineHeight: 18, color: colors.ink },
   meta: { fontSize: 12, color: colors.inkMuted },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, paddingHorizontal: space.md, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.bg },
-  input: { flex: 1, minHeight: 44, maxHeight: 120, borderRadius: 22, backgroundColor: colors.surface, paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11, fontSize: 16, color: colors.ink },
-  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  composer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: space.sm,
+    marginHorizontal: space.sm,
+    paddingHorizontal: space.sm,
+    paddingTop: space.sm,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: '#E6EDF8',
+    backgroundColor: colors.bg,
+    shadowColor: '#1E3A8A',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 4,
+  },
+  input: { flex: 1, minHeight: 44, maxHeight: 120, borderRadius: 22, backgroundColor: '#F4F7FC', paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11, fontSize: 16, color: colors.ink },
+  send: { width: 46, height: 46, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   closed: { padding: space.md, alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   system: { alignSelf: 'center', fontSize: 13, color: colors.inkMuted, textAlign: 'center', paddingVertical: space.xs },
   offerBar: { flexDirection: 'row', paddingHorizontal: space.md, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },

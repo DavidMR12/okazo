@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiError } from '../../src/api/client';
 import { useCreateReview } from '../../src/api/hooks';
 import { Button } from '../../src/components/Button';
@@ -8,6 +8,7 @@ import { RATING_LABELS, StarInput } from '../../src/components/Stars';
 import { Text, TextInput } from '../../src/components/Typography';
 import { reviewRoleLabel } from '../../src/lib/format';
 import { colors, space, type } from '../../src/theme';
+import { dialog } from '../../src/components/Dialog';
 
 /** Donner son avis après un échange : une note de 1 à 5 étoiles et, si on veut, quelques mots. */
 export default function ReviewScreen() {
@@ -28,7 +29,7 @@ export default function ReviewScreen() {
       { rating, comment: text || undefined },
       {
         onSuccess: () => {
-          Alert.alert('Merci pour votre avis', 'Il aide toute la communauté à échanger en confiance.');
+          dialog('Merci pour votre avis', 'Il aide toute la communauté à échanger en confiance.');
           router.back();
         },
         onError: (e) => setError(e instanceof ApiError ? e.message : 'Envoi impossible. Réessayez.'),

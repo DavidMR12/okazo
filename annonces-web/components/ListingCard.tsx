@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- photos déjà redimensionnées en WebP par l'API et servies par le CDN */
 import Link from 'next/link';
-import { calendarOutline, flame, locationOutline } from 'ionicons/icons';
+import type { ReactNode } from 'react';
+import { calendarOutline, flame, heartOutline, locationOutline } from 'ionicons/icons';
 import { Ion } from './Ion';
 import { listingPath, placeLabel, relativeTime } from '@/lib/format';
 import type { ListingCard as Card } from '@/lib/types';
@@ -12,12 +13,12 @@ import { PriceTag } from './PriceTag';
  * Carte d'annonce façon LeBonCoin : grande photo carrée en haut (cœur en surimpression), puis titre, prix,
  * lieu et date. Sans photo (emploi, services) : un fond bleu pâle avec une icône, jamais une case vide.
  */
-export function ListingCard({ item, eager }: { item: Card; eager?: boolean }) {
+export function ListingCard({ item, eager, preview }: { item: Card; eager?: boolean; preview?: boolean }) {
   const badge = [item.boosted ? 'À la une' : null, item.adType === 'request' ? 'Je recherche' : null].filter(Boolean).join(' · ');
   return (
     // Le cœur est un bouton à part : un bouton ne peut pas être placé dans un lien
     <div className="tile">
-      <Link href={listingPath(item)} className="tile-link" prefetch={false}>
+      <Wrapper href={listingPath(item)} preview={preview}>
         <span className="tile-media">
           {item.thumbnailUrl ? (
             <img src={item.thumbnailUrl} alt="" width={400} height={400} loading={eager ? 'eager' : 'lazy'} decoding="async" />
@@ -35,8 +36,14 @@ export function ListingCard({ item, eager }: { item: Card; eager?: boolean }) {
             <span className="tile-date"><Ion icon={calendarOutline} size={13} className="meta-ion" />{relativeTime(item.publishedAt)}</span>
           </span>
         </span>
-      </Link>
-      <CardHeart listingId={item.id} title={item.title} />
+      </Wrapper>
+      {preview ? <span className="card-heart preview-only" aria-hidden><Ion icon={heartOutline} size={20} /></span> : <CardHeart listingId={item.id} title={item.title} />}
     </div>
   );
+}
+
+/** Aperçu à la publication : même carte, mais ni lien ni bouton (l'annonce n'existe pas encore). */
+function Wrapper({ href, preview, children }: { href: string; preview?: boolean; children: ReactNode }) {
+  if (preview) return <span className="tile-link">{children}</span>;
+  return <Link href={href} className="tile-link" prefetch={false}>{children}</Link>;
 }

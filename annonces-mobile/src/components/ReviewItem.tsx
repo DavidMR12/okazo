@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { ApiError } from '../api/client';
 import { useReportReview } from '../api/hooks';
@@ -8,6 +8,7 @@ import { relativeTime, reviewRoleLabel } from '../lib/format';
 import { colors, space, type } from '../theme';
 import { Stars } from './Stars';
 import { Text } from './Typography';
+import { dialog } from './Dialog';
 
 /** Un avis : note, auteur (« Acheteur » ou « Vendeur »), annonce concernée, commentaire, et « Signaler ». */
 export function ReviewItem({ review }: { review: Review }) {
@@ -20,11 +21,11 @@ export function ReviewItem({ review }: { review: Review }) {
       report.mutate(
         { id: review.id, reason },
         {
-          onSuccess: () => Alert.alert('Merci', 'L’avis sera examiné par la modération.'),
-          onError: (e) => Alert.alert('Signalement', e instanceof ApiError ? e.message : 'Envoi impossible.'),
+          onSuccess: () => dialog('Merci', 'L’avis sera examiné par la modération.'),
+          onError: (e) => dialog('Signalement', e instanceof ApiError ? e.message : 'Envoi impossible.'),
         },
       );
-    Alert.alert('Signaler cet avis', undefined, [
+    dialog('Signaler cet avis', undefined, [
       { text: 'Faux avis (pas d’échange réel)', onPress: () => send('fake_review') },
       { text: 'Insultant ou injurieux', onPress: () => send('harassment') },
       { text: 'Annuler', style: 'cancel' },

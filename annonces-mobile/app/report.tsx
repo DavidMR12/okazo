@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '../src/components/Typography';
 import { ApiError } from '../src/api/client';
 import { useReport } from '../src/api/hooks';
 import type { ReportReason } from '../src/api/types';
 import { Button } from '../src/components/Button';
 import { colors, space, type } from '../src/theme';
+import { dialog } from '../src/components/Dialog';
 
 const REASONS: { value: ReportReason; label: string }[] = [
   { value: 'scam', label: "Arnaque ou demande d’argent à l’avance" },
@@ -33,10 +34,10 @@ export default function ReportScreen() {
       { listingId, userId, reason, details: details.trim() || undefined },
       {
         onSuccess: (r) => {
-          Alert.alert('Signalement envoyé', r.message);
+          dialog('Signalement envoyé', r.message);
           router.back();
         },
-        onError: (e) => Alert.alert('Signalement', e instanceof ApiError ? e.message : 'Envoi impossible.'),
+        onError: (e) => dialog('Signalement', e instanceof ApiError ? e.message : 'Envoi impossible.'),
       },
     );
   };

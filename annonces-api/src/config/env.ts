@@ -15,7 +15,9 @@ const schema = z
     JWT_ACCESS_SECRET: z.string().min(32),
     OTP_SECRET: z.string().min(32),
     ACCESS_TOKEN_TTL_SEC: z.coerce.number().int().default(900), // 15 min
-    REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().default(30),
+    // Session sans fin pour l'utilisateur (demande du porteur, 20 octobre 2026) : 10 ans, repoussés à chaque renouvellement.
+    // Elle ne s'arrête que par « Se déconnecter », la suppression du compte, un bannissement ou un vol détecté.
+    REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().default(3650),
 
     OTP_TTL_SEC: z.coerce.number().int().default(300), // 5 min
     OTP_MAX_ATTEMPTS: z.coerce.number().int().default(5),
