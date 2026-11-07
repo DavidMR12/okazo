@@ -28,7 +28,10 @@ const schema = z
     OTP_IP_HOURLY_LIMIT: z.coerce.number().int().default(10),
     OTP_DAILY_GLOBAL_CAP: z.coerce.number().int().default(5000), // plafond anti "SMS pumping"
 
-    SMS_PROVIDER: z.enum(['console', 'twilio']).default('console'),
+    SMS_PROVIDER: z.enum(['console', 'twilio', 'infobip']).default('console'),
+    INFOBIP_BASE_URL: z.string().regex(/^https:\/\/[a-z0-9-]+\.api\.infobip\.com$/, 'INFOBIP_BASE_URL : https://xxxxx.api.infobip.com, sans / final').optional(),
+    INFOBIP_API_KEY: z.string().optional(),
+    INFOBIP_SENDER: z.string().max(11).default('Okazo'), // nom d'expéditeur (11 caractères au plus), à faire enregistrer par pays
     TWILIO_ACCOUNT_SID: z.string().optional(),
     TWILIO_AUTH_TOKEN: z.string().optional(),
     TWILIO_FROM: z.string().optional(),
@@ -93,6 +96,9 @@ const schema = z
   })
   .refine((e) => !(e.NODE_ENV === 'production' && /localhost|127\.0\.0\.1|192\.168\./.test(e.CORS_ORIGINS)), {
     message: 'CORS_ORIGINS ne doit contenir que les vrais domaines en production',
+  })
+  .refine((e) => e.SMS_PROVIDER !== 'infobip' || (e.INFOBIP_BASE_URL && e.INFOBIP_API_KEY), {
+    message: 'INFOBIP_BASE_URL et INFOBIP_API_KEY sont requis',
   })
   .refine((e) => !(e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console'), {
     message: "SMS_PROVIDER=console est interdit en production",

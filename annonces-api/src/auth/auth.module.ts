@@ -12,6 +12,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { OtpService } from './otp.service';
 import { ConsoleSmsProvider } from './sms/console-sms.provider';
+import { InfobipSmsProvider } from './sms/infobip-sms.provider';
 import { SMS_PROVIDER } from './sms/sms-provider';
 import { TwilioSmsProvider } from './sms/twilio-sms.provider';
 import { TokenService } from './token.service';
@@ -40,7 +41,8 @@ import { ConsoleMailProvider, DisabledMailProvider, MAIL_PROVIDER } from './mail
     },
     {
       provide: SMS_PROVIDER,
-      useFactory: () => (env.SMS_PROVIDER === 'twilio' ? new TwilioSmsProvider() : new ConsoleSmsProvider()),
+      useFactory: () =>
+        env.SMS_PROVIDER === 'infobip' ? new InfobipSmsProvider() : env.SMS_PROVIDER === 'twilio' ? new TwilioSmsProvider() : new ConsoleSmsProvider(),
     },
   ],
   // Les autres modules (annonces, modération…) importent AuthModule pour utiliser les gardes.
