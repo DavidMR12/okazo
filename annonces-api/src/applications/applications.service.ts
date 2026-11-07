@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { RateLimitService } from '../common/rate-limit.service';
 import { Database, DB } from '../db/db.module';
 import { categories, jobApplications, listings, users } from '../db/schema';
+import { matchesType } from '../media/file-signature';
 import { StorageService } from '../media/storage.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ApplyInput, CV_MAX_BYTES, CV_TYPES, CvContentType, CvUploadInput, EmployerStatus } from './applications.schemas';
@@ -82,6 +83,7 @@ export class ApplicationsService {
       if (!h) throw new BadRequestException({ code: 'FILE_NOT_UPLOADED', message: 'Le CV n’a pas été envoyé. Réessayez.' });
       if (h.size > CV_MAX_BYTES) throw new BadRequestException({ code: 'FILE_TOO_LARGE', message: 'CV trop volumineux (5 Mo maximum).' });
       if (!h.contentType || !(h.contentType in CV_TYPES)) throw new BadRequestException({ code: 'FILE_TYPE', message: 'Format de CV non accepté (PDF, JPEG ou PNG).' });
+      if (!matchesType(h.contentType, await this.storage.getPrefix(input.cvKey))) throw new BadRequestException({ code: 'FILE_TYPE', message: 'Ce fichier n’est pas un PDF, un JPEG ou un PNG valide.' });
       cvContentType = h.contentType as CvContentType;
     }
 

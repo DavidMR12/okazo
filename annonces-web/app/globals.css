@@ -451,8 +451,6 @@ button.chip { font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--i
 .tile-link:hover .tile-title { text-decoration: underline; }
 .tile-meta { display: flex; justify-content: space-between; gap: 6px; font-size: 0.8rem; }
 .tile-place { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tile .price-tag { font-size: 1rem; }
-.tile .price-note { font-size: 0.78rem; }
 .tile .card-heart { top: 8px; right: 8px; width: 38px; height: 38px; background: rgba(255, 255, 255, 0.92); color: var(--ink); }
 .tile .card-heart:hover { background: #fff; }
 .tile .card-heart.on { color: var(--danger); }
@@ -570,7 +568,6 @@ body { overflow-x: clip; }
 .popular-media img { height: 100%; }
 .popular-body { padding: 0; font-size: 0.9rem; }
 .tile-title { font-size: 0.92rem; }
-.tile .price-tag { font-size: 0.95rem; }
 @media (min-width: 640px) { .tile-row { grid-auto-columns: calc((100% - 2 * 16px) / 3); gap: 16px; } }
 @media (min-width: 760px) { .tile-row { grid-auto-columns: calc((100% - 3 * 16px) / 4); } }
 @media (min-width: 960px) { .tile-row { grid-auto-columns: calc((100% - 5 * 16px) / 6); } }
@@ -714,20 +711,16 @@ button, input, textarea, select { font-family: inherit; }
 .listing-head .sold-badge, .listing-head .request-badge { align-self: flex-start; }
 
 /* Pied de page : les titres de colonnes reprennent le style du nom à gauche (très gras, gris, sans majuscules) */
-.footer-grid h2 { font-family: var(--font-slab), Georgia, serif; font-size: 1.05rem; font-weight: 900; color: var(--ink-muted); text-transform: none; letter-spacing: -0.02em; margin: 0 0 6px; }
-.footer-grid nav a, .footer-grid nav button, .footer-brand p { font-family: var(--font-slab), Georgia, serif; font-size: 0.9rem; font-weight: 400; color: var(--ink-muted); }
+.footer-grid h2 { font-family: var(--font-title), Georgia, serif; font-size: 1.1rem; font-weight: 700; color: var(--ink); text-transform: none; letter-spacing: -0.02em; margin: 0 0 6px; }
+.footer-grid nav a, .footer-grid nav button, .footer-brand p { font-family: var(--font-title), Georgia, serif; font-size: 0.95rem; font-weight: 400; color: var(--ink-muted); }
 .footer-grid nav button { align-self: flex-start; padding: 0; border: 0; background: none; text-align: left; text-decoration: none; cursor: pointer; }
 .footer-grid nav button:hover { color: var(--primary); }
 
 /* Cartes : rien ne déborde sur la carte voisine (prix avec unité, « à débattre », lieu et date) */
 .tile, .tile-link, .tile-body { min-width: 0; max-width: 100%; }
 .tile-body { overflow: hidden; }
-.tile .price { display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; max-width: 100%; }
-.tile .price-tag { white-space: normal; overflow-wrap: break-word; max-width: 100%; line-height: 1.25; }
-.tile .price-note { white-space: nowrap; line-height: 1.2; }
 .tile-meta { align-items: baseline; min-width: 0; }
 .tile-place { flex: 1 1 auto; min-width: 0; }
-.tile-meta > span:last-child { flex: none; white-space: nowrap; }
 
 /*
  * Cartes alignées ligne par ligne (13 octobre 2026) : titre, prix, « à débattre », puis lieu et date occupent
@@ -742,22 +735,14 @@ button, input, textarea, select { font-family: inherit; }
 .tile-link > .tile-media { grid-row: 1; margin-bottom: 10px; }
 .tile-link > .tile-body { display: grid; grid-row: 2 / -1; grid-template-rows: subgrid; row-gap: 0; gap: 0; overflow: hidden; }
 .tile-body > .tile-title { grid-row: 1; align-self: start; margin-bottom: 4px; }
-.tile-body > .price { display: contents; }
-.tile-body .price-tag { grid-row: 2; align-self: start; }
-.tile-body .price-note { grid-row: 3; align-self: start; }
 .tile-body > .tile-meta { grid-row: 4; align-self: start; margin-top: 4px; }
 
-/* Lieu et date côte à côte, sans grand espace : « Douala · le 3 oct. » (lieu coupé avec « … » si trop long) */
+/* Lieu puis date sur une ligne : « Douala · le 3 oct. » ; le lieu passe d'abord, la fin est coupée avec « … » */
 .tile-meta { justify-content: flex-start; gap: 0; }
-.tile-meta > .tile-date { flex: none; white-space: pre; }
 .tile-place { flex: 0 1 auto; }
 
 /* Page d'annonce : « Remise en main propre » */
 .handover { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 0; color: var(--primary); font-weight: 700; font-size: 0.92rem; }
-.tile-meta > .tile-date { white-space: nowrap; }
-.tile-meta > .tile-date::before { content: '·'; margin: 0 6px; }
-/* « À débattre » : même écart sous le prix qu'entre « À débattre » et le lieu */
-.tile-body .price-note { margin-top: 4px; }
 
 /* Barre de recherche : pays dans la liste à drapeaux (même hauteur que le champ, liste en Ubuntu) */
 .search-country { flex: 0 0 230px; min-width: 0; }
@@ -780,7 +765,7 @@ button, input, textarea, select { font-family: inherit; }
 .country-select.dial .country-current { width: auto; height: 42px; border: 0; border-right: 1.5px solid var(--line); border-radius: 0; padding: 0 10px 0 8px; gap: 8px; font-weight: 700; background: none; }
 .country-select.dial .country-list { left: 0; right: 0; }
 .country-dial { margin-left: auto; color: var(--ink-muted); font-weight: 700; }
-.password-row { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--bg); padding-right: 12px; }
+.password-row { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--bg); padding-right: 4px; }
 .password-row:focus-within { border-color: var(--primary); }
 .password-row input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; }
 .email-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
@@ -822,7 +807,7 @@ a, a:hover, .link-button, .link-button:hover { text-decoration: none !important;
  * Police unique : Inter (maquette du porteur, 18 octobre 2026). Les anciennes variables (Roboto Slab, Google Sans,
  * Ubuntu) pointent toutes vers Inter, et les replis sont des polices sans empattement.
  */
-:root { --font-slab: var(--font-inter); --font-title: var(--font-inter); --font-ubuntu: var(--font-inter); }
+:root { --font-slab: var(--font-inter); --font-title: var(--font-outfit); --font-ubuntu: var(--font-inter); }
 body, button, input, textarea, select { font-family: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 .listing-title, .tile-title, .card-title { font-weight: 700; letter-spacing: -0.01em; }
 
@@ -871,8 +856,6 @@ body, button, input, textarea, select { font-family: var(--font-inter), system-u
 .tile-badge .ion { color: var(--primary); }
 .tile-meta { align-items: center; gap: 4px; }
 .tile-meta .meta-ion { flex: none; color: var(--ink-muted); }
-.tile-meta > .tile-date { display: inline-flex; align-items: center; gap: 4px; }
-.tile-meta > .tile-date::before { content: ''; width: 1px; height: 12px; background: var(--line); margin: 0 6px 0 4px; }
 @media (max-width: 899px) { .listing-page { padding-bottom: 96px; } }
 /* Barre du bas sur petit téléphone : le prix entier tient (bouton plus étroit) */
 .mobile-bar .bar-btn { min-width: 0; padding: 0 18px; flex: none; }
@@ -1207,3 +1190,54 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 .safety-icon { flex: none; width: 40px; height: 40px; border-radius: 10px; background: #fff; display: grid; place-items: center; }
 .safety-icon .ion { color: var(--navy); }
 .safety-tips p { color: var(--ink-muted); }
+
+/*
+ * Carte « Vitrine » (choix du porteur, 1er novembre 2026) : carte blanche en relief, prix dans un ovale bleu à
+ * cheval sur la photo, badge safran. Mêmes rangées d'une carte à l'autre (subgrid) : la ligne « À débattre » reste vide si besoin.
+ */
+.tile { background: var(--bg); border-radius: 18px; box-shadow: 0 1px 2px rgba(19, 47, 107, 0.08), 0 8px 20px rgba(19, 47, 107, 0.1); transition: transform 0.15s, box-shadow 0.15s; }
+.tile:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(19, 47, 107, 0.1), 0 12px 26px rgba(19, 47, 107, 0.14); }
+.tile-grid:not(.popular-grid) > .tile, .tile-row > .tile { padding-bottom: 12px; margin-bottom: 18px; }
+.tile-grid:not(.popular-grid) > .tile-ad { margin-bottom: 18px; padding-bottom: 0; }
+.tile-link > .tile-media { margin-bottom: 0; }
+.tile-media { z-index: 1; overflow: visible; border-radius: 18px 18px 0 0; }
+.tile-media img { border-radius: 18px 18px 0 0; }
+.tile-badge { left: 8px; right: auto; top: 8px; bottom: auto; max-width: calc(100% - 58px); background: var(--saffron); color: var(--navy); font-weight: 800; font-size: 0.7rem; padding: 4px 9px; border-radius: 999px; }
+.tile-badge .ion { color: var(--navy); }
+.tile-price { position: absolute; left: 8px; bottom: -13px; max-width: calc(100% - 16px); padding: 6px 12px; border-radius: 999px; background: var(--primary); color: #fff; font-weight: 800; font-size: 0.86rem; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 10px rgba(30, 94, 219, 0.35); }
+.tile-link > .tile-body { padding: 22px 12px 0; }
+.tile-note { grid-row: 2; align-self: start; margin-bottom: 4px; color: var(--primary); font-size: 0.75rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile-body > .tile-meta { grid-row: 3; margin-top: 0; font-size: 0.75rem; }
+.tile .card-heart { width: 34px; height: 34px; z-index: 2; }
+.tile-row { padding: 2px 4px 6px; margin-inline: -4px; }
+
+/* Œil du mot de passe : affiche ou masque la saisie */
+.password-eye { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--ink-muted); cursor: pointer; }
+.password-eye:hover { background: var(--tint); color: var(--primary); }
+
+/* Bandeau « Hors connexion », comme dans l'application */
+.offline-banner { position: fixed; z-index: 40; left: 50%; bottom: 16px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 18px; background: var(--ink); color: #fff; font-size: 0.85rem; }
+.offline-banner .ion { flex: none; }
+
+/* Titre de la publication dans un ovale, centré */
+.publish-title { flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.publish-title h1.pill-title { margin: 0; }
+.publish-subtitle { margin: 0; }
+
+/* Onglets centrés (Messages) */
+.seg-center { display: flex; width: fit-content; margin-inline: auto; align-self: center; }
+
+/* Recherche par image */
+.search-lens { flex: none; width: 48px; height: 48px; display: grid; place-items: center; border: 1.5px solid var(--tint-line); border-radius: var(--radius); background: var(--bg); color: var(--primary); }
+.search-lens:hover { background: var(--tint); }
+.image-search-head { align-items: center; text-align: center; }
+.image-search-head p { margin: 0; }
+.image-search-box { width: 100%; max-width: 460px; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; padding: 16px; border: 1px solid var(--tint-line); border-radius: 24px; background: var(--tint); }
+.image-search-empty { height: 170px; display: grid; place-items: center; color: var(--primary); }
+.image-search-preview { position: relative; display: block; border-radius: 16px; overflow: hidden; background: var(--bg); }
+.image-search-preview img { display: block; width: 100%; max-height: 300px; object-fit: contain; }
+.image-search-scan { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(19, 47, 107, 0.45); color: #fff; }
+.image-search-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.image-search-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding-inline: 8px; font-size: 0.9rem; }
+.image-search-status { text-align: center; margin: 0; }
+@media (max-width: 480px) { .image-search-actions { grid-template-columns: 1fr; } }

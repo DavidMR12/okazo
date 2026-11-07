@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const attributes = z
-  .record(z.unknown())
+  .record(z.string(), z.unknown())
   .refine((a) => JSON.stringify(a).length <= 4000, 'Attributs trop volumineux.');
 
 const price = z.number().int().positive().max(100_000_000_000);

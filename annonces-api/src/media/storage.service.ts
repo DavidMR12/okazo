@@ -58,6 +58,12 @@ export class StorageService {
     return Buffer.from(await r.Body!.transformToByteArray());
   }
 
+  /** Premiers octets seulement : vérifier le format d'un fichier sans le télécharger. */
+  async getPrefix(key: string, bytes = 16): Promise<Buffer> {
+    const r = await this.s3.send(new GetObjectCommand({ Bucket: bucketFor(key), Key: key, Range: `bytes=0-${bytes - 1}` }));
+    return Buffer.from(await r.Body!.transformToByteArray());
+  }
+
   async putBuffer(key: string, body: Buffer, contentType: string): Promise<void> {
     await this.s3.send(
       new PutObjectCommand({

@@ -7,6 +7,9 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"
 set -a; . "$DIR/.env"; set +a
 umask 077
 
+# La base contient des numéros de téléphone : sans clé de chiffrement, rien ne part
+[ -n "${BACKUP_AGE_RECIPIENT:-}" ] || { echo "BACKUP_AGE_RECIPIENT vide : sauvegarde annulée" >&2; exit 1; }
+
 OUT=/var/backups/annonces
 STAMP=$(date -u +%Y%m%d-%H%M)
 FILE="$OUT/annonces-$STAMP.dump"
@@ -15,13 +18,9 @@ echo "[$(date -u +%FT%TZ)] début de la sauvegarde"
 docker compose -f "$DIR/compose.yml" exec -T postgres pg_dump -U annonces -d annonces -Fc > "$FILE"
 [ -s "$FILE" ] || { echo "Sauvegarde vide : échec" >&2; exit 1; }
 
-# La base contient des numéros de téléphone : chiffrement avant tout envoi
-if [ -n "${BACKUP_AGE_RECIPIENT:-}" ]; then
-  age -r "$BACKUP_AGE_RECIPIENT" -o "$FILE.age" "$FILE" && rm -f "$FILE"
-  FILE="$FILE.age"
-else
-  echo "ATTENTION : BACKUP_AGE_RECIPIENT vide, sauvegarde envoyée NON chiffrée" >&2
-fi
+age -r "$BACKUP_AGE_RECIPIENT" -o "$FILE.age" "$FILE"
+rm -f "$FILE"
+FILE="$FILE.age"
 
 export RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare RCLONE_CONFIG_R2_NO_CHECK_BUCKET=true \
   RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_BACKUP_ACCESS_KEY_ID" \

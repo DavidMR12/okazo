@@ -37,7 +37,9 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin no
 CONF
-systemctl reload ssh
+sshd -t
+# Ubuntu 24.04 lance SSH à la demande (ssh.socket) : chaque connexion relit la configuration, il n'y a alors rien à recharger.
+systemctl reload ssh 2>/dev/null || true
 
 # ---- Pare-feu : seul SSH entre. Le site et l'API arrivent par le tunnel Cloudflare (sortant). ----
 ufw default deny incoming
@@ -53,6 +55,12 @@ if ! swapon --show | grep -q .; then
   fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
   echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
+
+# ---- Tampons UDP pour cloudflared (QUIC) ----
+printf 'net.core.rmem_max=7500000
+net.core.wmem_max=7500000
+' > /etc/sysctl.d/90-cloudflared.conf
+sysctl -q --system
 
 # ---- Dossiers ----
 install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" /opt/annonces

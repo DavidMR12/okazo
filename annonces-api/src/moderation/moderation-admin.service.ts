@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { Database, DB } from '../db/db.module';
 import { listingImages, listings, moderationActions, reports, users } from '../db/schema';
@@ -91,7 +91,16 @@ export class ModerationAdminService {
     };
   }
 
+  /** Personne ne juge sa propre annonce. */
+  private async assertNotOwner(moderatorId: string, id: string) {
+    const [l] = await this.db.select({ userId: listings.userId }).from(listings).where(eq(listings.id, id)).limit(1);
+    if (l?.userId === moderatorId) {
+      throw new ForbiddenException({ code: 'SELF_MODERATION', message: 'Vous ne pouvez pas modérer votre propre annonce.' });
+    }
+  }
+
   async approve(moderatorId: string, id: string, note?: string) {
+    await this.assertNotOwner(moderatorId, id);
     // Impossible d'approuver tant que les photos n'ont pas été traitées (elles seraient encore dans pending/)
     const unprocessed = await this.db
       .select({ id: listingImages.id })
@@ -122,6 +131,7 @@ export class ModerationAdminService {
   }
 
   async reject(moderatorId: string, id: string, dto: { reasonCode: string; message?: string; note?: string }) {
+    await this.assertNotOwner(moderatorId, id);
     await this.db.transaction(async (tx) => {
       const [updated] = await tx
         .update(listings)

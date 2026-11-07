@@ -4,13 +4,13 @@
 name: annonces-dev
 services:
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16-trixie
     environment:
       POSTGRES_USER: annonces
       POSTGRES_PASSWORD: annonces
       POSTGRES_DB: annonces
     ports:
-      - "${PG_PORT:-5432}:5432"
+      - "127.0.0.1:${PG_PORT:-5432}:5432" # poste local seulement : identifiants de développement
     volumes:
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./db/migrations/002_account_deletion.sql:/docker-entrypoint-initdb.d/02-account-deletion.sql:ro
@@ -31,11 +31,13 @@ services:
       - ./db/migrations/017_terms_acceptance.sql:/docker-entrypoint-initdb.d/17-terms-acceptance.sql:ro
       - ./db/migrations/018_other_place.sql:/docker-entrypoint-initdb.d/18-other-place.sql:ro
       - ./db/migrations/019_endless_sessions.sql:/docker-entrypoint-initdb.d/19-endless-sessions.sql:ro
+      - ./db/migrations/020_visual_search.sql:/docker-entrypoint-initdb.d/20-visual-search.sql:ro
+      - ./db/migrations/021_reports_threshold_phone.sql:/docker-entrypoint-initdb.d/21-reports-threshold-phone.sql:ro
       - pgdata:/var/lib/postgresql/data
   redis:
     image: redis:7-alpine
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
   # Stockage compatible S3 pour le développement (remplace Cloudflare R2).
   # Les images officielles minio/minio et minio/mc ne sont plus publiées : images Chainguard équivalentes.
   minio:
@@ -46,7 +48,7 @@ services:
       MINIO_ROOT_PASSWORD: minio12345
     ports:
       - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - miniodata:/data
   # Crée le bucket. L'image mc n'a pas de shell : une commande par service, relancée tant que MinIO n'est pas prêt.

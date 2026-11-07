@@ -6,6 +6,11 @@ x-logging: &logging
   driver: json-file
   options: { max-size: "10m", max-file: "5" }
 
+# Conteneurs sans état : aucun droit système, aucune élévation possible
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
 x-api-env: &api-env
   NODE_ENV: production
   PORT: "3000"
@@ -19,6 +24,12 @@ x-api-env: &api-env
   TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
   TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
   TWILIO_FROM: ${TWILIO_FROM:-}
+  WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-none}
+  WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+  WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+  WHATSAPP_TEMPLATE: ${WHATSAPP_TEMPLATE:-code_verification}
+  MAIL_PROVIDER: ${MAIL_PROVIDER:-none}
+  GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
   CORS_ORIGINS: https://${DOMAIN}
   APP_NAME: ${APP_NAME}
   S3_ENDPOINT: https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
@@ -36,6 +47,8 @@ services:
     build: ../api
     image: annonces-api:latest
     restart: unless-stopped
+    <<: *hardening
+    networks: [edge, backend]
     environment:
       <<: *api-env
       RUN_MODERATION_WORKER: "false"
@@ -50,6 +63,8 @@ services:
   worker:
     image: annonces-api:latest
     restart: unless-stopped
+    <<: *hardening
+    networks: [backend]
     environment:
       <<: *api-env
       RUN_MODERATION_WORKER: "true"
@@ -67,11 +82,14 @@ services:
         NEXT_PUBLIC_SITE_NAME: ${APP_NAME}
         NEXT_PUBLIC_DEFAULT_COUNTRY: ${DEFAULT_COUNTRY:-cm}
         NEXT_PUBLIC_MEDIA_ORIGIN: https://media.${DOMAIN}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
         NEXT_PUBLIC_ADSENSE_CLIENT: ${ADSENSE_CLIENT:-}
         NEXT_PUBLIC_ADSENSE_SLOT_FEED: ${ADSENSE_SLOT_FEED:-}
         NEXT_PUBLIC_ADSENSE_SLOT_LISTING: ${ADSENSE_SLOT_LISTING:-}
     image: annonces-web:latest
     restart: unless-stopped
+    <<: *hardening
+    networks: [edge]
     environment:
       API_URL: http://api:3000 # réseau interne : ne repasse pas par Internet
     depends_on:
@@ -79,8 +97,9 @@ services:
     logging: *logging
 
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16-trixie
     restart: unless-stopped
+    networks: [backend]
     environment:
       POSTGRES_USER: annonces
       POSTGRES_DB: annonces
@@ -100,6 +119,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    networks: [backend]
     command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
     volumes:
       - redisdata:/data
@@ -111,10 +131,12 @@ services:
     logging: *logging
 
   # Connexion sortante vers Cloudflare : le serveur n'expose aucun port web.
-  # Fixez une version précise (ex. cloudflare/cloudflared:2026.9.0) après le premier déploiement.
+  # Version fixée : une mise à jour se décide, elle n'arrive pas toute seule sur le serveur.
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.10.7
     restart: unless-stopped
+    <<: *hardening
+    networks: [edge]
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -123,8 +145,9 @@ services:
 
   # Outil : applique les migrations SQL (lancé par scripts/deploy.sh)
   migrate:
-    image: postgres:16
+    image: pgvector/pgvector:pg16-trixie
     profiles: ["tools"]
+    networks: [backend]
     environment:
       DATABASE_URL: postgres://annonces:${POSTGRES_PASSWORD}@postgres:5432/annonces
     volumes:
@@ -132,6 +155,11 @@ services:
     entrypoint: ["sh", "/db/migrate.sh"]
     depends_on:
       postgres: { condition: service_healthy }
+
+# cloudflared et le site n'atteignent jamais la base ni Redis : seule l'API fait le lien
+networks:
+  edge:
+  backend:
 
 volumes:
   pgdata:

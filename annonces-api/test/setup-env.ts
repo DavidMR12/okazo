@@ -2,6 +2,7 @@
 // Les valeurs déjà définies (ex. CI) sont conservées.
 const defaults: Record<string, string> = {
   NODE_ENV: 'test',
+  VISUAL_SEARCH_ENABLED: 'false',
   DATABASE_URL: 'postgres://annonces:annonces@localhost:5433/annonces_test',
   REDIS_URL: 'redis://localhost:6380',
   JWT_ACCESS_SECRET: 'test-access-secret-0123456789abcdef0123456789abcdef',

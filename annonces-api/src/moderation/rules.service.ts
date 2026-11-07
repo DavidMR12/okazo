@@ -53,7 +53,9 @@ export class RulesService {
 
   // --- Mots-clés et domaines (table blocklist, modifiable sans redéploiement) ---
   private async textRules(listing: ListingRow): Promise<RuleHit[]> {
-    const text = normalize(`${listing.title} ${listing.description} ${listing.cityOther ?? ''} ${listing.districtOther ?? ''}`);
+    // Les champs de la catégorie sont affichés sur la page d'annonce : ils passent par les mêmes règles
+    const attributes = Object.values(listing.attributes ?? {}).filter((v) => typeof v === 'string').join(' ');
+    const text = normalize(`${listing.title} ${listing.description} ${listing.cityOther ?? ''} ${listing.districtOther ?? ''} ${attributes}`);
     const hits: RuleHit[] = [];
 
     for (const r of await this.loadTextRules()) {

@@ -25,7 +25,7 @@ cp .env.example .env
 npx expo install expo-router expo-secure-store expo-application expo-image expo-status-bar \
   expo-image-picker expo-document-picker @react-native-community/netinfo expo-auth-session expo-crypto expo-web-browser expo-image-manipulator expo-constants \
   react-native-safe-area-context react-native-screens @react-native-async-storage/async-storage @expo/vector-icons \
-  expo-font expo-splash-screen @expo-google-fonts/inter
+  expo-font expo-splash-screen @expo-google-fonts/inter @expo-google-fonts/outfit
 npm install @tanstack/react-query @tanstack/react-query-persist-client @tanstack/query-async-storage-persister
 
 npx tsc --noEmit || echo "⚠️  Erreurs TypeScript ci-dessus : à corriger avant de continuer."

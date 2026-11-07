@@ -60,7 +60,7 @@ export default function InboxPage() {
         {unread ? <span className="count-badge">{unread} non lu{unread > 1 ? 's' : ''}</span> : null}
       </div>
 
-      <div className="seg" role="tablist" aria-label="Conversations">
+      <div className="seg seg-center" role="tablist" aria-label="Conversations">
         {([['all', 'Toutes'], ['buyer', 'Mes achats'], ['seller', 'Mes ventes']] as const).map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className="seg-btn" onClick={() => setTab(k)}>{label}</button>
         ))}

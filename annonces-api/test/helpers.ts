@@ -12,6 +12,7 @@ import { WHATSAPP_PROVIDER, WhatsAppProvider } from '../src/auth/whatsapp/whatsa
 import { MAIL_PROVIDER, MailProvider } from '../src/auth/mail/mail-provider';
 import { OAUTH_VERIFIER, OAuthProfile, OAuthProvider, OAuthVerifier } from '../src/auth/oauth/oauth-verifier';
 import { env } from '../src/config/env';
+import { noStoreByDefault } from '../src/no-store';
 import { Database, DB } from '../src/db/db.module';
 import { StorageService } from '../src/media/storage.service';
 import { REDIS } from '../src/redis/redis.module';
@@ -96,6 +97,9 @@ export class MemoryStorage {
     if (!f) throw new Error(`Fichier absent : ${key}`);
     return f.body;
   }
+  async getPrefix(key: string, bytes = 16) {
+    return (await this.getBuffer(key)).subarray(0, bytes);
+  }
   async putBuffer(key: string, body: Buffer, contentType: string) {
     this.put(key, body, contentType);
   }
@@ -139,6 +143,7 @@ export async function createTestApp(): Promise<Ctx> {
     new FastifyAdapter({ trustProxy: env.TRUSTED_PROXIES }),
     { logger: ['error'] },
   );
+  noStoreByDefault(app);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return { app, db: app.get(DB), redis: app.get(REDIS), sms, storage, whatsapp, mail };
@@ -226,7 +231,7 @@ export async function acceptTerms(ctx: Ctx, token: string) {
   if (r.status !== 200) throw new Error(`me/terms ${r.status} ${JSON.stringify(r.body)}`);
 }
 
-/** Donne un rôle puis reconnecte (le rôle est inscrit dans le jeton d'accès). */
+/** Donne un rôle puis reconnecte. */
 export async function loginAs(ctx: Ctx, role: 'moderator' | 'admin'): Promise<Session> {
   const s = await login(ctx);
   await ctx.db.execute(sql`update users set role = ${role}::user_role where id = ${s.userId}`);

@@ -10,6 +10,9 @@ const schema = z
     // depuis une autre adresse ne peut donc pas choisir son IP et contourner les limites anti-abus.
     TRUSTED_PROXIES: z.string().min(1).default('loopback,uniquelocal'),
     DATABASE_URL: z.string().url(),
+    // Recherche par image : modèle CLIP exécuté sur le serveur (coupé pendant les tests)
+    VISUAL_SEARCH_ENABLED: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
+    MODEL_CACHE_DIR: z.string().min(1).default('.models'),
     REDIS_URL: z.string().url(),
 
     JWT_ACCESS_SECRET: z.string().min(32),
@@ -83,6 +86,13 @@ const schema = z
   })
   .refine((e) => !(e.NODE_ENV === 'production' && e.MAIL_PROVIDER === 'console'), {
     message: 'MAIL_PROVIDER=console est interdit en production',
+  })
+  // Pièces d'identité, CV et photos non modérées ne doivent jamais partager le bucket public
+  .refine((e) => !(e.NODE_ENV === 'production' && (!e.S3_PRIVATE_BUCKET || e.S3_PRIVATE_BUCKET === e.S3_BUCKET)), {
+    message: 'S3_PRIVATE_BUCKET doit être défini et différent de S3_BUCKET en production',
+  })
+  .refine((e) => !(e.NODE_ENV === 'production' && /localhost|127\.0\.0\.1|192\.168\./.test(e.CORS_ORIGINS)), {
+    message: 'CORS_ORIGINS ne doit contenir que les vrais domaines en production',
   })
   .refine((e) => !(e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console'), {
     message: "SMS_PROVIDER=console est interdit en production",

@@ -13,6 +13,40 @@ export const COOKIE = { access: 'app_at', refresh: 'app_rt', signedIn: 'app_in',
 
 export interface Tokens { accessToken: string; refreshToken: string }
 
+/** Même plafond que l'API (1 Mo), un peu au-dessus : le relais ne garde jamais en mémoire un envoi démesuré. */
+const MAX_BODY_BYTES = 1_100_000;
+
+/** Corps de la requête, ou null s'il dépasse le plafond (la lecture s'arrête alors aussitôt). */
+export async function readBody(req: NextRequest): Promise<string | null> {
+  if (Number(req.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) return null;
+  if (!req.body) return '';
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = req.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+/** Corps JSON : un contenu illisible ou trop gros donne {}, que l'API refuse ensuite. */
+export async function readJson(req: NextRequest): Promise<unknown> {
+  try {
+    return JSON.parse((await readBody(req)) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
+export const BODY_TOO_LARGE = { code: 'BODY_TOO_LARGE', message: 'Ce contenu est trop volumineux.' };
+
 export function setSessionCookies(res: NextResponse, t: Tokens) {
   const base = { httpOnly: true, secure, sameSite: 'lax' as const, path: '/api' };
   res.cookies.set(COOKIE.access, t.accessToken, { ...base, maxAge: 14 * 60 }); // jeton de 15 min côté API

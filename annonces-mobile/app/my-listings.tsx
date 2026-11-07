@@ -88,7 +88,7 @@ export default function MyListingsScreen() {
           <Message title="Vous n’avez pas encore d’annonce" body="Publiez votre première annonce depuis l’onglet Publier." />
         )
       }
-      ListHeaderComponent={listings.data?.length ? <Text style={[type.small, { padding: space.lg }]}>Appui long sur une annonce pour la modifier, la marquer vendue ou la supprimer.</Text> : null}
+      ListHeaderComponent={listings.data?.length ? <Text style={[type.small, { padding: space.lg }]}>Appui long sur une annonce pour la modifier, la marquer vendue ou la supprimer.</Text> : undefined}
       refreshControl={<RefreshControl refreshing={listings.isRefetching} onRefresh={() => void listings.refetch()} tintColor={colors.primary} />}
       style={{ backgroundColor: colors.bg }}
     />

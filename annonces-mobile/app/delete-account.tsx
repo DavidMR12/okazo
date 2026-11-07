@@ -60,7 +60,7 @@ export default function DeleteAccountScreen() {
         <Button label="Recevoir un code de confirmation" variant="danger" onPress={sendCode} loading={loading} />
       ) : (
         <>
-          <Text style={type.body}>Entrez le code reçu par SMS.</Text>
+          <Text style={type.body}>Entrez le code reçu par SMS ou par e-mail.</Text>
           <TextInput
             value={code}
             onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}

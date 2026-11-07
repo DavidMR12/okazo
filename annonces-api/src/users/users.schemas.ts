@@ -1,7 +1,5 @@
 import { z } from 'zod';
-
-// Lettres (accents compris), chiffres, espaces, point, apostrophe, tiret
-const NAME_RE = /^[\p{L}\p{M}0-9 .'’-]+$/u;
+import { NAME_RE } from './display-name';
 
 export const updateProfileSchema = z
   .object({

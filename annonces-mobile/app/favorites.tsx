@@ -58,7 +58,7 @@ export default function FavoritesScreen() {
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{items.length} annonce{items.length > 1 ? 's' : ''} gardée{items.length > 1 ? 's' : ''}</Text>
           </View>
-        ) : null
+        ) : undefined
       }
       renderItem={({ item }) => <FavCard item={item} onRemove={remove} />}
       ListEmptyComponent={
@@ -70,7 +70,7 @@ export default function FavoritesScreen() {
           <EmptyCard icon="heart-outline" decor={['heart-outline', 'pricetag-outline', 'heart', 'star-outline', 'bookmark-outline', 'heart-outline', 'sparkles-outline']} text="Aucun favori pour l’instant. Touchez le cœur d’une annonce pour la garder ici." action="Voir les annonces" onAction={() => router.push('/')} />
         )
       }
-      ListFooterComponent={items.length > 0 && items.length < 5 ? <DecorFooter icons={['heart-outline', 'pricetag-outline', 'heart', 'star-outline', 'bookmark-outline', 'heart-outline', 'sparkles-outline']} text="Touchez le cœur d’une annonce pour l’ajouter à vos favoris." /> : null}
+      ListFooterComponent={items.length > 0 && items.length < 5 ? <DecorFooter icons={['heart-outline', 'pricetag-outline', 'heart', 'star-outline', 'bookmark-outline', 'heart-outline', 'sparkles-outline']} text="Touchez le cœur d’une annonce pour l’ajouter à vos favoris." /> : undefined}
       onEndReached={() => favorites.hasNextPage && !favorites.isFetchingNextPage && void favorites.fetchNextPage()}
       onEndReachedThreshold={0.6}
       refreshControl={<RefreshControl refreshing={favorites.isRefetching} onRefresh={() => void favorites.refetch()} tintColor={colors.primary} />}

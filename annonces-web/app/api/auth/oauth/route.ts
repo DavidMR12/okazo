@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api';
-import { clientIp, deviceId, isSameOrigin, setSessionCookies } from '@/lib/session';
+import { clientIp, deviceId, isSameOrigin, readJson, setSessionCookies } from '@/lib/session';
 
 /** Connexion avec Google ou Facebook : le jeton du fournisseur est vérifié par l'API, la session posée en cookies httpOnly. */
 export async function POST(req: NextRequest) {
   if (!isSameOrigin(req)) return NextResponse.json({ code: 'FORBIDDEN', message: 'Requête refusée.' }, { status: 403 });
-  const input = (await req.json().catch(() => ({}))) as { provider?: string; token?: string; country?: string };
+  const input = (await readJson(req)) as { provider?: string; token?: string; country?: string };
 
   const out = NextResponse.json({});
   const did = deviceId(req, out);

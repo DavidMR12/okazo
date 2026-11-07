@@ -14,6 +14,7 @@ import { env } from '../config/env';
 import { Database, DB } from '../db/db.module';
 import { devices, refreshTokens, termsAcceptances, userIdentities, users } from '../db/schema';
 import { REDIS } from '../redis/redis.module';
+import { assertAcceptableName, safeProfileName } from '../users/display-name';
 import { OAUTH_VERIFIER, OAuthProvider, OAuthVerifier } from './oauth/oauth-verifier';
 import {
   AcceptTermsInput,
@@ -132,7 +133,7 @@ export class AuthService {
       user = await this.db.transaction(async (tx) => {
         const [u] = await tx
           .insert(users)
-          .values({ phoneE164: null, countryCode: country, displayName: (profile.name ?? 'Utilisateur').trim().slice(0, 40) || 'Utilisateur' })
+          .values({ phoneE164: null, countryCode: country, displayName: safeProfileName(profile.name) })
           .returning();
         await tx.insert(userIdentities).values({ userId: u.id, provider: profile.provider, subject: profile.subject, email: profile.email });
         return u;
@@ -149,6 +150,9 @@ export class AuthService {
    * s'inscrire avec l'adresse d'un autre). En attendant, la demande est gardée 15 min dans Redis.
    */
   async emailRegister(input: EmailRegisterInput, ip: string) {
+    assertAcceptableName(input.displayName);
+    // Avant le hachage du mot de passe, coûteux par construction : sinon des appels en série satureraient le serveur
+    await this.rateLimit.hit(`rl:register:ip:${ip}`, 30, 3600);
     if (await this.userByEmail(input.email)) throw this.emailInUse();
     const country = (await this.otp.activeCountryCodes()).has(input.country) ? input.country : 'CM';
     const pending = { passwordHash: await hashPassword(input.password), displayName: input.displayName, country };
@@ -194,7 +198,7 @@ export class AuthService {
   async emailForgot(input: EmailForgotInput, ip: string) {
     const user = await this.userByEmail(input.email);
     if (!user || user.status === 'deleted') {
-      await this.rateLimit.hit(`rl:mail:ip:${ip}`, 20, 3600);
+      await this.emailCodes.throttle('reset', input.email, ip); // mêmes limites, donc même réponse à la 2e demande
       return { expiresInSec: 900, resendAfterSec: 60 };
     }
     return this.emailCodes.send('reset', input.email, ip);
@@ -247,6 +251,7 @@ export class AuthService {
   // ------------------------------------------------------------------ numéro d'un compte Google ou Facebook
   async requestPhoneLink(userId: string, input: PhoneRequestInput, ip: string) {
     const { e164 } = await this.otp.parsePhone(input.phone);
+    await this.assertPhoneNotChanged(userId, e164);
     const [other] = await this.db.select({ id: users.id }).from(users).where(eq(users.phoneE164, e164)).limit(1);
     if (other && other.id !== userId) throw this.phoneInUse();
     return this.otp.request(e164, ip, input.channel);
@@ -254,6 +259,7 @@ export class AuthService {
 
   async verifyPhoneLink(userId: string, input: PhoneVerifyInput) {
     const { e164 } = await this.otp.parsePhone(input.phone);
+    await this.assertPhoneNotChanged(userId, e164);
     if (await this.blocklist.isBlocked('phone', e164)) {
       throw new ForbiddenException({ code: 'PHONE_BLOCKED', message: 'Ce numéro ne peut pas être utilisé.' });
     }
@@ -268,6 +274,17 @@ export class AuthService {
       return this.toPublicUser(u);
     } catch {
       throw this.phoneInUse(); // contrainte d'unicité : le numéro a été pris entre-temps
+    }
+  }
+
+  /**
+   * Le numéro se vérifie une seule fois : le remplacer depuis une session volée donnerait le compte à l'attaquant,
+   * et libérerait le numéro d'un compte sanctionné pour en créer un nouveau.
+   */
+  private async assertPhoneNotChanged(userId: string, e164: string) {
+    const [u] = await this.db.select({ phone: users.phoneE164 }).from(users).where(eq(users.id, userId)).limit(1);
+    if (u?.phone && u.phone !== e164) {
+      throw new ConflictException({ code: 'PHONE_ALREADY_SET', message: 'Votre compte a déjà un numéro vérifié.' });
     }
   }
 

@@ -13,6 +13,7 @@ import { RateLimitService } from '../common/rate-limit.service';
 import { env } from '../config/env';
 import { Database, DB } from '../db/db.module';
 import { userVerifications, users } from '../db/schema';
+import { matchesType } from '../media/file-signature';
 import { IMAGE_TYPES, isAllowedImageType, isVerificationKeyOf, verificationKey } from '../media/media-keys';
 import { StorageService } from '../media/storage.service';
 import {
@@ -58,7 +59,9 @@ export class VerificationsService {
       const h = await this.storage.head(key);
       if (!h) throw new BadRequestException({ code: 'FILE_NOT_UPLOADED', message: "Une photo n'a pas été envoyée." });
       if (h.size > env.MAX_IMAGE_BYTES) throw new BadRequestException({ code: 'FILE_TOO_LARGE', message: 'Photo trop volumineuse.' });
-      if (!isAllowedImageType(h.contentType)) throw new BadRequestException({ code: 'FILE_TYPE', message: 'Format de photo non accepté.' });
+      if (!isAllowedImageType(h.contentType) || !matchesType(h.contentType, await this.storage.getPrefix(key))) {
+        throw new BadRequestException({ code: 'FILE_TYPE', message: 'Format de photo non accepté.' });
+      }
     }
 
     await this.db.transaction(async (tx) => {

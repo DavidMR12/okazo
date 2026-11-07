@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, type ComponentRef } from 'react';
 import { Text as RNText, TextInput as RNTextInput, StyleSheet, type TextInputProps, type TextProps } from 'react-native';
 import { FONT } from '../theme';
 
@@ -20,11 +20,11 @@ const withFont = (style: TextProps['style']) => {
   return [rest, family ? { fontFamily: family } : styles.font];
 };
 
-export const Text = forwardRef<RNText, TextProps>(function Text({ style, ...props }, ref) {
+export const Text = forwardRef<ComponentRef<typeof RNText>, TextProps>(function Text({ style, ...props }, ref) {
   return <RNText ref={ref} {...props} style={withFont(style)} />;
 });
 
-export const TextInput = forwardRef<RNTextInput, TextInputProps>(function TextInput({ style, ...props }, ref) {
+export const TextInput = forwardRef<ComponentRef<typeof RNTextInput>, TextInputProps>(function TextInput({ style, ...props }, ref) {
   return <RNTextInput ref={ref} {...props} style={withFont(style)} />;
 });
 

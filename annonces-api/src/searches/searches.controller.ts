@@ -8,7 +8,7 @@ import { SearchesService } from './searches.service';
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(120), // résumé lisible préparé par le client (« Toyota · Douala · moins de 5 M »)
-  query: z.record(z.union([z.string().max(200), z.number()])).refine((q) => Object.keys(q).length <= 40, 'Trop de filtres.'),
+  query: z.record(z.string(), z.union([z.string().max(200), z.number()])).refine((q) => Object.keys(q).length <= 40, 'Trop de filtres.'),
 });
 type CreateInput = z.infer<typeof createSchema>;
 

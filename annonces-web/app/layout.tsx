@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AdsLoader } from '@/components/Ads';
 import { ConsentBanner, ManageCookiesLink } from '@/components/ConsentBanner';
 import { HeaderAccount } from '@/components/HeaderAccount';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { ServiceWorker } from '@/components/ServiceWorker';
 import { getCountries } from '@/lib/api';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
@@ -14,6 +15,8 @@ import { DialogHost } from '@/components/Dialog';
 // Tout le site en Inter, police sans empattement de la maquette du porteur (18 octobre 2026 ; remplace Roboto Slab,
 // Google Sans et Ubuntu). Fichier servi par le site, sans appel à Google.
 const interFont = Inter({ weight: ['400', '500', '600', '700', '800'], subsets: ['latin'], display: 'swap', variable: '--font-inter' });
+// Noms d'articles et pied de page en Outfit, choix du porteur (1er novembre 2026)
+const outfitFont = Outfit({ weight: ['400', '700'], subsets: ['latin'], display: 'swap', variable: '--font-outfit' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,7 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // Pays du pied de page (donnée en cache une heure, aucune lecture de cookie)
   const countries = await getCountries().catch(() => []);
   return (
-    <html lang="fr" className={interFont.variable}>
+    <html lang="fr" className={`${interFont.variable} ${outfitFont.variable}`}>
       <body>
         <header className="header">
           <div className="container header-inner">
@@ -44,6 +47,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </div>
         </header>
         <main>{children}</main>
+        <OfflineBanner />
         <footer className="footer">
           <div className="container footer-grid">
             <div className="footer-brand">
@@ -54,7 +58,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <p>Petites annonces entre particuliers au Cameroun, au Gabon et au Congo. Chaque annonce est vérifiée avant sa mise en ligne.</p>
             </div>
             <nav aria-label="Pays">
-              <h2>Annonces</h2>
+              <h2>Pays</h2>
               {countries.map((c) => (
                 <Link key={c.code} href={`/${c.code.toLowerCase()}`}>{c.name}</Link>
               ))}

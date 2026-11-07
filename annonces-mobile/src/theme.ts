@@ -26,10 +26,11 @@ export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
 // Police de l'application : Roboto Slab SemiBold (600), embarquée dans l'app (voir app.config.ts)
 // et chargée au démarrage pour Expo Go et le web (app/_layout.tsx). Utilisée par src/components/Typography.
 export const FONT = 'Inter_500Medium'; // police de l'application (Inter, maquette du porteur, 18 octobre 2026)
-// Titres des annonces (listes, cartes, page d'annonce) : Google Sans SemiBold, choix du porteur (12 octobre 2026)
+// Noms d'articles (listes, cartes, page d'annonce) : Outfit gras, choix du porteur (1er novembre 2026)
 // Prix : Roboto Slab ExtraBold, bien plus gras que le reste du texte (demande du porteur, 12 octobre 2026)
 export const PRICE_FONT = 'Inter_800ExtraBold';
-export const TITLE_FONT = 'Inter_700Bold';
+export const TITLE_FONT = 'Outfit_700Bold';
+export const DIALOG_FONT = 'Inter_700Bold'; // titres des fenêtres de confirmation
 
 export const type = {
   title: { fontSize: 22, lineHeight: 28, fontWeight: '800' as const, color: colors.ink },

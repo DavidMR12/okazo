@@ -103,6 +103,16 @@ export class SanctionsService {
       const [row] = await tx.select().from(sanctions).where(eq(sanctions.id, sanctionId)).for('update');
       if (!row) throw new NotFoundException({ code: 'SANCTION_NOT_FOUND', message: 'Sanction introuvable.' });
       if (row.revokedAt) throw new ConflictException({ code: 'ALREADY_REVOKED', message: 'Sanction déjà levée.' });
+      if (row.userId === actor.id) {
+        throw new ForbiddenException({ code: 'SELF_SANCTION', message: 'Vous ne pouvez pas lever une sanction qui vous vise.' });
+      }
+      // Une décision d'administrateur ne se défait pas au niveau modérateur
+      if (actor.role !== 'admin' && row.issuedBy) {
+        const [issuer] = await tx.select({ role: users.role }).from(users).where(eq(users.id, row.issuedBy)).limit(1);
+        if (issuer?.role === 'admin') {
+          throw new ForbiddenException({ code: 'REVOKE_REQUIRES_ADMIN', message: 'Seul un administrateur peut lever cette sanction.' });
+        }
+      }
       if (row.type === 'ban' && actor.role !== 'admin') {
         throw new ForbiddenException({ code: 'UNBAN_REQUIRES_ADMIN', message: 'Seul un administrateur peut lever un bannissement.' });
       }

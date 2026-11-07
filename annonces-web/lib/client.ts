@@ -79,4 +79,12 @@ export function useSignedIn(): boolean | null {
 }
 
 /** Redirection interne uniquement (empêche ?retour=https://site-malveillant). */
-export const safeReturn = (to: string | undefined | null) => (to && to.startsWith('/') && !to.startsWith('//') ? to : '/');
+export const safeReturn = (to: string | undefined | null) => {
+  // Les navigateurs lisent « /\\site.com » comme « //site.com » et ignorent tabulations et retours à la ligne
+  if (!to || !to.startsWith('/') || /[\\\u0000-\u001f]/.test(to)) return '/';
+  try {
+    return new URL(to, 'http://x').origin === 'http://x' ? to : '/';
+  } catch {
+    return '/';
+  }
+};

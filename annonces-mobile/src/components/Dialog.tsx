@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { colors, space, TITLE_FONT } from '../theme';
+import { colors, DIALOG_FONT, space } from '../theme';
 import { Text } from './Typography';
 
 /**
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 380, backgroundColor: colors.bg, borderRadius: 26, padding: space.xl, alignItems: 'center', gap: space.sm },
   icon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center', marginBottom: space.xs },
   iconDanger: { backgroundColor: '#FFF1F0' },
-  title: { fontSize: 18, lineHeight: 24, fontFamily: TITLE_FONT, color: colors.ink, textAlign: 'center' },
+  title: { fontSize: 18, lineHeight: 24, fontFamily: DIALOG_FONT, color: colors.ink, textAlign: 'center' },
   message: { fontSize: 15, lineHeight: 22, color: colors.inkMuted, textAlign: 'center' },
   buttons: { alignSelf: 'stretch', gap: space.sm, marginTop: space.md },
   buttonsRow: { flexDirection: 'row' },

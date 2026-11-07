@@ -9,4 +9,4 @@ ROLE="${2:-moderator}"
 [[ "$ROLE" =~ ^(admin|moderator|user)$ ]] || { echo "Rôle invalide : admin, moderator ou user" >&2; exit 1; }
 docker compose exec -T postgres psql -U annonces -d annonces -v ON_ERROR_STOP=1 \
   -c "update users set role = '$ROLE' where phone_e164 = '$PHONE' returning display_name, role;"
-echo "La personne doit se reconnecter (ou attendre 15 min) pour que le rôle s'applique."
+echo "Le rôle s'applique tout de suite côté API ; l'application l'affiche à la prochaine connexion."

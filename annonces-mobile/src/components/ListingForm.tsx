@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { Text, TextInput } from './Typography';
 import { ApiError } from '../api/client';
 import { useCategories, useCities, useCountries, useDistricts, useMe } from '../api/hooks';
@@ -120,7 +120,7 @@ export function ListingForm({
   const cities = useCities(me.data?.countryCode);
   const countries = useCountries();
   const photos = usePhotoUploads(8);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
 
   const [d, setD] = useState<ListingDraft>(initial ? { ...EMPTY, ...initial } : EMPTY);
   const districts = useDistricts(d.cityId);

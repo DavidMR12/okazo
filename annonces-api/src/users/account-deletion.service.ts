@@ -1,6 +1,7 @@
-import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { and, eq, isNull, ne, sql } from 'drizzle-orm';
+import { ConflictException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { and, eq, isNotNull, isNull, ne, sql } from 'drizzle-orm';
 import Redis from 'ioredis';
+import { EmailCodeService } from '../auth/email-code.service';
 import { OtpService } from '../auth/otp.service';
 import { env } from '../config/env';
 import { Database, DB } from '../db/db.module';
@@ -26,32 +27,44 @@ export class AccountDeletionService {
     @Inject(DB) private readonly db: Database,
     @Inject(REDIS) private readonly redis: Redis,
     private readonly otp: OtpService,
+    private readonly emailCodes: EmailCodeService,
     private readonly storage: StorageService,
   ) {}
 
   private async activeUser(userId: string) {
     const [u] = await this.db
-      .select({ phone: users.phoneE164, status: users.status })
+      .select({ phone: users.phoneE164, email: users.email, status: users.status })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    if (!u?.phone || u.status === 'deleted') throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Compte introuvable.' });
+    if (!u || u.status === 'deleted') throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Compte introuvable.' });
     if (u.status === 'banned') {
       throw new ForbiddenException({ code: 'ACCOUNT_BANNED', message: 'Contactez le support pour toute demande concernant ce compte.' });
     }
-    return { phone: u.phone };
+    if (u.phone) return { phone: u.phone, email: null };
+    // Compte sans numéro : le code part à son adresse e-mail, ou à celle du compte Google lié
+    const [link] = u.email ? [] : await this.db.select({ email: userIdentities.email }).from(userIdentities).where(and(eq(userIdentities.userId, userId), isNotNull(userIdentities.email))).limit(1);
+    return { phone: null, email: u.email ?? link?.email ?? null };
   }
 
-  /** Étape 1 : un code SMS confirme que c'est bien le titulaire (un jeton volé ne suffit pas). */
+  private noChannel() {
+    return new ConflictException({ code: 'NO_CONFIRMATION_CHANNEL', message: 'Vérifiez d’abord un numéro de téléphone : il sert à confirmer la suppression.' });
+  }
+
+  /** Étape 1 : un code (SMS, ou e-mail sans numéro) confirme que c'est bien le titulaire (un jeton volé ne suffit pas). */
   async requestCode(userId: string, ip: string) {
-    const { phone } = await this.activeUser(userId);
-    return this.otp.request(phone, ip);
+    const { phone, email } = await this.activeUser(userId);
+    if (phone) return this.otp.request(phone, ip);
+    if (!email) throw this.noChannel();
+    return { ...(await this.emailCodes.send('delete', email, ip)), channel: 'email' as const };
   }
 
   /** Étape 2 : suppression définitive. */
   async delete(userId: string, code: string): Promise<void> {
-    const { phone } = await this.activeUser(userId);
-    await this.otp.verify(phone, code);
+    const { phone, email } = await this.activeUser(userId);
+    if (phone) await this.otp.verify(phone, code);
+    else if (email) await this.emailCodes.verify('delete', email, code);
+    else throw this.noChannel();
 
     const files: string[] = [];
 
@@ -66,7 +79,7 @@ export class AccountDeletionService {
       }
 
       // Supprimer son compte ne doit pas effacer une sanction : le numéro reste « à surveiller »
-      if (u.status === 'suspended' || u.trustScore < 0) {
+      if (phone && (u.status === 'suspended' || u.trustScore < 0)) {
         await tx
           .insert(blocklist)
           .values({ kind: 'phone', value: phone, action: 'flag', reason: 'Compte supprimé sous sanction ou avec un historique négatif' })

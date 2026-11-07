@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api';
-import { clientIp, deviceId, isSameOrigin, setSessionCookies } from '@/lib/session';
+import { clientIp, deviceId, isSameOrigin, readJson, setSessionCookies } from '@/lib/session';
 
 export async function POST(req: NextRequest) {
   if (!isSameOrigin(req)) return NextResponse.json({ code: 'FORBIDDEN', message: 'Requête refusée.' }, { status: 403 });
-  const input = (await req.json().catch(() => ({}))) as { phone?: string; code?: string };
+  const input = (await readJson(req)) as { phone?: string; code?: string };
 
   const out = NextResponse.json({});
   const did = deviceId(req, out);

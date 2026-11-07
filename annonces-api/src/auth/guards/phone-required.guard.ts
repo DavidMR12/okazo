@@ -9,6 +9,7 @@ import { AuthedRequest } from '../auth.types';
  * À placer APRÈS JwtAuthGuard sur les actions qui engagent (publier, contacter, écrire, faire une offre,
  * postuler, donner un avis) : il faut avoir accepté la version en vigueur des CGU (preuve en cas de litige),
  * et un compte créé avec Google ou par e-mail doit d'abord vérifier un numéro.
+ * Un compte suspendu n'agit plus (il ne doit pas non plus récupérer les numéros des vendeurs).
  * Le numéro reste la clé anti-fraude (un numéro banni ne revient pas avec un nouveau compte Google).
  */
 @Injectable()
@@ -18,7 +19,10 @@ export class PhoneRequiredGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<AuthedRequest>();
     if (!req.user) return false;
-    const [u] = await this.db.select({ phone: users.phoneE164, terms: users.termsVersion }).from(users).where(eq(users.id, req.user.id)).limit(1);
+    const [u] = await this.db.select({ phone: users.phoneE164, terms: users.termsVersion, status: users.status }).from(users).where(eq(users.id, req.user.id)).limit(1);
+    if (u && u.status !== 'active') {
+      throw new ForbiddenException({ code: 'USER_NOT_ACTIVE', message: 'Votre compte ne permet pas cette action.' });
+    }
     if (u && u.terms !== env.TERMS_VERSION) {
       throw new ForbiddenException({ code: 'TERMS_REQUIRED', message: 'Acceptez les conditions d’utilisation pour continuer.' });
     }

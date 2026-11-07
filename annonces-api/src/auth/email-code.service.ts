@@ -6,7 +6,7 @@ import { env } from '../config/env';
 import { REDIS } from '../redis/redis.module';
 import { MAIL_PROVIDER, MailProvider } from './mail/mail-provider';
 
-export type EmailCodePurpose = 'register' | 'reset';
+export type EmailCodePurpose = 'register' | 'reset' | 'delete';
 
 const TTL_SEC = 15 * 60; // un e-mail met parfois plusieurs minutes à arriver
 const RESEND_COOLDOWN_SEC = 60;
@@ -30,13 +30,18 @@ export class EmailCodeService {
     return this.mail.enabled;
   }
 
-  async send(purpose: EmailCodePurpose, email: string, ip: string): Promise<{ expiresInSec: number; resendAfterSec: number }> {
+  /** Limites d'envoi. Appelé aussi pour une adresse inconnue : la réponse ne doit pas révéler si elle a un compte. */
+  async throttle(purpose: EmailCodePurpose, email: string, ip: string): Promise<void> {
     if (!this.mail.enabled) {
       throw new BadRequestException({ code: 'EMAIL_UNAVAILABLE', message: 'La connexion par e-mail n’est pas disponible pour le moment.' });
     }
     await this.rateLimit.hit(`rl:mail:cooldown:${purpose}:${email}`, 1, RESEND_COOLDOWN_SEC);
     await this.rateLimit.hit(`rl:mail:addr:${email}`, 5, 3600);
     await this.rateLimit.hit(`rl:mail:ip:${ip}`, 20, 3600);
+  }
+
+  async send(purpose: EmailCodePurpose, email: string, ip: string): Promise<{ expiresInSec: number; resendAfterSec: number }> {
+    await this.throttle(purpose, email, ip);
 
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
     const key = `ecode:${purpose}:${email}`;
@@ -46,7 +51,9 @@ export class EmailCodeService {
     const [subject, text] =
       purpose === 'register'
         ? [`${env.APP_NAME} : confirmez votre adresse`, `Votre code de confirmation ${env.APP_NAME} est ${code}. Il expire dans ${minutes} min. Si vous n’avez rien demandé, ignorez ce message.`]
-        : [`${env.APP_NAME} : nouveau mot de passe`, `Votre code pour choisir un nouveau mot de passe ${env.APP_NAME} est ${code}. Il expire dans ${minutes} min. Si vous n’avez rien demandé, ignorez ce message : votre mot de passe ne change pas.`];
+        : purpose === 'delete'
+          ? [`${env.APP_NAME} : suppression de votre compte`, `Votre code pour supprimer votre compte ${env.APP_NAME} est ${code}. Il expire dans ${minutes} min. Si vous n’avez rien demandé, ignorez ce message.`]
+          : [`${env.APP_NAME} : nouveau mot de passe`, `Votre code pour choisir un nouveau mot de passe ${env.APP_NAME} est ${code}. Il expire dans ${minutes} min. Si vous n’avez rien demandé, ignorez ce message : votre mot de passe ne change pas.`];
     try {
       await this.mail.send(email, subject, text);
     } catch (err) {

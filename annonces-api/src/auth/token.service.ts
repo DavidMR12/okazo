@@ -23,7 +23,7 @@ export class TokenService {
   }
 
   verifyAccessToken(token: string): Promise<AccessTokenPayload> {
-    return this.jwt.verifyAsync<AccessTokenPayload>(token, { secret: env.JWT_ACCESS_SECRET });
+    return this.jwt.verifyAsync<AccessTokenPayload>(token, { secret: env.JWT_ACCESS_SECRET, algorithms: ['HS256'] });
   }
 
   /** Jeton opaque aléatoire : seul son hachage est stocké en base. */

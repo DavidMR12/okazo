@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { Database, DB } from '../db/db.module';
 import {
   ListingRow,
@@ -9,6 +9,7 @@ import {
   users,
 } from '../db/schema';
 import { ImageError, ImageProcessorService } from '../media/image-processor.service';
+import { VisualSearchService } from '../media/visual-search.service';
 import { fullKey, thumbKey } from '../media/media-keys';
 import { StorageService } from '../media/storage.service';
 import { RuleHit, RulesService } from './rules.service';
@@ -31,6 +32,7 @@ export class ModerationService {
     @Inject(DB) private readonly db: Database,
     private readonly storage: StorageService,
     private readonly images: ImageProcessorService,
+    private readonly visual: VisualSearchService,
     private readonly rules: RulesService,
   ) {}
 
@@ -91,6 +93,8 @@ export class ModerationService {
         .update(listingImages)
         .set({ storageKey: full, width: out.width, height: out.height, sha256: out.sha256, phash: out.phash })
         .where(eq(listingImages.id, img.id));
+      const embedding = await this.visual.tryEmbed(out.full);
+      if (embedding) await this.db.execute(sql`update listing_images set embedding = ${embedding}::vector where id = ${img.id}`);
 
       await this.storage.delete(img.storageKey).catch((e) => this.log.warn(`Suppression de l'original impossible : ${e}`));
     }

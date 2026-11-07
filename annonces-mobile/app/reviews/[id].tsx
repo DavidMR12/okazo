@@ -44,7 +44,7 @@ export default function ReviewsScreen() {
       }
       ListEmptyComponent={<Message title="Pas encore d’avis" body="Les avis sont donnés après un échange dans la messagerie." />}
       renderItem={({ item }) => <ReviewItem review={item} />}
-      ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={colors.primary} style={{ margin: space.lg }} /> : null}
+      ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={colors.primary} style={{ margin: space.lg }} /> : undefined}
     />
   );
 }

@@ -27,10 +27,10 @@ Ce fichier résume le contexte et les décisions prises avec le porteur du proje
 **Première exécution faite le 4 octobre 2026 (Claude Code, sur l'ordinateur du porteur) :**
 - `api` : dépendances installées, `npm run typecheck` et `npm run build` passent, **105 tests automatiques** passent sur une vraie base (`npm run test:db` puis `npm test`, voir `api/README.md`). L'API n'a pas encore été lancée à la main de bout en bout avec MinIO et un vrai client.
 - `web` : projet créé par `setup.sh` (Next.js 16.3), `next build` et `npm run lint` passent. Pas encore ouvert dans un navigateur face à l'API.
-- `mobile` : projet créé par `setup.sh` (Expo SDK 57), `tsc` passe et `expo export --platform android` produit le paquet. Pas encore lancé sur un téléphone.
+- `mobile` : projet créé par `setup.sh` (Expo SDK 58 depuis le 1er novembre 2026), `tsc` passe et `expo export --platform android` produit le paquet. Pas encore lancé sur un téléphone.
 
 Appris à l'exécution (à garder en tête) :
-- **fastify** est fixé à la version utilisée par `@nestjs/platform-fastify` (bloc `overrides` de `api/package.json`) ; deux copies différentes cassent la compilation. Le correctif de sécurité 5.12.5 n'existe officiellement qu'avec Nest 12.
+- **fastify** est fixé par le bloc `overrides` de `api/package.json` à la version de `package.json` (5.12.8 depuis le 2 novembre 2026) ; deux copies différentes cassent la compilation. Nest 11 fonctionne avec cette version : aucune faille n'oblige à passer à Nest 12.
 - **Expo SDK 57** : le modèle range ses écrans dans `src/app/`, qui passe avant notre `app/` ; `setup.sh` supprime donc tout `src/` du modèle. La navigation est intégrée à expo-router : importer `useFocusEffect` et `useIsFocused` depuis `expo-router`, `useHeaderHeight` depuis `expo-router/react-navigation`, **jamais** `@react-navigation/*` (contexte différent, plantage à l'exécution). `StyleSheet.absoluteFillObject` n'existe plus (`absoluteFill`).
 - `expo install` ne sait pas écrire dans `app.config.ts` : tout module qui demande un plugin s'y ajoute à la main.
 
@@ -55,7 +55,7 @@ Chaque dossier a un README détaillé. Celui de `deploy/` est le guide de mise e
 
 ## Base de données
 
-- **La source de vérité est le SQL** : `api/db/schema.sql`, puis `api/db/migrations/002_account_deletion.sql`, `003_messaging.sql` et `004_category_names.sql` (« Électronique », nom des maquettes). Les migrations sont appliquées et suivies par `api/db/migrate.sh` (table `schema_migrations`).
+- **La source de vérité est le SQL** : `api/db/schema.sql`, puis les fichiers numérotés de `api/db/migrations/` (jusqu'à `021_reports_threshold_phone.sql`). Toute migration s'ajoute aussi aux listes de `api/docker-compose.yml` et `api/test/compose.yml`. Les migrations sont appliquées et suivies par `api/db/migrate.sh` (table `schema_migrations`).
 - `api/src/db/schema.ts` (Drizzle) est un **miroir partiel**, uniquement pour les requêtes. **Ne jamais utiliser `drizzle-kit push` ni de migrations générées.** Toute évolution passe par un nouveau fichier `00X_….sql`.
 - Des règles métier vivent aussi dans des **déclencheurs SQL** : limite d'annonces par jour, identité exigée pour certaines catégories, une annonce naît toujours en `pending_review`, application automatique des sanctions, seuil de 3 signalements, passage au niveau « identité ».
 
@@ -105,7 +105,8 @@ Chaque dossier a un README détaillé. Celui de `deploy/` est le guide de mise e
 - Photos : **deux buckets**. `listings/` est public ; `pending/` et `verifications/` sont privés. Les photos traitées sont nommées par l'identifiant de la photo, jamais par sa position.
 - Pièces d'identité : prises à l'appareil photo uniquement (pas de galerie), lues par les modérateurs via des liens de 5 minutes.
 - Sanctions : seul un admin peut bannir ou lever un bannissement. Un modérateur suspend 30 jours au plus et ne peut sanctionner ni un modérateur, ni un admin, ni lui-même. Un bannissement coupe l'accès immédiatement (clé Redis vérifiée par `JwtAuthGuard`).
-- Le nom de la marque seul est interdit comme nom affiché, mais autorisé dans un nom complet (une marque peut être un nom de famille).
+- Le nom de la marque seul est interdit comme nom affiché, mais autorisé dans un nom complet (une marque peut être un nom de famille). Mêmes règles à l'inscription et au changement de nom (`users/display-name.ts`) ; un nom Google ou Facebook refusé devient « Utilisateur ».
+- **Audit du 2 novembre 2026** : le numéro vérifié ne se remplace pas (409 `PHONE_ALREADY_SET` : un changement de numéro demandera une procédure à décider, avec contrôle du support) ; seuls les comptes avec numéro comptent dans le seuil de 3 signalements (migration 021) ; le rôle est relu en base à chaque requête d'administration (`RolesGuard`) ; un compte non actif ne peut plus agir, y compris pour obtenir un numéro ; personne ne modère sa propre annonce ni ne lève sa propre sanction, et un modérateur ne lève pas une sanction donnée par un admin ; le format réel des CV et pièces d'identité est vérifié sur leurs premiers octets ; `Cache-Control: private, no-store` par défaut sur l'API ; suppression d'un compte sans numéro confirmée par code e-mail.
 - Messagerie : avertissements automatiques au destinataire (paiement à l'avance, transfert d'argent, lien, **demande de code SMS**). Les modérateurs ne peuvent lire **que les conversations signalées**.
 - Suppression de compte : anonymisation, pas d'effacement brut. Un compte supprimé sous sanction laisse son numéro « à surveiller ».
 
@@ -161,11 +162,38 @@ Démonstration en partage d'écran (13 octobre 2026) : site sur http://localhost
 **Ensuite**
 1. Lancer l'ensemble en local et le parcourir pour de vrai : API + MinIO, site dans un navigateur, application sur un téléphone avec Expo Go.
 2. Régler le seuil de détection des photos volées sur de vraies photos (voir `api/README.md`, « Photos volées : seuil à régler »).
-3. Plus tard : passer à Nest 12 pour revenir à la version de fastify livrée avec Nest.
+3. Plus tard : passer à Nest 12 (confort seulement : fastify 5.12.8 et zod 4 sont déjà en place depuis le 2 novembre 2026).
 
 **Publicité (décision du 12 octobre 2026)** : AdSense sur le site dès que le site est en ligne (compte à créer ; en développement, des emplacements de test pointillés montrent la place réservée, toutes les 12 annonces et sur la page d’annonce) ; AdMob dans l’application au moment de construire la vraie application avant la bêta (impossible dans Expo Go).
 
 **Cache et réseau de l’application (12 octobre 2026)** : `src/lib/network.ts` (NetInfo) : bandeau « Hors connexion », React Query attend le retour du réseau ; conversations relues depuis le téléphone hors connexion, messages écrits hors connexion envoyés au retour du réseau ; préchargement de l’annonce et de sa première photo quand une carte est à l’écran ; « Économie de données » dans Compte (automatique en 2G/3G) : pas de préchargement, galerie en miniatures, photos envoyées plus légères.
+
+**Recherche par image (demande du porteur, 1er novembre 2026)** : comme Google Lens. Modèle CLIP (`Xenova/clip-vit-base-patch32`, q8) exécuté sur notre serveur par `@huggingface/transformers` : ni clé, ni coût par recherche, aucune photo chez un tiers ; environ 270 Mo de mémoire et 0,25 s par photo sur le PC de développement. Empreinte de 512 nombres dans `listing_images.embedding` (migration 020, extension pgvector : image Docker `pgvector/pgvector:pg16-trixie`, colonne absente du schéma Drizzle), calculée à la modération (`VisualSearchService.tryEmbed`, jamais bloquant). Route publique `POST /listings/search-by-image`, 30 appels par heure et par IP, photo ni enregistrée ni transmise ; seuil `MAX_IMAGE_DISTANCE`. Après le déploiement : `node dist/media/index-photos.js` pour indexer les photos déjà publiées. Le modèle est embarqué dans l'image Docker (`--model`) ; `VISUAL_SEARCH_ENABLED=false` coupe la fonction (tests). Seuil 0,33 mesuré sur 554 photos (catégories différentes : 5 % sous 0,37) : à revoir sur de vraies photos de téléphone. Écrans : icône appareil photo dans la barre de recherche ; site `/recherche-image` (relais public `/api/image-search`, car `/api/proxy` exige un compte) ; application `app/visual-search.tsx`. Photo réduite à 512 px avant l'envoi.
+
+**Titre de publication (1er novembre 2026)** : « Vendez votre article » dans un ovale centré, avec sous-titre sur le site ; onglets de Messages centrés (site `.seg-center`, application `seg`).
+
+**Hors-ligne (exigence du porteur, 1er novembre 2026)** : tout ce qui a été récupéré reste consultable. Application : cache disque 30 jours (`PERSIST_MAX_AGE`), 150 fiches maximum (`keepRecentListings`, limite du stockage Android), fiches préchargées aussi en mode léger, sans leur photo ; message « Pas de connexion » si rien n'est enregistré. `gcTime` reste à `Infinity` : une durée au-delà de 24,8 jours déclenche le minuteur aussitôt et vide le cache. Site : service worker (production seulement), page `/hors-ligne` et ses fichiers mis en cache dès l'installation, bandeau `OfflineBanner`. Le panneau de navigateur de l'application de bureau n'enregistre pas les service workers : tester dans Chrome.
+
+**Noms d'articles en Outfit gras (choix du porteur, 1er novembre 2026)** : `--font-title` sur le site, `TITLE_FONT` dans l'application ; le reste du texte reste en Inter, y compris les fenêtres de confirmation (`DIALOG_FONT`).
+
+**Carte d'annonce « Vitrine » (choix du porteur, 1er novembre 2026)** : carte blanche en relief, photo carrée, prix dans un ovale bleu à cheval sur la photo, badge safran. L'ovale ne contient que le montant ; l'unité et « À débattre » sont dessous, pour ne jamais couper le prix. Sous le titre : lieu puis date sur une ligne, coupée à la fin. Site : `components/ListingCard.tsx`, fin de `globals.css`. Application : `src/components/ListingTile.tsx`, et `ListingFeed` passe en grille de deux cartes (accueil, recherche, vendeur) ; `ListingRow` est supprimé. Hauteur de carte fixe (`tileHeight`) pour `getItemLayout`.
+
+**Serveur de production (7 novembre 2026)** : domaine `okazo.org` acheté chez Gandi, DNS chez Cloudflare depuis le 7 novembre (zone active, offre Free ; enregistrements de messagerie Gandi gardés). Serveur Hetzner Cloud `okazo-prod`, CX33 (4 vCPU, 8 Go, 80 Go), **Helsinki** (pas de CX33 libre en Allemagne), Ubuntu 24.04, IPv4 `204.168.142.119`, sauvegardes Hetzner activées, pare-feu Hetzner `okazo-ssh` (TCP 22 seul). Préparé par `server-setup.sh` : connexion `ssh -i ~/.ssh/okazo_hetzner deploy@204.168.142.119` (clé `okazo-prod` sur le PC du porteur, sans phrase de passe) ; root et mots de passe refusés, ufw, mises à jour automatiques, Docker, 4 Go d'échange. Rien n'est encore déployé, sauf un connecteur de tunnel provisoire (conteneur `okazo-tunnel-temp`, jeton dans `/opt/annonces/tunnel-temp.env`) à supprimer au premier déploiement, quand compose lancera son propre cloudflared. Buckets R2 créés ; clés et jeton du tunnel dans `annonces-deploy/.env.cloudflare` (exclu de Git).
+
+**Cybersécurité : avant, pendant et après la mise en production finale (exigence du porteur, 28 octobre 2026)**
+Aucune mise en production finale ni publication sur les stores sans ce volet. Le porteur branchera **son propre agent d'analyse continue des failles** sur l'infrastructure : on lui prépare le terrain, sans jamais lui confier de secret.
+- **En-têtes du site (2 novembre 2026, production seulement)** : CSP statique, HSTS, Permissions-Policy (`web/next.config.ts`). `script-src` reste large (`'unsafe-inline' https:`) car AdSense l'exige et qu'un nonce casserait l'ISR.
+- **Déjà en place** (`annonces-deploy`) : serveur sans port web ouvert (Cloudflare Tunnel sortant, adresse cachée), SSH par clé seulement et sans root, pare-feu fermé sauf SSH, mises à jour de sécurité automatiques, secrets générés par `generate-secrets.sh`, sauvegardes chiffrées (age) avec clé hors serveur ; côté application : cookies httpOnly, jetons de renouvellement hachés et détection de vol, `TRUSTED_PROXIES`, limites de débit (OTP, e-mail, numéro du vendeur), helmet, fichiers privés par liens de 5 min, modération avant publication.
+- **Avant** (audit) :
+  - dépendances (`npm audit` des trois projets ; passage à Nest 12 pour récupérer le correctif fastify 5.12.5) ;
+  - aucun secret dans le dépôt GitHub ni dans l'application (tout `EXPO_PUBLIC_*` est public) ; `scripts/compte-test.mjs` jamais lancé en production (il refuse déjà une base non locale) ;
+  - en-têtes (CSP, HSTS, X-Frame-Options), CORS limité aux vrais domaines (plus d'adresse 192.168.1.96 ni de localhost) ;
+  - revue des droits par rôle (utilisateur, modérateur, admin), des téléversements (type, taille, métadonnées) et des limites de débit ; test d'intrusion des parcours sensibles (connexion, numéro du vendeur, messagerie, pièces d'identité, CV) ;
+  - restauration d'une sauvegarde testée.
+- **Pendant** (bascule) : secrets de production régénérés (JWT, OTP, R2, base), `NODE_ENV=production`, fournisseurs réels (SMS, WhatsApp, e-mail ; `console` interdit), règles Cloudflare (WAF, limitation de débit, protection anti-robots sur la connexion), comptes admin nommés avec mot de passe fort, journaux activés, liste de vérification cochée.
+- **Après** (surveillance) : journaux centralisés et alertes (erreurs, pics de connexions ratées, envois de SMS anormaux), sondes de disponibilité et de sauvegarde, mises à jour mensuelles, rotation des secrets, revue des comptes admin, plan de réponse à incident écrit (qui fait quoi, coupure, communication, déclaration à l'autorité de protection des données).
+- **Audit hebdomadaire (demande du porteur, 1er novembre 2026)** : tâche planifiée `okazo-audit-securite-hebdo`, chaque dimanche à 9 h : audit du code et de la configuration en local, correction des failles, rapport dans `audits-securite/`. Pas de commit ni de déploiement automatique, aucun scan de service en ligne.
+- **Agent du porteur** : accès en lecture seule (journaux, configuration sans secrets, résultats d'analyse), périmètre écrit (ce qu'il peut scanner, quand, et ce qu'il ne doit pas toucher), canal d'alerte vers le porteur.
 
 **Après la bêta**
 - Notifications push (annonce en ligne ou refusée, nouveau message).

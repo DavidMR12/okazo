@@ -43,6 +43,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf',
           'node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf',
           'node_modules/@expo-google-fonts/inter/800ExtraBold/Inter_800ExtraBold.ttf',
+          'node_modules/@expo-google-fonts/outfit/700Bold/Outfit_700Bold.ttf',
         ] }],
     'expo-status-bar',
     [

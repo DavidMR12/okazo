@@ -54,7 +54,8 @@ export function PublishForm({ categories, citiesByCountry, walletsByCountry }: {
 
   return (
     <ListingForm
-      heading="Publier une annonce"
+      heading="Vendez votre article"
+      subheading="Quelques photos, un prix, et c’est en ligne."
       categories={categories}
       cities={citiesByCountry[me.countryCode] ?? []}
       walletsByCountry={walletsByCountry}

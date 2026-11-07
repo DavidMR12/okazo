@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,8 +12,11 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
+import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { AuthUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/guards/current-user.decorator';
@@ -27,7 +31,16 @@ import {
   UpdateListingInput,
   updateListingSchema,
 } from './listings.schemas';
+import { RateLimitService } from '../common/rate-limit.service';
+import { ImageError } from '../media/image-processor.service';
+import { VisualSearchService } from '../media/visual-search.service';
 import { ListingsService } from './listings.service';
+
+const imageSearchSchema = z.object({
+  country: z.string().length(2).transform((s) => s.toUpperCase()),
+  image: z.string().min(100).max(900_000), // base64 : le client envoie une photo réduite (512 px)
+});
+type ImageSearchInput = z.infer<typeof imageSearchSchema>;
 
 // Lectures publiques : courte mise en cache côté CDN (Cloudflare) pour absorber le trafic anonyme.
 const PUBLIC_LIST_CACHE = 'public, max-age=15, s-maxage=30, stale-while-revalidate=60';
@@ -41,7 +54,26 @@ const popularQuery = z.object({
 
 @Controller()
 export class ListingsController {
-  constructor(private readonly listings: ListingsService) {}
+  constructor(
+    private readonly listings: ListingsService,
+    private readonly visual: VisualSearchService,
+    private readonly rateLimit: RateLimitService,
+  ) {}
+
+  /** Recherche par image : public, limité par adresse IP. La photo n'est ni enregistrée ni transmise à un tiers. */
+  @Post('listings/search-by-image')
+  @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', PRIVATE)
+  async searchByImage(@Req() req: FastifyRequest, @Body(new ZodValidationPipe(imageSearchSchema)) body: ImageSearchInput) {
+    if (!this.visual.enabled) throw new ServiceUnavailableException({ code: 'VISUAL_SEARCH_OFF', message: 'La recherche par image est indisponible pour le moment.' });
+    await this.rateLimit.hit(`rl:visual:${req.ip}`, 30, 3600);
+    try {
+      return await this.listings.searchByImage(await this.visual.embed(Buffer.from(body.image, 'base64')), body.country);
+    } catch (err) {
+      if (err instanceof ImageError) throw new BadRequestException({ code: err.code, message: 'Cette image ne peut pas être lue. Essayez une autre photo.' });
+      throw err;
+    }
+  }
 
   @Get('listings')
   @Header('Cache-Control', PUBLIC_LIST_CACHE)

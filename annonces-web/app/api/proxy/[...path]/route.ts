@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api';
-import { clearSessionCookies, clientIp, COOKIE, isSameOrigin, refreshTokens, setSessionCookies, Tokens } from '@/lib/session';
+import { BODY_TOO_LARGE, clearSessionCookies, clientIp, COOKIE, isSameOrigin, readBody, refreshTokens, setSessionCookies, Tokens } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,8 @@ async function handler(req: NextRequest, ctx: { params: Promise<{ path: string[]
 
   const ip = clientIp(req);
   const target = `${API_URL}/${path.map(encodeURIComponent).join('/')}${req.nextUrl.search}`;
-  const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.text();
+  const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req);
+  if (body === null) return NextResponse.json(BODY_TOO_LARGE, { status: 413 });
 
   const forward = (token: string) =>
     fetch(target, {

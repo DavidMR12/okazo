@@ -42,9 +42,9 @@ export const ensureCamera = (why = 'Okazo a besoin de l’appareil photo pour ph
     denied: 'L’accès à l’appareil photo est refusé. Vous pouvez l’autoriser dans les réglages du téléphone, rubrique Okazo.',
   });
 
-export const ensurePhotos = () =>
+export const ensurePhotos = (why = 'Okazo a besoin d’accéder à vos photos pour les ajouter à votre annonce.') =>
   ensure(() => ImagePicker.getMediaLibraryPermissionsAsync(), () => ImagePicker.requestMediaLibraryPermissionsAsync(), {
     title: 'Vos photos',
-    why: 'Okazo a besoin d’accéder à vos photos pour les ajouter à votre annonce. Votre téléphone va vous demander l’autorisation.',
+    why: `${why} Votre téléphone va vous demander l’autorisation.`,
     denied: 'L’accès à vos photos est refusé. Vous pouvez l’autoriser dans les réglages du téléphone, rubrique Okazo.',
   });

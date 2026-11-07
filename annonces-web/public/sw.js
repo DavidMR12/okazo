@@ -1,13 +1,23 @@
 /* Service worker : pages et photos déjà consultées disponibles hors ligne. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const IMAGES = `images-${VERSION}`;
 const OFFLINE_URL = '/hors-ligne';
 const MEDIA_ORIGIN = new URL(self.location.href).searchParams.get('media') || '';
 
+// La page « hors ligne » et ses fichiers : sans eux, elle ne s'afficherait pas correctement dès la première coupure
+async function precacheOfflinePage() {
+  const res = await fetch(OFFLINE_URL);
+  const html = await res.clone().text();
+  await (await caches.open(PAGES)).put(OFFLINE_URL, res);
+  const files = [...new Set(html.match(/\/_next\/static\/[^"'\\\s)]+/g) || [])];
+  const assets = await caches.open(ASSETS);
+  await Promise.all(files.map((f) => assets.add(f).catch(() => undefined)));
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(PAGES).then((c) => c.add(OFFLINE_URL)).then(() => self.skipWaiting()));
+  event.waitUntil(precacheOfflinePage().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

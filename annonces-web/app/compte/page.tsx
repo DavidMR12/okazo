@@ -227,7 +227,7 @@ export default function AccountPage() {
               });
             }}>
               <div className="field">
-                <label htmlFor="del-code">Code reçu par SMS</label>
+                <label htmlFor="del-code">Code reçu par SMS ou par e-mail</label>
                 <input id="del-code" className="code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} />
               </div>
               <button className="btn btn-danger" type="submit" disabled={busy || code.length !== 6}>Supprimer mon compte</button>

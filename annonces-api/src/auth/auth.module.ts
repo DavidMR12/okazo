@@ -44,6 +44,6 @@ import { ConsoleMailProvider, DisabledMailProvider, MAIL_PROVIDER } from './mail
     },
   ],
   // Les autres modules (annonces, modération…) importent AuthModule pour utiliser les gardes.
-  exports: [TokenService, JwtAuthGuard, RolesGuard, PhoneRequiredGuard, RateLimitService, OtpService, BlocklistService],
+  exports: [TokenService, JwtAuthGuard, RolesGuard, PhoneRequiredGuard, RateLimitService, OtpService, EmailCodeService, BlocklistService],
 })
 export class AuthModule {}

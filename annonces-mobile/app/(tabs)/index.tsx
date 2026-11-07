@@ -60,6 +60,9 @@ export default function HomeScreen() {
           <Ionicons name="search" size={20} color={colors.inkMuted} />
           <Text style={styles.searchPlaceholder}>Que recherchez-vous ?</Text>
         </Pressable>
+        <Pressable onPress={() => router.push({ pathname: '/visual-search', params: { country: place?.country ?? '' } })} hitSlop={8} accessibilityRole="button" accessibilityLabel="Rechercher par image">
+          <Ionicons name="camera-outline" size={24} color={colors.primary} />
+        </Pressable>
         <Pressable onPress={() => router.push({ pathname: '/search', params: { openFilters: '1' } })} hitSlop={8} accessibilityRole="button" accessibilityLabel="Filtres">
           <Ionicons name="options-outline" size={22} color={colors.primary} />
         </Pressable>
@@ -137,7 +140,7 @@ function Nearby({ place }: { place: Place }) {
         data={items}
         keyExtractor={(i) => i.id}
         renderItem={({ item }) => <ListingTile item={item} favorited={favoriteIds.has(item.id)} onToggleFavorite={onToggleFavorite} />}
-        contentContainerStyle={{ paddingHorizontal: space.lg, gap: space.md }}
+        contentContainerStyle={{ paddingHorizontal: space.lg, paddingTop: 2, paddingBottom: space.md, gap: space.md }}
         showsHorizontalScrollIndicator={false}
       />
     </View>

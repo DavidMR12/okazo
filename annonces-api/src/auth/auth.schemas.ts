@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { NAME_RE } from '../users/display-name';
 
 // Le numéro doit être envoyé au format international (+237…, +241…, +242…).
 const phone = z.string().trim().min(8).max(20);
@@ -44,7 +45,7 @@ const code = z.string().regex(/^\d{6}$/, 'Le code contient 6 chiffres.');
 export const emailRegisterSchema = z.object({
   email,
   password,
-  displayName: z.string().trim().min(2).max(40),
+  displayName: z.string().trim().min(2).max(40).regex(NAME_RE, 'Caractères non autorisés dans le nom.'),
   country: z.string().length(2).transform((s) => s.toUpperCase()).default('CM'),
 });
 export const emailVerifySchema = z.object({ email, code, device });

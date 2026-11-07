@@ -1,6 +1,8 @@
 'use client';
 
+import { eyeOffOutline, eyeOutline } from 'ionicons/icons';
 import { FormEvent, useState } from 'react';
+import { Ion } from './Ion';
 import { authCall, ClientError } from '@/lib/client';
 
 type Mode = 'login' | 'register' | 'confirm' | 'forgot' | 'reset';
@@ -54,7 +56,7 @@ export function EmailForm({ country, onDone }: { country: string; onDone: (phone
       <label htmlFor="password">{label}</label>
       <div className="password-row">
         <input id="password" type={show ? 'text' : 'password'} autoComplete={autoComplete} required minLength={autoComplete === 'new-password' ? 8 : 1} value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button type="button" className="link-button" onClick={() => setShow((s) => !s)} aria-pressed={show}>{show ? 'Masquer' : 'Afficher'}</button>
+        <button type="button" className="password-eye" onClick={() => setShow((s) => !s)} aria-pressed={show} aria-label={show ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}><Ion icon={show ? eyeOffOutline : eyeOutline} size={22} /></button>
       </div>
       {autoComplete === 'new-password' ? <p className={`hint ${password && !strong ? 'error' : 'muted'}`}>8 caractères au moins, avec une lettre et un chiffre.</p> : null}
     </div>

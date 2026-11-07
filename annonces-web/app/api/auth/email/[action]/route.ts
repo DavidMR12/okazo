@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api';
-import { clientIp, deviceId, isSameOrigin, setSessionCookies } from '@/lib/session';
+import { clientIp, deviceId, isSameOrigin, readJson, setSessionCookies } from '@/lib/session';
 
 /**
  * Connexion par e-mail et mot de passe, relayée vers l'API :
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ act
   const { action } = await params;
   if (!isSameOrigin(req)) return NextResponse.json({ code: 'FORBIDDEN', message: 'Requête refusée.' }, { status: 403 });
   if (!SESSION.has(action) && !PLAIN.has(action)) return NextResponse.json({ code: 'NOT_FOUND', message: 'Introuvable.' }, { status: 404 });
-  const input = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const input = (await readJson(req)) as Record<string, unknown>;
 
   const out = NextResponse.json({});
   const body = SESSION.has(action) ? { ...input, device: { fingerprint: `web:${deviceId(req, out)}`, platform: 'web' } } : input;

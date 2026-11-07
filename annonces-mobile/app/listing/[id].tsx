@@ -67,6 +67,9 @@ export default function ListingScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, listing.data?.id]);
 
+  if (listing.isPending && listing.fetchStatus === 'paused') {
+    return <Message title="Pas de connexion" body="Cet article n’a pas encore été enregistré sur cet appareil. Il s’affichera dès le retour du réseau." actionLabel="Retour" onAction={() => router.back()} />;
+  }
   if (listing.isPending) return <ActivityIndicator style={{ marginTop: space.xxl }} color={colors.primary} />;
   if (listing.isError || !listing.data) {
     const gone = listing.error instanceof ApiError && listing.error.status === 404;

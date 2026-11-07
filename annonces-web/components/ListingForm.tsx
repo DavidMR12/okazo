@@ -94,6 +94,7 @@ const stepOfError = (k: string): StepKey =>
  */
 export function ListingForm({
   heading,
+  subheading,
   header,
   categories,
   cities,
@@ -108,6 +109,7 @@ export function ListingForm({
   onSubmit,
 }: {
   heading: string;
+  subheading?: string;
   header?: ReactNode;
   categories: Category[];
   cities: City[];
@@ -353,7 +355,8 @@ export function ListingForm({
     <div className="container publish-layout section" ref={top}>
       <form className="stack-lg" onSubmit={submit} noValidate>
         <div className="publish-title">
-          <h1>{heading}</h1>
+          <h1 className="pill-title">{heading}</h1>
+          {subheading ? <p className="muted publish-subtitle">{subheading}</p> : null}
           {draftKey && restored && hasDraft ? <span className="saved">✓ Brouillon enregistré</span> : null}
         </div>
         {stepped ? (

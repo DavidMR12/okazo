@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '../src/components/Typography';
@@ -46,6 +47,7 @@ export default function LoginScreen() {
   const countries = useCountries();
   const list = countries.data?.length ? countries.data : FALLBACK;
   const [tab, setTab] = useState<'phone' | 'email'>('phone');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -105,18 +107,31 @@ export default function LoginScreen() {
   const field = (props: { label: string; value: string; onChangeText: (v: string) => void; secure?: boolean; keyboardType?: 'email-address' | 'number-pad'; autoComplete?: 'email' | 'password' | 'new-password' | 'name' | 'one-time-code'; placeholder?: string }) => (
     <View style={{ gap: 6 }}>
       <Text style={styles.label}>{props.label}</Text>
+      <View>
       <TextInput
         value={props.value}
         onChangeText={props.onChangeText}
-        secureTextEntry={props.secure}
+        secureTextEntry={props.secure && !showPassword}
         keyboardType={props.keyboardType}
         autoComplete={props.autoComplete}
         autoCapitalize="none"
         placeholder={props.placeholder}
         placeholderTextColor={colors.inkMuted}
-        style={styles.field}
+        style={[styles.field, props.secure ? { paddingRight: 48 } : null]}
         accessibilityLabel={props.label}
       />
+      {props.secure ? (
+        <Pressable
+          onPress={() => setShowPassword((s) => !s)}
+          hitSlop={6}
+          style={styles.eye}
+          accessibilityRole="button"
+          accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+        >
+          <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.inkMuted} />
+        </Pressable>
+      ) : null}
+      </View>
     </View>
   );
   const emailField = field({ label: 'Adresse e-mail', value: email, onChangeText: setEmail, keyboardType: 'email-address', autoComplete: 'email', placeholder: 'vous@exemple.com' });
@@ -258,6 +273,7 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 18, color: colors.ink, letterSpacing: 0.5 },
   label: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  eye: { position: 'absolute', right: 4, top: 3, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   field: { borderWidth: 1.5, borderColor: colors.line, borderRadius: 10, paddingHorizontal: space.md, height: 50, fontSize: 16, color: colors.ink },
   links: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm },
   link: { color: colors.primary, fontWeight: '700', fontSize: 15 },

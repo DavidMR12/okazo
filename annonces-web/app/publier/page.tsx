@@ -3,7 +3,7 @@ import { getCategories, getCities, getCountries } from '@/lib/api';
 import type { City } from '@/lib/types';
 import { PublishForm } from './PublishForm';
 
-export const metadata: Metadata = { title: 'Publier une annonce', robots: { index: false } };
+export const metadata: Metadata = { title: 'Vendez votre article', robots: { index: false } };
 export const revalidate = 3600;
 
 // Catégories et villes préparées côté serveur : le formulaire s'affiche sans attendre l'API

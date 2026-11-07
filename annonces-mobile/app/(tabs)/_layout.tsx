@@ -14,7 +14,7 @@ const pillHeader = (text: string) => ({ headerTitle: () => <PillTitle text={text
 type IconName = keyof typeof Ionicons.glyphMap;
 const icon = (name: IconName, active: IconName) =>
   function TabIcon({ color, focused, size }: { color: ColorValue; focused: boolean; size: number }) {
-    return <Ionicons name={focused ? active : name} size={size} color={color} />;
+    return <Ionicons name={focused ? active : name} size={size} color={color as string} />;
   };
 
 // Libellé d'onglet ; l'onglet actif est souligné d'un trait bleu (maquette du porteur, 18 octobre 2026)
@@ -51,7 +51,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="publish"
         options={{
-          title: 'Publier une annonce',
+          title: 'Vendez votre article',
+          ...pillHeader('Vendez votre article'),
           tabBarLabel: 'Publier',
           tabBarButton: (props) => <PublishTabButton onPress={props.onPress ?? undefined} focused={props['aria-selected'] ?? false} />,
         }}

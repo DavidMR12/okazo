@@ -35,7 +35,7 @@ export function SimilarListings({
         data={items}
         keyExtractor={(i) => i.id}
         renderItem={({ item }) => <ListingTile item={item} favorited={favoriteIds.has(item.id)} onToggleFavorite={onToggleFavorite} />}
-        contentContainerStyle={{ paddingHorizontal: space.lg, gap: space.md }}
+        contentContainerStyle={{ paddingHorizontal: space.lg, paddingTop: 2, paddingBottom: space.md, gap: space.md }}
         showsHorizontalScrollIndicator={false}
       />
     </View>

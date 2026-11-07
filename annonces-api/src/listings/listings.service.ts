@@ -92,6 +92,10 @@ function otherPlace(citySlug: string, cityOther: string | null, districtId: numb
   };
 }
 
+// Recherche par image : au-delà de cette distance (0 = identique), la photo ne ressemble plus à ce qui est cherché
+const MAX_IMAGE_DISTANCE = 0.33;
+const IMAGE_RESULTS = 24;
+
 @Injectable()
 export class ListingsService {
   private readonly log = new Logger(ListingsService.name);
@@ -273,9 +277,28 @@ export class ListingsService {
     return Number(r?.n ?? 0);
   }
 
-  async list(q: ListQuery) {
+  /** Articles dont une photo ressemble à l'empreinte donnée, du plus proche au moins proche. */
+  async searchByImage(embedding: string, country: string) {
+    const rows = await this.db.execute<{ id: string }>(sql`
+      select i.listing_id as id
+      from listing_images i
+      join listings l on l.id = i.listing_id
+      where i.embedding is not null and l.status = 'active' and l.expires_at > now() and l.country_code = ${country}
+      group by i.listing_id
+      having min(i.embedding <=> ${embedding}::vector) < ${MAX_IMAGE_DISTANCE}
+      order by min(i.embedding <=> ${embedding}::vector)
+      limit ${IMAGE_RESULTS}`);
+    const ids = [...rows].map((r) => r.id);
+    if (!ids.length) return { items: [] };
+    const { items } = await this.list({ country, limit: ids.length } as ListQuery, ids);
+    const rank = new Map(ids.map((id, i) => [id, i]));
+    return { items: items.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!) };
+  }
+
+  async list(q: ListQuery, onlyIds?: string[]) {
     const now = new Date();
     const base = await this.filterConditions(q);
+    if (onlyIds) base.push(inArray(listings.id, onlyIds));
     const byPrice = q.sort === 'price_asc' || q.sort === 'price_desc';
 
     const fields = {
@@ -328,7 +351,7 @@ export class ListingsService {
         .limit(q.limit + 1),
       // Annonces boostées : mises en avant sur la première page du tri par défaut uniquement.
       // Elles peuvent aussi apparaître dans le flux normal : le client déduplique par id.
-      q.cursor || byPrice
+      q.cursor || byPrice || onlyIds
         ? Promise.resolve([])
         : this.db
             .select(fields)
@@ -783,7 +806,7 @@ export class ListingsService {
       .select({ title: listings.title, phone: users.phoneE164, contactPreference: users.contactPreference })
       .from(listings)
       .innerJoin(users, eq(users.id, listings.userId))
-      .where(and(eq(listings.id, id), eq(listings.status, 'active'), eq(users.status, 'active')))
+      .where(and(eq(listings.id, id), eq(listings.status, 'active'), gt(listings.expiresAt, new Date()), eq(users.status, 'active')))
       .limit(1);
     if (!row?.phone) throw new NotFoundException({ code: 'LISTING_NOT_FOUND', message: 'Annonce introuvable.' });
     if (row.contactPreference === 'messages_only') {

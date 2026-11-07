@@ -1,4 +1,8 @@
+import { cameraOutline } from 'ionicons/icons';
+import Link from 'next/link';
+import { DEFAULT_COUNTRY } from '@/lib/site';
 import type { Country } from '@/lib/types';
+import { Ion } from './Ion';
 import { SearchCountry } from './SearchCountry';
 
 /** Formulaire HTML classique (GET) : fonctionne sans JavaScript, même sur un vieux téléphone. Le pays se choisit dans une liste à drapeaux. */
@@ -20,6 +24,7 @@ export function SearchForm({ action, defaultQuery, countries, country, category,
       {countries && countries.length > 1 ? (
         <SearchCountry countries={countries} country={country ?? countries[0].code} category={category} />
       ) : null}
+      <Link href={`/recherche-image?pays=${(country ?? DEFAULT_COUNTRY).toLowerCase()}`} className="search-lens" prefetch={false} aria-label="Rechercher par image" title="Rechercher par image"><Ion icon={cameraOutline} size={24} /></Link>
       <button className="btn" type="submit">Rechercher</button>
     </form>
   );

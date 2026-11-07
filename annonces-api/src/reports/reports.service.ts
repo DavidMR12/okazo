@@ -220,6 +220,10 @@ export class ReportsService {
         }
       }
 
+      if (ownerId === actor.id) {
+        throw new ForbiddenException({ code: 'SELF_MODERATION', message: 'Vous ne pouvez pas traiter un signalement qui vous concerne.' });
+      }
+
       if (dto.decision === 'uphold' && dto.sanction) {
         if (!ownerId) throw new BadRequestException({ code: 'NO_TARGET_USER', message: 'Aucun utilisateur à sanctionner.' });
         issued = await this.sanctions.issue(tx, actor, { ...dto.sanction, userId: ownerId, relatedReportId: r.id });

@@ -66,7 +66,7 @@ export default function MessagesScreen() {
           />
         )
       }
-      ListFooterComponent={shown.length > 0 && shown.length < 5 ? <DecorFooter icons={['chatbubble-outline', 'chatbubbles-outline', 'mail-outline', 'chatbubble-ellipses-outline', 'paper-plane-outline', 'happy-outline', 'chatbox-outline']} text="Écrivez aux vendeurs depuis leurs annonces : vos conversations s’affichent ici." /> : null}
+      ListFooterComponent={shown.length > 0 && shown.length < 5 ? <DecorFooter icons={['chatbubble-outline', 'chatbubbles-outline', 'mail-outline', 'chatbubble-ellipses-outline', 'paper-plane-outline', 'happy-outline', 'chatbox-outline']} text="Écrivez aux vendeurs depuis leurs annonces : vos conversations s’affichent ici." /> : undefined}
       onEndReached={() => inbox.hasNextPage && !inbox.isFetchingNextPage && void inbox.fetchNextPage()}
       refreshControl={<RefreshControl refreshing={inbox.isRefetching && !inbox.isFetchingNextPage} onRefresh={() => void inbox.refetch()} tintColor={colors.primary} />}
       style={{ backgroundColor: colors.bg }}
@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
   padded: { flex: 1, padding: space.lg, backgroundColor: colors.bg },
   content: { padding: space.lg, gap: space.sm, paddingBottom: space.xxl },
   head: { gap: space.md, marginBottom: space.xs },
-  seg: { flexDirection: 'row', padding: 4, borderRadius: 14, backgroundColor: colors.tint, gap: 4 },
-  segBtn: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 10 },
+  seg: { flexDirection: 'row', alignSelf: 'center', padding: 4, borderRadius: 14, backgroundColor: colors.tint, gap: 4 },
+  segBtn: { alignItems: 'center', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 10 },
   segOn: { backgroundColor: '#fff', shadowColor: '#1E3A8A', shadowOpacity: 0.1, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   segText: { fontSize: 14, fontWeight: '600', color: colors.inkMuted },
   segTextOn: { color: colors.primary },
