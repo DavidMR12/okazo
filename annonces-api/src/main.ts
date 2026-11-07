@@ -22,6 +22,9 @@ async function bootstrap() {
 
   await app.listen(env.PORT, '0.0.0.0');
   Logger.log(`API démarrée sur le port ${env.PORT}`, 'Bootstrap');
+  if (env.NODE_ENV === 'production' && env.PREVIEW_MODE) {
+    Logger.warn('AVANT-PREMIÈRE : codes de connexion dans les journaux, aucun SMS envoyé. Site à garder fermé au public.', 'Bootstrap');
+  }
 }
 
 bootstrap();

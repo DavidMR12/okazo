@@ -80,6 +80,9 @@ const schema = z
     FAVORITES_MAX: z.coerce.number().int().default(500),
     VERIFICATIONS_DAILY_LIMIT: z.coerce.number().int().default(3),
     RUN_MAINTENANCE_WORKER: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
+    // Avant-première privée (site fermé par Cloudflare Access) : codes de connexion dans les journaux au lieu d'un SMS.
+    // Seule exception tolérée en production ; à repasser à false avant l'ouverture au public.
+    PREVIEW_MODE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   })
   .refine((e) => !(e.NODE_ENV === 'production' && e.WHATSAPP_PROVIDER === 'console'), {
     message: 'WHATSAPP_PROVIDER=console est interdit en production',
@@ -100,8 +103,8 @@ const schema = z
   .refine((e) => e.SMS_PROVIDER !== 'infobip' || (e.INFOBIP_BASE_URL && e.INFOBIP_API_KEY), {
     message: 'INFOBIP_BASE_URL et INFOBIP_API_KEY sont requis',
   })
-  .refine((e) => !(e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console'), {
-    message: "SMS_PROVIDER=console est interdit en production",
+  .refine((e) => !(e.NODE_ENV === 'production' && e.SMS_PROVIDER === 'console' && !e.PREVIEW_MODE), {
+    message: 'SMS_PROVIDER=console est interdit en production (sauf PREVIEW_MODE=true, site fermé au public)',
   })
   .refine(
     (e) =>
