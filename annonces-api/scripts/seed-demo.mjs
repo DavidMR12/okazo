@@ -5,19 +5,25 @@
 // Les photos sont des visuels d'illustration générés (dégradé et titre), envoyés dans le stockage comme de vraies photos traitées.
 import { DeleteObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import postgres from 'postgres';
 import sharp from 'sharp';
 
-// ---------------------------------------------------------------- configuration (.env de l'API)
-const env = Object.fromEntries(
-  readFileSync(new URL('../.env', import.meta.url), 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
-);
-if (!/localhost|127\.0\.0\.1/.test(env.DATABASE_URL)) {
-  console.error('Refusé : ce script ne tourne que sur une base locale.');
+// ---------------------------------------------------------------- configuration (.env de l'API, sinon l'environnement du conteneur)
+const ENV_FILE = new URL('../.env', import.meta.url);
+const env = existsSync(ENV_FILE)
+  ? Object.fromEntries(
+      readFileSync(ENV_FILE, 'utf8')
+        .split(/\r?\n/)
+        .filter((l) => l && !l.startsWith('#') && l.includes('='))
+        .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
+    )
+  : process.env;
+// Hors base locale : seulement pour l'avant-première fermée (PREVIEW_MODE), sur demande explicite.
+// L'effacement (--reset) reste permis avec la seule demande explicite, pour tout nettoyer avant l'ouverture.
+const AVANT_PREMIERE = process.env.DEMO_AVANT_PREMIERE === 'oui';
+if (!/localhost|127\.0\.0\.1/.test(env.DATABASE_URL) && !(AVANT_PREMIERE && (env.PREVIEW_MODE === 'true' || process.argv.includes('--reset')))) {
+  console.error('Refusé : ce script ne tourne que sur une base locale (ou en avant-première avec DEMO_AVANT_PREMIERE=oui).');
   process.exit(1);
 }
 const sql = postgres(env.DATABASE_URL, { max: 4, onnotice: () => {} });
@@ -290,6 +296,8 @@ async function seedAll() {
       values (${conv.id}, ${l.id}, ${buyer.id}, ${l.seller}, 'buyer', ${rating}, ${pick(comments)}, now() - make_interval(days => ${int(0, 5)}))`;
     reviews++;
   }
+  // Avant-première : les numéros +237 6990… peuvent appartenir à de vrais abonnés, ils ne sont jamais affichés
+  if (AVANT_PREMIERE) await sql`update users set contact_preference = 'messages_only' where phone_e164 like ${DEMO_PHONE}`;
   console.log(`Données de démonstration ajoutées : ${users.length} vendeurs, ${listings} annonces, ${files} fichiers photo, ${reviews} avis.`);
 }
 

@@ -11,14 +11,18 @@ import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 import sharp from 'sharp';
 
-const env = Object.fromEntries(
-  readFileSync(new URL('../.env', import.meta.url), 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
-);
-if (!/localhost|127\.0\.0\.1/.test(env.DATABASE_URL)) {
-  console.error('Refusé : ce script ne tourne que sur une base locale.');
+const ENV_FILE = new URL('../.env', import.meta.url);
+const env = existsSync(ENV_FILE)
+  ? Object.fromEntries(
+      readFileSync(ENV_FILE, 'utf8')
+        .split(/\r?\n/)
+        .filter((l) => l && !l.startsWith('#') && l.includes('='))
+        .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
+    )
+  : process.env;
+// Hors base locale : seulement pour l'avant-première fermée (PREVIEW_MODE), sur demande explicite
+if (!/localhost|127\.0\.0\.1/.test(env.DATABASE_URL) && !(process.env.DEMO_AVANT_PREMIERE === 'oui' && env.PREVIEW_MODE === 'true')) {
+  console.error('Refusé : ce script ne tourne que sur une base locale (ou en avant-première avec DEMO_AVANT_PREMIERE=oui).');
   process.exit(1);
 }
 const sql = postgres(env.DATABASE_URL, { max: 4, onnotice: () => {} });
@@ -30,7 +34,9 @@ const s3 = new S3Client({
 });
 const BUCKET = env.S3_BUCKET;
 const DEMO_PHONE = '+2376990%';
-const DIR = new URL('../../Maquettes/photos-demo/', import.meta.url);
+const DIR = process.env.DEMO_PHOTOS_DIR
+  ? new URL(`file://${process.env.DEMO_PHOTOS_DIR.replace(/\/?$/, '/')}`)
+  : new URL('../../Maquettes/photos-demo/', import.meta.url);
 mkdirSync(DIR, { recursive: true });
 const CREDITS_FILE = new URL('credits.json', DIR);
 const SEARCH_FILE = new URL('recherches.json', DIR); // résultats de recherche gardés : relancer le script ne réinterroge pas Commons
