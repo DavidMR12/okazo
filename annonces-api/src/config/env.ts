@@ -29,7 +29,9 @@ const schema = z
     OTP_DAILY_GLOBAL_CAP: z.coerce.number().int().default(5000), // plafond anti "SMS pumping"
 
     SMS_PROVIDER: z.enum(['console', 'twilio', 'infobip']).default('console'),
-    INFOBIP_BASE_URL: z.string().regex(/^https:\/\/[a-z0-9-]+\.api\.infobip\.com$/, 'INFOBIP_BASE_URL : https://xxxxx.api.infobip.com, sans / final').optional(),
+    INFOBIP_BASE_URL: z.string().regex(/^https:\/\/[a-z0-9-]+\.api\.infobip\.com$/, 'INFOBIP_BASE_URL : https://xxxxx.api.infobip.com, sans / final')
+      .optional()
+      .or(z.literal('').transform(() => undefined)), // compose passe une chaîne vide quand Infobip n'est pas configuré
     INFOBIP_API_KEY: z.string().optional(),
     INFOBIP_SENDER: z.string().max(11).default('Okazo'), // nom d'expéditeur (11 caractères au plus), à faire enregistrer par pays
     TWILIO_ACCOUNT_SID: z.string().optional(),
