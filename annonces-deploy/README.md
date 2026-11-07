@@ -29,23 +29,23 @@ Suivez les étapes dans l'ordre. Comptez une journée pour la première mise en 
 
 ## 2. Dépôt Git unique
 
-Regroupez les quatre dossiers dans un dépôt privé :
+Le dépôt privé (github.com/DavidMR12/okazo) contient les quatre dossiers tels quels :
 
 ```
-annonces/
-├─ api/      ← contenu de annonces-api
-├─ web/      ← projet créé par web/setup.sh (annonces-web)
-├─ mobile/   ← projet créé par mobile/setup.sh (annonces-mobile)
-└─ deploy/   ← ce dossier
+okazo/
+├─ annonces-api/
+├─ annonces-web/      ← avec package.json et package-lock.json : se construit sans setup.sh
+├─ annonces-mobile/
+└─ annonces-deploy/   ← ce dossier
 ```
 
-Versionnez les `package-lock.json` (les images Docker en ont besoin), jamais les fichiers `.env`.
+Versionnez les `package-lock.json` (les images Docker en ont besoin), jamais les fichiers `.env`. Après une mise à jour des dépendances du site dans `web/`, recopiez `package.json` et `package-lock.json` dans `annonces-web/`.
 
 ## 3. Serveur
 
 ```bash
 # Depuis votre ordinateur : envoyer le script, puis le lancer en root
-scp deploy/scripts/server-setup.sh root@IP:/root/
+scp annonces-deploy/scripts/server-setup.sh root@IP:/root/
 ssh root@IP "bash /root/server-setup.sh deploy"
 # Dans un AUTRE terminal, vérifier la nouvelle connexion avant de fermer la session root :
 ssh deploy@IP
@@ -57,8 +57,8 @@ Puis, en tant que `deploy` :
 
 ```bash
 cd /opt/annonces
-git clone git@github.com:VOUS/annonces.git .   # ou via une clé de déploiement en lecture seule
-cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
+git clone git@github.com:DavidMR12/okazo.git .   # ou via une clé de déploiement en lecture seule
+cp annonces-deploy/.env.example annonces-deploy/.env && chmod 600 annonces-deploy/.env
 ```
 
 ## 4. Cloudflare
@@ -118,7 +118,7 @@ N'activez pas *Bot Fight Mode* sur l'hôte `api…` : il peut bloquer l'applicat
 ## 5. Variables d'environnement
 
 ```bash
-cd /opt/annonces/deploy
+cd /opt/annonces/annonces-deploy
 bash scripts/generate-secrets.sh    # copiez les 3 lignes dans .env
 nano .env                           # complétez le reste
 ```
@@ -153,7 +153,7 @@ bash scripts/make-admin.sh +237YYYYYYYYY moderator   # vos modérateurs
 ```bash
 crontab -e
 # ajouter :
-15 3 * * * /opt/annonces/deploy/scripts/backup.sh >> /var/backups/annonces/backup.log 2>&1
+15 3 * * * /opt/annonces/annonces-deploy/scripts/backup.sh >> /var/backups/annonces/backup.log 2>&1
 ```
 
 Lancez-la une première fois à la main (`bash scripts/backup.sh`), puis **testez une restauration dès maintenant**, sur un serveur de test ou en local. Une sauvegarde jamais restaurée n'est pas une sauvegarde. Refaites ce test une fois par mois.
@@ -208,7 +208,7 @@ npx eas-cli submit --platform android
 
 Le nom provisoire est « Annonces ». Il se change à **deux endroits seulement** :
 
-1. `deploy/.env` : `APP_NAME=VotreNom`. Il alimente l'API (texte des SMS, nom interdit aux comptes) et le site (logo, titres, résultats Google), puis lancez `bash scripts/deploy.sh`.
+1. `annonces-deploy/.env` : `APP_NAME=VotreNom`. Il alimente l'API (texte des SMS, nom interdit aux comptes) et le site (logo, titres, résultats Google), puis lancez `bash scripts/deploy.sh`.
 2. `mobile/app.config.ts` : la constante `BRAND` en haut du fichier (nom affiché, identifiants des stores), puis reconstruisez l'application.
 
 Les identifiants techniques (cookies, base de données, buckets) sont neutres et n'ont pas à changer.

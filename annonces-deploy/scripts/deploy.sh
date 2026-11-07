@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Déploiement (sur le serveur, depuis /opt/annonces/deploy) : bash scripts/deploy.sh
+# Déploiement (sur le serveur, depuis /opt/annonces/annonces-deploy) : bash scripts/deploy.sh
 # Récupère le code, construit les images, applique les migrations, redémarre les services.
 set -euo pipefail
 cd "$(dirname "$0")/.."

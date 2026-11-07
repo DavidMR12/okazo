@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sauvegarde quotidienne de PostgreSQL, chiffrée, envoyée sur R2 (30 jours), copie locale 7 jours.
 # Crontab de l'utilisateur deploy :
-#   15 3 * * * /opt/annonces/deploy/scripts/backup.sh >> /var/backups/annonces/backup.log 2>&1
+#   15 3 * * * /opt/annonces/annonces-deploy/scripts/backup.sh >> /var/backups/annonces/backup.log 2>&1
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 set -a; . "$DIR/.env"; set +a

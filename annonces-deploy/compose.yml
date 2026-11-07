@@ -44,7 +44,7 @@ x-api-env: &api-env
 services:
   # API publique (mobile et site). Ne fait pas tourner les tâches de fond.
   api:
-    build: ../api
+    build: ../annonces-api
     image: annonces-api:latest
     restart: unless-stopped
     <<: *hardening
@@ -76,7 +76,7 @@ services:
 
   web:
     build:
-      context: ../web
+      context: ../annonces-web
       args:
         NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
         NEXT_PUBLIC_SITE_NAME: ${APP_NAME}
@@ -151,7 +151,7 @@ services:
     environment:
       DATABASE_URL: postgres://annonces:${POSTGRES_PASSWORD}@postgres:5432/annonces
     volumes:
-      - ../api/db:/db:ro
+      - ../annonces-api/db:/db:ro
     entrypoint: ["sh", "/db/migrate.sh"]
     depends_on:
       postgres: { condition: service_healthy }
