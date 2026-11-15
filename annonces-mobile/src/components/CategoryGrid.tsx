@@ -26,9 +26,11 @@ export function Tile({ label, icon, onPress }: { label: string; icon: keyof type
       <View style={styles.iconBox}>
         <Ionicons name={icon} size={28} color={colors.primary} />
       </View>
-      <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-        {label}
-      </Text>
+      <View style={styles.labelBox}>
+        <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+          {label}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -49,5 +51,7 @@ const styles = StyleSheet.create({
   },
   // Icône et texte dans des cases de hauteur fixe : toutes les tuiles alignées, même si le texte est réduit (« Électronique »)
   iconBox: { height: 32, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 13, lineHeight: 18, height: 18, fontFamily: TITLE_FONT, color: colors.ink, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false }, // Outfit, comme les tuiles du site
+  // La hauteur fixe est sur la case, pas sur le texte : sinon Android réduit le texte jusqu'à l'illisible
+  labelBox: { height: 20, alignSelf: 'stretch', justifyContent: 'center' },
+  label: { fontSize: 13, fontFamily: TITLE_FONT, color: colors.ink, textAlign: 'center' }, // Outfit, comme les tuiles du site
 });
