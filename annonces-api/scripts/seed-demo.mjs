@@ -50,15 +50,15 @@ const round = (n, step) => Math.max(step, Math.round(n / step) * step);
 async function reset() {
   const keys = await sql`
     select li.storage_key from listing_images li join listings l on l.id = li.listing_id
-      join users u on u.id = l.user_id where u.phone_e164 = any(${sql.array(DEMO_PHONES)})`;
+      join users u on u.id = l.user_id where u.phone_e164 in ${sql(DEMO_PHONES)}`;
   const all = keys.flatMap((k) => [k.storage_key, k.storage_key.replace(/-1200\.webp$/, '-400.webp')]);
   for (let i = 0; i < all.length; i += 900) {
     await s3.send(new DeleteObjectsCommand({ Bucket: BUCKET, Delete: { Objects: all.slice(i, i + 900).map((Key) => ({ Key })) } })).catch(() => undefined);
   }
   // Les annonces d'abord (leurs photos, conversations, avis et offres suivent), puis les comptes
-  await sql`delete from listings where user_id in (select id from users where phone_e164 = any(${sql.array(DEMO_PHONES)}))`;
+  await sql`delete from listings where user_id in (select id from users where phone_e164 in ${sql(DEMO_PHONES)})`;
   const [{ n }] = await sql`
-    with gone as (delete from users where phone_e164 = any(${sql.array(DEMO_PHONES)}) returning id) select count(*)::int as n from gone`;
+    with gone as (delete from users where phone_e164 in ${sql(DEMO_PHONES)} returning id) select count(*)::int as n from gone`;
   console.log(`Données de démonstration effacées : ${n} comptes, ${all.length} fichiers.`);
 }
 
@@ -191,7 +191,7 @@ function attributesFor(form, title, adType) {
 
 // ---------------------------------------------------------------- remplissage
 async function seedAll() {
-  const [{ n: existing }] = await sql`select count(*)::int as n from users where phone_e164 = any(${sql.array(DEMO_PHONES)})`;
+  const [{ n: existing }] = await sql`select count(*)::int as n from users where phone_e164 in ${sql(DEMO_PHONES)}`;
   if (existing) {
     console.log(`Des données de démonstration existent déjà (${existing} comptes). Lancez d’abord : node scripts/seed-demo.mjs --reset`);
     return;
@@ -278,7 +278,7 @@ async function seedAll() {
               select array_agg(cw.wallet order by cw.position) from country_wallets cw
                where cw.country_code = l.country_code and random() < 0.75), '{}')
              where l.ad_type = 'offer' and l.payment_methods = '{}'
-               and l.user_id in (select id from users where phone_e164 = any(${sql.array(DEMO_PHONES)}))
+               and l.user_id in (select id from users where phone_e164 in ${sql(DEMO_PHONES)})
                and not exists (select 1 from categories c join categories p on p.id = c.parent_id where c.id = l.category_id and p.slug = 'emploi')`;
 
   // Échanges et avis : des conversations réelles (les deux ont écrit), puis une note de l'acheteur
@@ -300,7 +300,7 @@ async function seedAll() {
     reviews++;
   }
   // Avant-première : les numéros +237 6990… peuvent appartenir à de vrais abonnés, ils ne sont jamais affichés
-  if (AVANT_PREMIERE) await sql`update users set contact_preference = 'messages_only' where phone_e164 = any(${sql.array(DEMO_PHONES)})`;
+  if (AVANT_PREMIERE) await sql`update users set contact_preference = 'messages_only' where phone_e164 in ${sql(DEMO_PHONES)}`;
   console.log(`Données de démonstration ajoutées : ${users.length} vendeurs, ${listings} annonces, ${files} fichiers photo, ${reviews} avis.`);
 }
 

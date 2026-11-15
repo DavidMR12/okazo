@@ -33,7 +33,8 @@ const s3 = new S3Client({
   credentials: { accessKeyId: env.S3_ACCESS_KEY_ID, secretAccessKey: env.S3_SECRET_ACCESS_KEY },
 });
 const BUCKET = env.S3_BUCKET;
-const DEMO_PHONE = '+2376990%';
+// Les 48 numéros exacts des comptes de démonstration (comme seed-demo.mjs), jamais un motif : +2376990… est une vraie tranche MTN
+const DEMO_PHONES = Array.from({ length: 48 }, (_, i) => '+2376990' + String(10000 + i).slice(-5));
 const DIR = process.env.DEMO_PHOTOS_DIR
   ? new URL(`file://${process.env.DEMO_PHOTOS_DIR.replace(/\/?$/, '/')}`)
   : new URL('../../Maquettes/photos-demo/', import.meta.url);
@@ -199,7 +200,7 @@ const put = (Key, Body) => s3.send(new PutObjectCommand({ Bucket: BUCKET, Key, B
 const rows = await sql`
   select l.id, l.title, coalesce((select count(*) from listing_images i where i.listing_id = l.id), 0)::int as n
     from listings l join users u on u.id = l.user_id
-   where u.phone_e164 like ${DEMO_PHONE}
+   where u.phone_e164 in ${sql(DEMO_PHONES)}
    order by l.created_at`;
 const missing = [...new Set(rows.map((r) => subjectOf(r.title)).filter((s) => !QUERIES[s]))];
 if (missing.length) console.warn(`Sujets sans recherche (ignorés) : ${missing.join(' ; ')}`);
