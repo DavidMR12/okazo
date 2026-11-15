@@ -23,7 +23,9 @@ export function CategoryGrid({ categories }: { categories: Category[] }) {
 export function Tile({ label, icon, onPress }: { label: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.tile, pressed && { backgroundColor: colors.tintLine }]} accessibilityRole="button" accessibilityLabel={label}>
-      <Ionicons name={icon} size={28} color={colors.primary} />
+      <View style={styles.iconBox}>
+        <Ionicons name={icon} size={28} color={colors.primary} />
+      </View>
       <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {label}
       </Text>
@@ -45,5 +47,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 4,
   },
-  label: { fontSize: 13, fontFamily: TITLE_FONT, color: colors.ink }, // Outfit, comme les tuiles du site
+  // Icône et texte dans des cases de hauteur fixe : toutes les tuiles alignées, même si le texte est réduit (« Électronique »)
+  iconBox: { height: 32, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 13, lineHeight: 18, height: 18, fontFamily: TITLE_FONT, color: colors.ink, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false }, // Outfit, comme les tuiles du site
 });
