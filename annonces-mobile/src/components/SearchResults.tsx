@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Keyboard, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import type { ComponentRef } from 'react';
 import { ApiError } from '../api/client';
 import { useCategories, useCities, useSaveSearch } from '../api/hooks';
 import type { FeedFilters } from '../api/types';
@@ -43,6 +44,18 @@ export function SearchResults({ initial, autoFocus, openFilters }: { initial: Fe
     return () => clearTimeout(t);
   }, [search]);
 
+  // Loupe ou touche « Rechercher » du clavier : recherche immédiate et clavier fermé ; champ vide : on l'ouvre
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
+  const submit = () => {
+    const q = search.trim().length >= 2 ? search.trim() : undefined;
+    if (!search.trim()) {
+      input.current?.focus();
+      return;
+    }
+    Keyboard.dismiss();
+    setFilters((f) => (f.q === q ? f : { ...f, q }));
+  };
+
   // Une recherche modifiée peut être sauvegardée à nouveau
   useEffect(() => setSaved(false), [filters]);
 
@@ -71,19 +84,23 @@ export function SearchResults({ initial, autoFocus, openFilters }: { initial: Fe
     <View style={styles.header}>
       <View style={styles.searchRow}>
         <View style={styles.search}>
-          <Ionicons name="search" size={20} color={colors.inkMuted} />
           <TextInput
+            ref={input}
             value={search}
             onChangeText={setSearch}
             placeholder="Que recherchez-vous ?"
             placeholderTextColor={colors.inkMuted}
             style={styles.searchInput}
             returnKeyType="search"
+            onSubmitEditing={submit}
             autoCorrect={false}
             autoFocus={autoFocus}
             accessibilityLabel="Rechercher une annonce"
           />
           {search ? <Ionicons name="close-circle" size={18} color={colors.inkMuted} onPress={() => setSearch('')} /> : null}
+          <Pressable onPress={submit} style={({ pressed }) => [styles.searchBtn, pressed && { backgroundColor: colors.primaryPressed }]} hitSlop={6} accessibilityRole="button" accessibilityLabel="Lancer la recherche">
+            <Ionicons name="search" size={18} color="#FFFFFF" />
+          </Pressable>
         </View>
         <Pressable onPress={() => setSheet(true)} style={styles.filterBtn} accessibilityRole="button" accessibilityLabel={`Filtres${n ? ` (${n} actifs)` : ''}`}>
           <Ionicons name="options-outline" size={22} color={colors.primary} />
@@ -136,7 +153,9 @@ export function SearchResults({ initial, autoFocus, openFilters }: { initial: Fe
 const styles = StyleSheet.create({
   header: { paddingTop: space.md, paddingBottom: space.sm, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg },
-  search: { flex: 1, height: 48, borderRadius: 14, borderWidth: 1, borderColor: colors.tintLine, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.md, gap: space.sm },
+  search: { flex: 1, height: 48, borderRadius: 14, borderWidth: 1, borderColor: colors.tintLine, flexDirection: 'row', alignItems: 'center', paddingLeft: space.md, paddingRight: 5, gap: space.sm },
+  // Loupe bleue à droite du champ, comme sur le site : elle lance la recherche
+  searchBtn: { width: 38, height: 38, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   searchInput: { flex: 1, fontSize: 16, color: colors.ink },
   filterBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: 4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
