@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import type { Category } from '../api/types';
 import { categoryIcon, HOME_GRID } from '../lib/categoryIcons';
 import { shortCategory } from '../lib/format';
-import { colors, space } from '../theme';
+import { colors, space, TITLE_FONT } from '../theme';
 import { Text } from './Typography';
 
 /** Grille d'icônes bleues de l'accueil : 7 catégories principales + « Autres » (liste complète). */
@@ -45,5 +45,5 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 4,
   },
-  label: { fontSize: 12, color: colors.ink },
+  label: { fontSize: 13, fontFamily: TITLE_FONT, color: colors.ink }, // Outfit, comme les tuiles du site
 });

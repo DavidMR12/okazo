@@ -30,6 +30,7 @@ export const FONT = 'Inter_500Medium'; // police de l'application (Inter, maquet
 // Prix : Roboto Slab ExtraBold, bien plus gras que le reste du texte (demande du porteur, 12 octobre 2026)
 export const PRICE_FONT = 'Inter_800ExtraBold';
 export const TITLE_FONT = 'Outfit_700Bold';
+export const TITLE_FONT_REGULAR = 'Outfit_400Regular'; // sous-catégories, comme le web (15 novembre 2026)
 export const DIALOG_FONT = 'Inter_700Bold'; // titres des fenêtres de confirmation
 
 export const type = {

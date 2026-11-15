@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { useCategories } from '../src/api/hooks';
 import { Text } from '../src/components/Typography';
 import { categoryIcon } from '../src/lib/categoryIcons';
-import { colors, space, type } from '../src/theme';
+import { colors, space, TITLE_FONT, TITLE_FONT_REGULAR, type } from '../src/theme';
 
 /** Toutes les catégories (tuile « Autres » de l'accueil). */
 export default function CategoriesScreen() {
@@ -18,9 +18,9 @@ export default function CategoriesScreen() {
             <Ionicons name={categoryIcon(c.slug)} size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={type.body}>{c.name}</Text>
+            <Text style={[type.body, { fontFamily: TITLE_FONT }]}>{c.name}</Text>
             {c.children?.length ? (
-              <Text style={type.small} numberOfLines={1}>
+              <Text style={[type.small, { fontFamily: TITLE_FONT_REGULAR }]} numberOfLines={1}>
                 {c.children.map((x) => x.name).join(', ')}
               </Text>
             ) : null}

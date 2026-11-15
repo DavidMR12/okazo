@@ -1,5 +1,5 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from '@expo-google-fonts/inter';
-import { Outfit_700Bold } from '@expo-google-fonts/outfit';
+import { Outfit_400Regular, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { focusManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
@@ -23,7 +23,7 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   // Police déjà embarquée dans l'app compilée ; chargée ici pour Expo Go et le web
-  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Outfit_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Outfit_400Regular, Outfit_700Bold });
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => undefined);
   }, [fontsLoaded, fontError]);
