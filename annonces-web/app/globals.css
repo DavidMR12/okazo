@@ -1258,5 +1258,15 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 .region-list button[aria-current='true'] { color: var(--primary); font-weight: 700; }
 @media (min-width: 760px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr; } }
 .country-fixed { cursor: default; }
-/* Téléphone : sous le champ, appareil photo et « Rechercher » calés à droite, comme d'habitude (15/11) */
-@media (max-width: 759px) { .search .search-lens { margin-left: auto; } }
+/* Barre de recherche sur une ligne (15/11) : appareil photo dans le champ à droite, bouton à droite ;
+   sur téléphone, le bouton n'est qu'une loupe pour laisser la place au champ */
+.search, .search:has(.search-field) { flex-wrap: nowrap; }
+.search-field { position: relative; flex: 1; min-width: 0; display: flex; }
+.search .search-field input { flex: 1 1 auto; width: 100%; padding-right: 52px; }
+.search-field .search-lens { position: absolute; right: 4px; top: 4px; width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; }
+.search-field .search-lens:hover { background: var(--tint); }
+.search-submit { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; }
+@media (max-width: 639px) {
+  .search-submit { width: 48px; padding: 0; }
+  .search-submit-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}

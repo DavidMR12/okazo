@@ -1,4 +1,4 @@
-import { cameraOutline } from 'ionicons/icons';
+import { cameraOutline, search } from 'ionicons/icons';
 import Link from 'next/link';
 import { DEFAULT_COUNTRY } from '@/lib/site';
 import { Ion } from './Ion';
@@ -22,9 +22,15 @@ export function SearchForm({ action, defaultQuery, country, category, city }: {
       {category ? <input type="hidden" name="cat" value={category} /> : null}
       {city ? <input type="hidden" name="ville" value={city} /> : null}
       {city ? <input type="hidden" name="depuis" value={pays} /> : null}
-      <input id="q" name="q" type="search" defaultValue={defaultQuery} placeholder="Que recherchez-vous ?" minLength={2} maxLength={80} />
-      <Link href={`/recherche-image?pays=${pays}`} className="search-lens" prefetch={false} aria-label="Rechercher par image" title="Rechercher par image"><Ion icon={cameraOutline} size={24} /></Link>
-      <button className="btn" type="submit">Rechercher</button>
+      {/* Une seule ligne : appareil photo dans le champ, à droite ; sur téléphone, bouton loupe */}
+      <div className="search-field">
+        <input id="q" name="q" type="search" defaultValue={defaultQuery} placeholder="Que recherchez-vous ?" minLength={2} maxLength={80} />
+        <Link href={`/recherche-image?pays=${pays}`} className="search-lens" prefetch={false} aria-label="Rechercher par image" title="Rechercher par image"><Ion icon={cameraOutline} size={22} /></Link>
+      </div>
+      <button className="btn search-submit" type="submit" aria-label="Rechercher">
+        <Ion icon={search} size={20} />
+        <span className="search-submit-label">Rechercher</span>
+      </button>
     </form>
   );
 }
