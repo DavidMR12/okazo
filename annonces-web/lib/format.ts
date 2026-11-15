@@ -1,6 +1,6 @@
 import type { PriceType } from './types';
 
-// Espace ins\u00E9cable normale : Outfit ne dessine pas l'espace fine (U+202F), les prix sortaient coll\u00E9s (\u00AB 9000FCFA \u00BB)
+// Espace insécable normale : Outfit ne dessine pas l'espace fine (U+202F), les prix sortaient collés (9000FCFA)
 const NNBSP = '\u00A0';
 export const formatXaf = (n: number) =>
   `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, NNBSP)}${NNBSP}FCFA`;
