@@ -1241,3 +1241,6 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 .image-search-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding-inline: 8px; font-size: 0.9rem; }
 .image-search-status { text-align: center; margin: 0; }
 @media (max-width: 480px) { .image-search-actions { grid-template-columns: 1fr; } }
+
+/* Catégories populaires dans la même police que les tuiles du dessus (Outfit, demande du porteur du 15/11) */
+.popular-body, .popular-body strong, .popular-body .muted { font-family: var(--font-title), var(--font-inter), sans-serif; }
