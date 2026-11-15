@@ -58,7 +58,7 @@ export async function HomePage({ country, citySlug }: { country: Country; citySl
                     <CategoryIcon slug={c.slug} size={24} />
                   </span>
                   <span className="popular-body">
-                    <strong>{c.name}</strong>
+                    <strong title={c.name}>{c.name.replace(/ et .*$/, '')}</strong>
                     <span className="muted">{c.count.toLocaleString('fr-FR').replace(/ /g, ' ')} annonce{c.count > 1 ? 's' : ''}</span>
                   </span>
                 </Link>

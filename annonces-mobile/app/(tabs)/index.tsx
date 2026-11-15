@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
   },
   searchTap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, height: '100%' },
   searchPlaceholder: { fontSize: 16, color: colors.inkMuted },
-  sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: space.lg },
-  sectionTitle: { fontSize: 21, fontWeight: '800', color: colors.ink, letterSpacing: -0.3 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, paddingHorizontal: space.lg },
+  sectionTitle: { flex: 1, fontSize: 21, fontWeight: '800', color: colors.ink, letterSpacing: -0.3 }, // flex : le titre passe à la ligne, « Voir tout » reste visible
   seeAll: { fontSize: 15, fontWeight: '500', color: colors.primary },
-  seeAllRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  seeAllRow: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 0 },
 });

@@ -1335,3 +1335,13 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 .f-pills .chip:hover { border-color: var(--primary); }
 .f-pills .chip[aria-current='page'] { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
 .f-pills .chip[aria-current='page']::before { content: ''; width: 15px; height: 15px; background: currentColor; -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='44' d='M416 128L192 384l-96-96'/></svg>") center / contain no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='44' d='M416 128L192 384l-96-96'/></svg>") center / contain no-repeat; }
+
+/* Catégories populaires : colonnes égales sur toute la largeur, plus de vide à droite (15 novembre 2026) */
+.popular-grid, .tile-grid.popular-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 8px; }
+@media (min-width: 760px) { .popular-grid, .tile-grid.popular-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px 12px; } }
+.popular-card { flex: none; width: 100%; min-width: 0; }
+.popular-body, .popular-body strong { max-width: 100%; }
+/* Titres de section : le titre passe à la ligne, « Voir tout » reste visible à droite */
+.section-head { align-items: center; }
+.section-head h2 { flex: 1; min-width: 0; }
+.section-head .see-all { flex: none; }
