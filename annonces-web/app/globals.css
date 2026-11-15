@@ -77,10 +77,18 @@ h2 { font-size: 1.15rem; line-height: 1.3; margin: 0; font-weight: 700; }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
-  flex: none; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 18px;
-  background: var(--surface); border: 1px solid var(--line); text-decoration: none; font-weight: 600; font-size: 0.9rem; white-space: nowrap;
+  /* Même style que les filtres et l'application (15 novembre 2026) : blanc, bord bleu clair, bleu avec coche si choisi */
+  flex: none; display: inline-flex; align-items: center; gap: 5px; height: 38px; padding: 0 14px; border-radius: 19px;
+  background: var(--bg); border: 1.5px solid var(--tint-line); text-decoration: none; font-family: var(--font-title), sans-serif;
+  font-weight: 400; font-size: 0.95rem; color: var(--ink); white-space: nowrap;
 }
-.chip[aria-current='page'], .chip.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip:hover { border-color: var(--primary); }
+.chip[aria-current='page'], .chip.selected, .chip[aria-pressed='true'] { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 700; }
+.chip[aria-current='page']::before, .chip.selected::before, .chip[aria-pressed='true']::before {
+  content: ''; flex: none; width: 15px; height: 15px; background: currentColor;
+  -webkit-mask: var(--check-mask) center / contain no-repeat; mask: var(--check-mask) center / contain no-repeat;
+}
+:root { --check-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='44' d='M416 128L192 384l-96-96'/></svg>"); }
 
 /* ---------- grille des catégories (accueil) ---------- */
 .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -111,7 +119,7 @@ h2 { font-size: 1.15rem; line-height: 1.3; margin: 0; font-weight: 700; }
 .check-chip { position: relative; display: inline-flex; }
 .check-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .check-chip span { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: 0.9rem; cursor: pointer; }
-.check-chip input:checked + span { background: var(--ink); color: #fff; border-color: var(--ink); }
+.check-chip input:checked + span { background: var(--primary); color: #fff; border-color: var(--primary); }
 .check-chip input:focus-visible + span { outline: 3px solid var(--primary); outline-offset: 2px; }
 
 /* ---------- étiquette de prix (élément distinctif) ---------- */
@@ -194,8 +202,7 @@ h2 { font-size: 1.15rem; line-height: 1.3; margin: 0; font-weight: 700; }
 .footer p { margin: 0; }
 
 /* ---------- boutons-puces (formulaires) ---------- */
-button.chip { font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--ink); cursor: pointer; }
-.chip[aria-pressed='true'] { background: var(--ink); color: #fff; border-color: var(--ink); }
+button.chip { font-family: var(--font-title), sans-serif; cursor: pointer; }
 .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .sub-chips { padding-left: 12px; border-left: 2px solid var(--line); }
 .btn-sm { min-height: 44px; padding: 0 16px; font-size: 0.95rem; }
@@ -804,10 +811,11 @@ a, a:hover, .link-button, .link-button:hover { text-decoration: none !important;
 .terms-summary { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
 
 /*
- * Police unique : Inter (maquette du porteur, 18 octobre 2026). Les anciennes variables (Roboto Slab, Google Sans,
- * Ubuntu) pointent toutes vers Inter, et les replis sont des polices sans empattement.
+ * Police unique : Outfit (porteur, 15 novembre 2026 ; avant, Inter). Les anciennes variables (Inter, Roboto Slab, Google Sans,
+ * Ubuntu) pointent toutes vers Outfit, fichier servi par le site, sans appel à Google.
  */
-:root { --font-slab: var(--font-inter); --font-title: var(--font-outfit); --font-ubuntu: var(--font-inter); }
+/* Tout le site en Outfit (15 novembre 2026) : les anciens noms de police pointent tous vers elle */
+:root { --font-inter: var(--font-outfit); --font-slab: var(--font-outfit); --font-title: var(--font-outfit); --font-ubuntu: var(--font-outfit); }
 body, button, input, textarea, select { font-family: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 .listing-title, .tile-title, .card-title { font-weight: 700; letter-spacing: -0.01em; }
 

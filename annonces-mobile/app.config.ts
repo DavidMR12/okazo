@@ -38,13 +38,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-image',
     // Police embarquée dans l'application : disponible dès l'ouverture, sans téléchargement
     ['expo-font', { fonts: [
-          'node_modules/@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf',
-          'node_modules/@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf',
-          'node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf',
-          'node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf',
-          'node_modules/@expo-google-fonts/inter/800ExtraBold/Inter_800ExtraBold.ttf',
           'node_modules/@expo-google-fonts/outfit/400Regular/Outfit_400Regular.ttf',
+          'node_modules/@expo-google-fonts/outfit/500Medium/Outfit_500Medium.ttf',
+          'node_modules/@expo-google-fonts/outfit/600SemiBold/Outfit_600SemiBold.ttf',
           'node_modules/@expo-google-fonts/outfit/700Bold/Outfit_700Bold.ttf',
+          'node_modules/@expo-google-fonts/outfit/800ExtraBold/Outfit_800ExtraBold.ttf',
         ] }],
     'expo-status-bar',
     [

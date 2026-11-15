@@ -3,14 +3,14 @@ import { Text as RNText, TextInput as RNTextInput, StyleSheet, type TextInputPro
 import { FONT } from '../theme';
 
 /**
- * Texte de l'application, en Inter (décision du porteur, 18 octobre 2026, d'après sa maquette ; remplace Roboto Slab).
+ * Texte de l'application, en Outfit partout (demande du porteur, 15 novembre 2026 : plus aucune police neutre ; remplace Inter).
  * React Native n'a pas de police globale : tous les écrans importent Text et TextInput d'ici, jamais de 'react-native'.
- * Avec une police chargée, Android ignore fontWeight (ou simule un faux gras) : on choisit donc le fichier Inter
+ * Avec une police chargée, Android ignore fontWeight (ou simule un faux gras) : on choisit donc le fichier Outfit
  * de la graisse demandée (400, 500, 600, 700, 800), et on retire fontWeight. Un style peut imposer sa police (fontFamily).
  */
 const WEIGHTS: Record<string, string> = {
-  '100': 'Inter_400Regular', '200': 'Inter_400Regular', '300': 'Inter_400Regular', '400': 'Inter_400Regular', normal: 'Inter_400Regular',
-  '500': 'Inter_500Medium', '600': 'Inter_600SemiBold', '700': 'Inter_700Bold', bold: 'Inter_700Bold', '800': 'Inter_800ExtraBold', '900': 'Inter_800ExtraBold',
+  '100': 'Outfit_400Regular', '200': 'Outfit_400Regular', '300': 'Outfit_400Regular', '400': 'Outfit_400Regular', normal: 'Outfit_400Regular',
+  '500': 'Outfit_500Medium', '600': 'Outfit_600SemiBold', '700': 'Outfit_700Bold', bold: 'Outfit_700Bold', '800': 'Outfit_800ExtraBold', '900': 'Outfit_800ExtraBold',
 };
 
 const withFont = (style: TextProps['style']) => {

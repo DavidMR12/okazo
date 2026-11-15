@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AdsLoader } from '@/components/Ads';
@@ -13,11 +13,8 @@ import { SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
 import { DialogHost } from '@/components/Dialog';
 
-// Tout le site en Inter, police sans empattement de la maquette du porteur (18 octobre 2026 ; remplace Roboto Slab,
-// Google Sans et Ubuntu). Fichier servi par le site, sans appel à Google.
-const interFont = Inter({ weight: ['400', '500', '600', '700', '800'], subsets: ['latin'], display: 'swap', variable: '--font-inter' });
-// Noms d'articles et pied de page en Outfit, choix du porteur (1er novembre 2026)
-const outfitFont = Outfit({ weight: ['400', '700'], subsets: ['latin'], display: 'swap', variable: '--font-outfit' });
+// Tout le site en Outfit, plus aucune police neutre (porteur, 15 novembre 2026 ; remplace Inter)
+const outfitFont = Outfit({ weight: ['400', '500', '600', '700', '800'], subsets: ['latin'], display: 'swap', variable: '--font-outfit' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -34,7 +31,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // la région du visiteur est lue dans son navigateur)
   const catalog = await getRegionCatalog().catch(() => []);
   return (
-    <html lang="fr" className={`${interFont.variable} ${outfitFont.variable}`}>
+    <html lang="fr" className={outfitFont.variable}>
       <body>
         <RegionBar catalog={catalog} />
         <header className="header">

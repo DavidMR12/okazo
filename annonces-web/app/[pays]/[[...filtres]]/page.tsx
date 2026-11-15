@@ -151,7 +151,7 @@ export default async function ListPage({ params, searchParams }: { params: Param
           ))}
         </nav>
         <div className="results-bar">
-          {count !== null ? <p className="muted" style={{ margin: 0 }}>{count === 0 ? 'Aucune annonce' : count === 1 ? '1 annonce' : `${count.toLocaleString('fr-FR')} annonces`}</p> : null}
+          {count !== null ? <p className="muted" style={{ margin: 0 }}>{count === 0 ? 'Aucune annonce' : count === 1 ? '1 annonce' : `${count.toLocaleString('fr-FR').replace(/ /g, ' ')} annonces`}</p> : null}
           <SaveSearchButton
             query={{ ...filters, ...base, country: ctx.country.code }}
             name={[heading(ctx.country, ctx.category, ctx.city, q), describeFilters(filters, form)].filter(Boolean).join(' · ')}

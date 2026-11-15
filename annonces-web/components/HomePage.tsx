@@ -59,7 +59,7 @@ export async function HomePage({ country, citySlug }: { country: Country; citySl
                   </span>
                   <span className="popular-body">
                     <strong>{c.name}</strong>
-                    <span className="muted">{c.count.toLocaleString('fr-FR')} annonce{c.count > 1 ? 's' : ''}</span>
+                    <span className="muted">{c.count.toLocaleString('fr-FR').replace(/ /g, ' ')} annonce{c.count > 1 ? 's' : ''}</span>
                   </span>
                 </Link>
               ))}
