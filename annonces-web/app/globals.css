@@ -711,8 +711,8 @@ button, input, textarea, select { font-family: inherit; }
 .listing-head .sold-badge, .listing-head .request-badge { align-self: flex-start; }
 
 /* Pied de page : les titres de colonnes reprennent le style du nom à gauche (très gras, gris, sans majuscules) */
-.footer-grid h2 { font-family: var(--font-title), Georgia, serif; font-size: 1.1rem; font-weight: 700; color: var(--ink); text-transform: none; letter-spacing: -0.02em; margin: 0 0 6px; }
-.footer-grid nav a, .footer-grid nav button, .footer-brand p { font-family: var(--font-title), Georgia, serif; font-size: 0.95rem; font-weight: 400; color: var(--ink-muted); }
+.footer-grid h2 { font-family: var(--font-inter), system-ui, sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--ink); text-transform: none; letter-spacing: -0.02em; margin: 0 0 6px; }
+.footer-grid nav a, .footer-grid nav button, .footer-brand p { font-family: var(--font-inter), system-ui, sans-serif; font-size: 0.95rem; font-weight: 400; color: var(--ink-muted); }
 .footer-grid nav button { align-self: flex-start; padding: 0; border: 0; background: none; text-align: left; text-decoration: none; cursor: pointer; }
 .footer-grid nav button:hover { color: var(--primary); }
 
