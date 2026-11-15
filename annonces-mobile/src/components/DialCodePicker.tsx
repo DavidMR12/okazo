@@ -14,6 +14,15 @@ export interface DialCountry { code: string; name: string; dialCode: string }
 export function DialCodePicker({ countries, value, onChange }: { countries: DialCountry[]; value: string; onChange: (code: string) => void }) {
   const [open, setOpen] = useState(false);
   const current = countries.find((c) => c.code === value) ?? countries[0];
+  // Un seul pays (celui de l'utilisateur, comme Uber) : drapeau et indicatif, rien à choisir
+  if (countries.length <= 1) {
+    return (
+      <View style={styles.current} accessibilityLabel={`Indicatif : ${current?.name} ${current?.dialCode}`}>
+        <Flag code={current?.code ?? ''} />
+        <Text style={styles.dial}>{current?.dialCode}</Text>
+      </View>
+    );
+  }
   return (
     <>
       <Pressable onPress={() => setOpen(true)} style={styles.current} accessibilityRole="button" accessibilityLabel={`Indicatif : ${current?.name} ${current?.dialCode}`}>

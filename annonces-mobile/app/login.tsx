@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSh
 import { Text, TextInput } from '../src/components/Typography';
 import { ApiError } from '../src/api/client';
 import { useAuthMethods, useCountries } from '../src/api/hooks';
+import { useRegion } from '../src/lib/region';
 import { useAuth } from '../src/auth/AuthProvider';
 import { Button } from '../src/components/Button';
 import { DialCodePicker } from '../src/components/DialCodePicker';
@@ -45,7 +46,11 @@ export default function LoginScreen() {
   const methods = useAuthMethods();
   const canWhatsApp = methods.data?.otpChannels.includes('whatsapp') ?? false;
   const countries = useCountries();
-  const list = countries.data?.length ? countries.data : FALLBACK;
+  // Seulement le pays de l'utilisateur (comme Uber) : aucun autre indicatif proposé
+  const region = useRegion();
+  const all = countries.data?.length ? countries.data : FALLBACK;
+  const mine = all.filter((c) => c.code === region?.country);
+  const list = mine.length ? mine : all.slice(0, 1);
   const [tab, setTab] = useState<'phone' | 'email'>('phone');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +58,8 @@ export default function LoginScreen() {
 
   // ---- téléphone
   const [channel, setChannel] = useState<'sms' | 'whatsapp'>('sms');
-  const [country, setCountry] = useState(list[0].code);
+  const [picked, setCountry] = useState<string | null>(null);
+  const country = picked && list.some((c) => c.code === picked) ? picked : list[0].code;
   const dial = list.find((c) => c.code === country)?.dialCode ?? list[0].dialCode;
   const [number, setNumber] = useState('');
   const digits = number.replace(/\D/g, '').replace(/^0+/, '');

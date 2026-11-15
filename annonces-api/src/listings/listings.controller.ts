@@ -50,6 +50,7 @@ const PRIVATE = 'private, no-store';
 const popularQuery = z.object({
   country: z.string().length(2).transform((s) => s.toUpperCase()),
   limit: z.coerce.number().int().min(1).max(12).default(6),
+  cityId: z.coerce.number().int().positive().optional(), // ville du visiteur : catégories populaires de sa ville
 });
 
 @Controller()
@@ -92,8 +93,8 @@ export class ListingsController {
   /** « Catégories populaires » de l'accueil : catégories principales les plus fournies du pays, avec une photo récente. */
   @Get('categories/popular')
   @Header('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600')
-  popular(@Query(new ZodValidationPipe(popularQuery)) q: { country: string; limit: number }) {
-    return this.listings.popularCategories(q.country, q.limit);
+  popular(@Query(new ZodValidationPipe(popularQuery)) q: { country: string; limit: number; cityId?: number }) {
+    return this.listings.popularCategories(q.country, q.limit, q.cityId);
   }
 
   @Get('listings/sitemap')

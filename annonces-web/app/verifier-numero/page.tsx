@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PhoneCodeForm } from '@/components/PhoneCodeForm';
 import { call, safeReturn, useSignedIn } from '@/lib/client';
+import { browserRegion } from '@/lib/region';
 import type { Country } from '@/lib/types';
 
 /**
@@ -28,7 +29,10 @@ export default function VerifyPhonePage() {
       call<{ countries: Country[] }>('/geo/countries').then((r) => r.countries).catch(() => []),
       call<{ otpChannels: ('sms' | 'whatsapp')[] }>('/auth/methods').then((r) => r.otpChannels).catch(() => ['sms' as const]),
     ]).then(([c, ch]) => {
-      setCountries(c.length ? c : [{ code: 'CM', name: 'Cameroun', dialCode: '+237', currencyCode: 'XAF' }]);
+      // Seulement le pays du visiteur (comme Uber) : aucun indicatif au choix
+      const region = browserRegion()?.country;
+      const mine = c.filter((x) => x.code.toLowerCase() === region);
+      setCountries(mine.length ? mine : c.length ? c.slice(0, 1) : [{ code: 'CM', name: 'Cameroun', dialCode: '+237', currencyCode: 'XAF' }]);
       setChannels(ch);
     });
   }, []);

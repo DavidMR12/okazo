@@ -39,6 +39,18 @@ export function CountrySelect({ countries, value, onChange, showDial = false }: 
     else if (open && e.key === 'Enter') { e.preventDefault(); choose(countries[active].code); }
   };
 
+  // Un seul pays (celui du visiteur) : rien à choisir, on montre le drapeau et l'indicatif
+  if (countries.length <= 1) {
+    return (
+      <div className={showDial ? 'country-select dial' : 'country-select'}>
+        <span className="country-current country-fixed" aria-label={showDial ? `Indicatif : ${current?.name} ${current?.dialCode}` : `Pays : ${current?.name}`}>
+          {current ? <Flag code={current.code} /> : null}
+          <span>{showDial ? current?.dialCode : current?.name}</span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className={showDial ? 'country-select dial' : 'country-select'} ref={box}>
       <button type="button" className="country-current" aria-haspopup="listbox" aria-expanded={open} aria-label={showDial ? `Indicatif : ${current?.name} ${current?.dialCode}` : `Pays : ${current?.name}`} onClick={() => setOpen((o) => !o)} onKeyDown={onKey}>

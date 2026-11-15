@@ -1,10 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
-import { useMe } from '../src/api/hooks';
 import type { FeedFilters } from '../src/api/types';
 import { SearchResults } from '../src/components/SearchResults';
 import { fromQuery } from '../src/lib/filters';
-import { usePlace } from '../src/lib/place';
+import { useRegion } from '../src/lib/region';
 
 /**
  * Écran Recherche (barre de recherche de l'accueil, recherches sauvegardées).
@@ -12,8 +11,7 @@ import { usePlace } from '../src/lib/place';
  */
 export default function SearchScreen() {
   const p = useLocalSearchParams<{ q?: string; cityId?: string; categoryId?: string; filters?: string; openFilters?: string }>();
-  const place = usePlace();
-  const me = useMe();
+  const place = useRegion(); // seulement le pays de l'utilisateur, et sa ville par défaut
   const initial = useMemo<FeedFilters>(() => {
     if (p.filters) {
       try {
@@ -23,7 +21,7 @@ export default function SearchScreen() {
       }
     }
     return {
-      country: place?.country ?? me.data?.countryCode,
+      country: place?.country,
       cityId: p.cityId ? Number(p.cityId) : place?.cityId,
       categoryId: p.categoryId ? Number(p.categoryId) : undefined,
       q: p.q,

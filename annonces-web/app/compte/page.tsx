@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   addCircleOutline, arrowUpCircleOutline, briefcaseOutline, callOutline, chatbubblesOutline, chevronForward, documentTextOutline,
-  earthOutline, flagOutline, flameOutline, gridOutline, heartOutline, helpBuoyOutline, helpCircleOutline, languageOutline, linkOutline,
+  flagOutline, flameOutline, gridOutline, heartOutline, helpBuoyOutline, helpCircleOutline, languageOutline, linkOutline,
   lockClosedOutline, logOutOutline, mailOutline, notificationsOutline, optionsOutline, personOutline, pricetagsOutline, readerOutline,
   settingsOutline, shieldCheckmarkOutline, shieldOutline, sparklesOutline, storefrontOutline, timeOutline, trashOutline,
 } from 'ionicons/icons';
@@ -36,14 +36,12 @@ export default function AccountPage() {
   const [deleteStep, setDeleteStep] = useState<'idle' | 'code'>('idle');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [countries, setCountries] = useState<{ code: string; name: string }[]>([]);
 
   useEffect(() => {
     if (!signedIn) return;
     call<Me>('/auth/me')
       .then((m) => { setMe(m); setName(m.displayName); })
       .catch(() => undefined);
-    call<{ countries: { code: string; name: string }[] }>('/geo/countries').then((r) => setCountries(r.countries)).catch(() => undefined);
   }, [signedIn]);
 
   if (signedIn === false) {
@@ -73,7 +71,6 @@ export default function AccountPage() {
     }
   };
 
-  const countryName = countries.find((c) => c.code === me.countryCode)?.name ?? me.countryCode ?? '—';
   const initials = me.displayName.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
   const tiles: { href: string; icon: string; label: string; hint: string }[] = [
     { href: '/mes-annonces', icon: pricetagsOutline, label: 'Mes annonces', hint: 'Gérer vos annonces en ligne' },
@@ -176,7 +173,6 @@ export default function AccountPage() {
 
       <DetailCard id="h-settings" icon={settingsOutline} title="Paramètres">
         <div className="pill-rows">
-          <PillRow icon={earthOutline} label="Pays" hint={countryName} />
           <PillRow icon={languageOutline} label="Langue" hint="Français" />
           <PillRow icon={optionsOutline} label="Cookies et publicité" hint="Publicités personnalisées ou non : changer votre choix" onClick={reopenConsent} />
         </div>

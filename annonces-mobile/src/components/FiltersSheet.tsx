@@ -101,15 +101,9 @@ export function FiltersSheet({
         </Section>
 
         <Section title="Lieu">
-          {/* Pays : tous par défaut, puis les villes du pays choisi */}
-          <View style={styles.wrap}>
-            <Chip label="Tous les pays" selected={!d.country} onPress={() => set({ country: undefined, cityId: undefined, districtId: undefined })} />
-            {countries.data?.map((c) => (
-              <Chip key={c.code} label={c.name} selected={d.country === c.code} onPress={() => set({ country: c.code, cityId: undefined, districtId: undefined })} />
-            ))}
-          </View>
+          {/* Seulement les villes du pays de l'utilisateur (comme Uber) : aucun autre pays n'est proposé */}
           {d.country ? (
-            <View style={[styles.wrap, styles.sub]}>
+            <View style={styles.wrap}>
               <Chip label="Tout le pays" selected={!d.cityId} onPress={() => set({ cityId: undefined, districtId: undefined })} />
               {cities.data?.map((c) => (
                 <Chip key={c.id} label={c.name} selected={d.cityId === c.id} onPress={() => set({ cityId: c.id, districtId: undefined })} />

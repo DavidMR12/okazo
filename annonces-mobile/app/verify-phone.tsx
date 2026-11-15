@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, ApiError } from '../src/api/client';
 import { useAuthMethods, useCountries } from '../src/api/hooks';
+import { useRegion } from '../src/lib/region';
 import { Button } from '../src/components/Button';
 import { Chip } from '../src/components/Chip';
 import { DialCodePicker } from '../src/components/DialCodePicker';
@@ -25,8 +26,13 @@ export default function VerifyPhoneScreen() {
   const qc = useQueryClient();
   const countries = useCountries();
   const methods = useAuthMethods();
-  const list = countries.data?.length ? countries.data : FALLBACK;
-  const [country, setCountry] = useState(list[0].code);
+  // Seulement le pays de l'utilisateur (comme Uber) : aucun autre indicatif proposé
+  const region = useRegion();
+  const all = countries.data?.length ? countries.data : FALLBACK;
+  const mine = all.filter((c) => c.code === region?.country);
+  const list = mine.length ? mine : all.slice(0, 1);
+  const [picked, setCountry] = useState<string | null>(null);
+  const country = picked && list.some((c) => c.code === picked) ? picked : list[0].code;
   const dial = list.find((c) => c.code === country)?.dialCode ?? list[0].dialCode;
   const [number, setNumber] = useState('');
   const [channel, setChannel] = useState<'sms' | 'whatsapp'>('sms');

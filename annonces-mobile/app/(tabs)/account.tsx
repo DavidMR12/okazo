@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { Text, TextInput } from '../../src/components/Typography';
 import { ApiError } from '../../src/api/client';
-import { useCountries, useMe, useMyVerification, useUpdateProfile } from '../../src/api/hooks';
+import { useMe, useMyVerification, useUpdateProfile } from '../../src/api/hooks';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { SITE_URL, SUPPORT_EMAIL } from '../../src/brand';
 import { Avatar, EmptyCard, TileRow } from '../../src/components/Blocks';
@@ -28,7 +28,6 @@ export default function AccountScreen() {
   const me = useMe();
   const verification = useMyVerification();
   const update = useUpdateProfile();
-  const countries = useCountries();
   const [name, setName] = useState('');
 
   useEffect(() => {
@@ -75,7 +74,6 @@ export default function AccountScreen() {
         : 'Obligatoire pour l’immobilier et les véhicules.';
   const canVerify = !verified && v?.request?.status !== 'pending';
   const nameChanged = name.trim().length >= 2 && name.trim() !== me.data.displayName;
-  const countryName = countries.data?.find((c) => c.code === me.data.countryCode)?.name ?? me.data.countryCode;
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" style={{ backgroundColor: colors.bg }}>
@@ -172,7 +170,6 @@ export default function AccountScreen() {
         <View style={styles.list}>
           <DataSaverRow />
           <TileRow icon="notifications-outline" label="Notifications" hint="Messages, offres et alertes de recherche : à régler dans le téléphone." onPress={() => void Linking.openSettings()} />
-          <TileRow icon="earth-outline" label="Pays" hint={countryName} />
           <TileRow icon="language-outline" label="Langue" hint="Français" />
           <TileRow icon="phone-portrait-outline" label="Version de l’application" hint={APP_VERSION} />
         </View>

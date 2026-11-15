@@ -1,30 +1,29 @@
 import { cameraOutline } from 'ionicons/icons';
 import Link from 'next/link';
 import { DEFAULT_COUNTRY } from '@/lib/site';
-import type { Country } from '@/lib/types';
 import { Ion } from './Ion';
-import { SearchCountry } from './SearchCountry';
 
-/** Formulaire HTML classique (GET) : fonctionne sans JavaScript, même sur un vieux téléphone. Le pays se choisit dans une liste à drapeaux. */
-export function SearchForm({ action, defaultQuery, countries, country, category, city }: {
+/**
+ * Formulaire HTML classique (GET) : fonctionne sans JavaScript, même sur un vieux téléphone.
+ * La recherche reste dans le pays de la page (aucun autre pays n'est proposé) et, s'il y en a une, dans sa ville.
+ */
+export function SearchForm({ action, defaultQuery, country, category, city }: {
   action: string;
   defaultQuery?: string;
-  countries?: Country[];
   country?: string;
   category?: string; // pages de liste : la recherche reste dans la catégorie
-  city?: string; // et dans la ville (si le pays ne change pas)
+  city?: string; // et dans la ville
 }) {
+  const pays = (country ?? DEFAULT_COUNTRY).toLowerCase();
   return (
     <form className="search" action={action} method="get" role="search">
       <label className="visually-hidden" htmlFor="q">Rechercher</label>
+      <input type="hidden" name="pays" value={pays} />
       {category ? <input type="hidden" name="cat" value={category} /> : null}
       {city ? <input type="hidden" name="ville" value={city} /> : null}
-      {city && country ? <input type="hidden" name="depuis" value={country} /> : null}
+      {city ? <input type="hidden" name="depuis" value={pays} /> : null}
       <input id="q" name="q" type="search" defaultValue={defaultQuery} placeholder="Que recherchez-vous ?" minLength={2} maxLength={80} />
-      {countries && countries.length > 1 ? (
-        <SearchCountry countries={countries} country={country ?? countries[0].code} category={category} />
-      ) : null}
-      <Link href={`/recherche-image?pays=${(country ?? DEFAULT_COUNTRY).toLowerCase()}`} className="search-lens" prefetch={false} aria-label="Rechercher par image" title="Rechercher par image"><Ion icon={cameraOutline} size={24} /></Link>
+      <Link href={`/recherche-image?pays=${pays}`} className="search-lens" prefetch={false} aria-label="Rechercher par image" title="Rechercher par image"><Ion icon={cameraOutline} size={24} /></Link>
       <button className="btn" type="submit">Rechercher</button>
     </form>
   );

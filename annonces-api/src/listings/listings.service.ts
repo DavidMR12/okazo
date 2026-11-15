@@ -513,19 +513,21 @@ export class ListingsService {
    * Catégories principales les plus fournies d'un pays (annonces en ligne), avec la miniature
    * de l'annonce la plus récente qui a une photo : cartes « Catégories populaires » de l'accueil.
    */
-  async popularCategories(country: string, limit = 6) {
+  async popularCategories(country: string, limit = 6, cityId?: number) {
+    const inCity = cityId ? sql`and l2.city_id = ${cityId}` : sql``;
+    const inCityL = cityId ? sql`and l.city_id = ${cityId}` : sql``;
     const rows = (await this.db.execute(sql`
       select p.id, p.slug, p.name, count(l.id)::int as count,
         (select li.storage_key
            from listings l2
            join categories c2 on c2.id = l2.category_id
            join listing_images li on li.listing_id = l2.id and li.position = 0 and li.storage_key like 'listings/%'
-          where (c2.parent_id = p.id or c2.id = p.id) and l2.status = 'active' and l2.expires_at > now() and l2.country_code = ${country}
+          where (c2.parent_id = p.id or c2.id = p.id) and l2.status = 'active' and l2.expires_at > now() and l2.country_code = ${country} ${inCity}
           order by l2.published_at desc
           limit 1) as image_key
         from categories p
         join categories c on c.parent_id = p.id or c.id = p.id
-        join listings l on l.category_id = c.id and l.status = 'active' and l.expires_at > now() and l.country_code = ${country}
+        join listings l on l.category_id = c.id and l.status = 'active' and l.expires_at > now() and l.country_code = ${country} ${inCityL}
        where p.parent_id is null and p.is_active
        group by p.id
        order by count desc, p.name

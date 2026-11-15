@@ -56,8 +56,8 @@ export const getListingCount = async (p: ListingQuery, filters: Filters = {}) =>
 export const getListing = (id: string) => get<ListingDetail>(`/listings/${id}`, 60);
 export const getDistricts = async (cityId: number) => (await get<{ districts: District[] }>(`/geo/districts?cityId=${cityId}`, HOUR))?.districts ?? [];
 /** « Catégories populaires » de l'accueil (nombre d'annonces en ligne et photo récente). */
-export const getPopularCategories = async (country: string) =>
-  (await get<{ categories: { id: number; slug: string; name: string; count: number; imageUrl: string | null }[] }>(`/categories/popular?country=${country.toUpperCase()}`, 300))?.categories ?? [];
+export const getPopularCategories = async (country: string, cityId?: number) =>
+  (await get<{ categories: { id: number; slug: string; name: string; count: number; imageUrl: string | null }[] }>(`/categories/popular${qs({ country: country.toUpperCase(), cityId })}`, 300))?.categories ?? [];
 /** Modes de connexion proposés (SMS ou WhatsApp, Google, Facebook). */
 export const getAuthMethods = async () =>
   (await get<{ otpChannels: ('sms' | 'whatsapp')[]; google: boolean; facebook: boolean; email?: boolean }>('/auth/methods', 300)) ?? { otpChannels: ['sms' as const], google: false, facebook: false, email: true };
@@ -74,4 +74,15 @@ export function findCategory(tree: Category[], pred: (c: Category) => boolean): 
     if (child) return { category: child, parent: root };
   }
   return null;
+}
+
+/** Pays ouverts et leurs villes (sans « Autres villes ») : de quoi choisir et vérifier la région du visiteur. */
+export async function getRegionCatalog(): Promise<import('./region').RegionCountry[]> {
+  const countries = await getCountries();
+  const cities = await Promise.all(countries.map((c) => getCities(c.code).catch(() => [])));
+  return countries.map((c, i) => ({
+    code: c.code.toLowerCase(),
+    name: c.name,
+    cities: cities[i].filter((x) => x.slug !== 'autre').map((x) => ({ slug: x.slug, name: x.name })),
+  }));
 }

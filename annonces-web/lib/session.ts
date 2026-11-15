@@ -84,6 +84,16 @@ export function clientIp(req: NextRequest): string {
   );
 }
 
+/**
+ * Requête déclenchée par un autre site (lien, formulaire ou redirection vers /api/…). SameSite=Lax laisse
+ * passer les cookies sur une navigation : sans ce contrôle, un site tiers pourrait faire consommer le quota
+ * de numéros du visiteur ou marquer ses messages comme lus. En-tête absent (vieux navigateur) : accepté.
+ */
+export function isCrossSite(req: NextRequest): boolean {
+  const site = req.headers.get('sec-fetch-site');
+  return site !== null && site !== 'same-origin' && site !== 'none';
+}
+
 /** Refuse les requêtes d'écriture venant d'un autre site (protection CSRF, en plus de SameSite=Lax). */
 export function isSameOrigin(req: NextRequest): boolean {
   const origin = req.headers.get('origin');

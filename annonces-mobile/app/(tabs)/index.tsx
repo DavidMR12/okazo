@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError } from '../../src/api/client';
-import { useCategories, useCountries, useFavoriteIds, useFeed, useMe, useToggleFavorite, useUnreadCount } from '../../src/api/hooks';
+import { useCategories, useCountries, useFavoriteIds, useFeed, useToggleFavorite, useUnreadCount } from '../../src/api/hooks';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { BRAND_NAME } from '../../src/brand';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
@@ -14,7 +14,8 @@ import { ListingFeed } from '../../src/components/ListingFeed';
 import { ListingTile } from '../../src/components/ListingTile';
 import { Text } from '../../src/components/Typography';
 import { setPendingAction } from '../../src/lib/pendingAction';
-import { Place, setPlace, usePlace } from '../../src/lib/place';
+import { Place, setPlace } from '../../src/lib/place';
+import { placeIn, useRegion } from '../../src/lib/region';
 import { colors, space } from '../../src/theme';
 import { dialog } from '../../src/components/Dialog';
 
@@ -26,14 +27,11 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const countries = useCountries();
   const categories = useCategories();
-  const me = useMe();
   const unread = useUnreadCount();
-  const stored = usePlace();
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Lieu par défaut : celui choisi, sinon le pays du compte, sinon le premier pays ouvert
-  const defaultCountry = me.data?.countryCode ?? countries.data?.[0]?.code;
-  const place: Place | null = stored ?? (defaultCountry ? { country: defaultCountry } : null);
+  // Comme Uber : seulement le pays de l'utilisateur, et par défaut sa ville (src/lib/region.ts)
+  const place = useRegion();
   const countryName = countries.data?.find((c) => c.code === place?.country)?.name.replace(/\s*\(.*\)$/, '');
 
   const filters = useMemo(() => ({ country: place?.country }), [place?.country]);
@@ -72,7 +70,7 @@ export default function HomeScreen() {
       {place?.cityId ? <Nearby place={place} /> : null}
 
       <View style={[styles.sectionHead, { paddingHorizontal: space.lg }]}>
-        <Text style={styles.sectionTitle}>Dernières annonces</Text>
+        <Text style={styles.sectionTitle}>Dernières annonces {placeIn(place?.country ? { country: place.country } : null, countryName)}</Text>
         <Pressable onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'all', country: place?.country ?? '' } })} hitSlop={8} style={styles.seeAllRow} accessibilityRole="link">
           <Text style={styles.seeAll}>Voir tout</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.primary} />
@@ -130,7 +128,7 @@ function Nearby({ place }: { place: Place }) {
   return (
     <View style={{ gap: space.md }}>
       <View style={styles.sectionHead}>
-        <Text style={styles.sectionTitle}>Annonces près de vous</Text>
+        <Text style={styles.sectionTitle}>Annonces {placeIn(place)}</Text>
         <Pressable onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'all', cityId: String(place.cityId), country: place.country } })} hitSlop={8}>
           <Text style={styles.seeAll}>Voir tout ›</Text>
         </Pressable>

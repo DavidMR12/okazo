@@ -1,4 +1,5 @@
-import { Controller, Get, Header, Inject, Query } from '@nestjs/common';
+import { Controller, Get, Header, Inject, Query, Req } from '@nestjs/common';
+import type { FastifyRequest } from 'fastify';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
@@ -13,6 +14,10 @@ const citiesQuery = z.object({
   country: z.string().length(2).transform((s) => s.toUpperCase()).optional(),
 });
 type CitiesQuery = z.infer<typeof citiesQuery>;
+/** Ville principale de chaque pays : ville par défaut quand l'adresse internet ne donne pas la ville. */
+export const MAIN_CITY: Record<string, string> = { CM: 'douala', GA: 'libreville', CG: 'brazzaville', TD: 'ndjamena', CF: 'bangui', GQ: 'malabo' };
+const plain = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 const districtsQuery = z.object({ cityId: z.coerce.number().int().positive() });
 
 @Controller()
@@ -38,6 +43,28 @@ export class GeoController {
     // Portefeuilles électroniques du pays (MTN MoMo, Orange Money…), dans l'ordre d'affichage
     const wallets = await this.db.select().from(countryWallets).orderBy(asc(countryWallets.position));
     return { countries: rows.map((c) => ({ ...c, wallets: wallets.filter((w) => w.countryCode === c.code).map((w) => w.wallet) })) };
+  }
+
+  /**
+   * Pays et ville du visiteur d'après son adresse internet, lus dans les en-têtes ajoutés par Cloudflare
+   * (CF-IPCountry ; CF-IPCity avec la règle « Add visitor location headers »). Rien n'est enregistré.
+   * Pays non ouvert (ou inconnu) : country null, l'application garde alors son propre choix.
+   */
+  @Get('geo/region')
+  @Header('Cache-Control', 'private, no-store')
+  async region(@Req() req: FastifyRequest) {
+    const header = (name: string) => {
+      const v = req.headers[name];
+      return (Array.isArray(v) ? v[0] : v)?.trim() ?? '';
+    };
+    const code = header('cf-ipcountry').toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) return { country: null, city: null };
+    const { cities: list } = await this.cities({ country: code });
+    if (!list.length) return { country: null, city: null };
+    // En-tête en UTF-8 transmis tel quel ; « Yaoundé » et « Yaounde » se valent
+    const ipCity = plain(Buffer.from(header('cf-ipcity'), 'latin1').toString('utf8'));
+    const city = (ipCity && list.find((c) => c.slug !== 'autre' && (c.slug === ipCity || plain(c.name) === ipCity))) || null;
+    return { country: code, city: city ? { id: city.id, slug: city.slug, name: city.name } : null };
   }
 
   @Get('geo/cities')

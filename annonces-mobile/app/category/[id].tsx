@@ -1,9 +1,9 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { ActivityIndicator } from 'react-native';
-import { useCategories, useMe } from '../../src/api/hooks';
+import { useCategories } from '../../src/api/hooks';
 import { SearchResults } from '../../src/components/SearchResults';
-import { usePlace } from '../../src/lib/place';
+import { useRegion } from '../../src/lib/region';
 import { colors, space } from '../../src/theme';
 
 /**
@@ -13,14 +13,13 @@ import { colors, space } from '../../src/theme';
 export default function CategoryScreen() {
   const params = useLocalSearchParams<{ id: string; cityId?: string; country?: string }>();
   const categories = useCategories();
-  const me = useMe();
-  const place = usePlace();
+  const place = useRegion(); // seulement le pays de l'utilisateur, et sa ville par défaut
   const parent = params.id === 'all' ? undefined : categories.data?.find((c) => c.id === Number(params.id));
   const cityId = params.cityId ? Number(params.cityId) : place?.cityId;
   const title = parent?.name ?? (cityId && place?.cityName ? `Annonces à ${place.cityName}` : 'Annonces');
 
   const initial = useMemo(
-    () => ({ country: params.country ?? place?.country ?? me.data?.countryCode, cityId, categoryId: parent?.id }),
+    () => ({ country: params.country ?? place?.country, cityId, categoryId: parent?.id }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [parent?.id],
   );

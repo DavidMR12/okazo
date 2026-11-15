@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getAuthMethods, getCountries } from '@/lib/api';
+import { requestRegion } from '@/lib/regionServer';
 import { LoginForm } from './LoginForm';
 
 export const metadata: Metadata = { title: 'Connexion', robots: { index: false } };
@@ -12,11 +13,14 @@ const FALLBACK = [
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ retour?: string }> }) {
   const { retour } = await searchParams;
-  const [countries, methods] = await Promise.all([getCountries().catch(() => []), getAuthMethods().catch(() => ({ otpChannels: ['sms' as const], google: false, facebook: false }))]);
+  const [all, methods, region] = await Promise.all([getCountries().catch(() => []), getAuthMethods().catch(() => ({ otpChannels: ['sms' as const], google: false, facebook: false })), requestRegion()]);
+  // Seulement le pays du visiteur (comme Uber) : ni liste de pays, ni indicatif au choix
+  const mine = (list: typeof FALLBACK) => list.filter((c) => c.code.toLowerCase() === region.country);
+  const countries = mine(all).length ? mine(all) : mine(FALLBACK).length ? mine(FALLBACK) : FALLBACK.slice(0, 1);
   return (
     <div className="auth-page">
       <div className="narrow auth-card">
-      <LoginForm countries={countries.length ? countries : FALLBACK} returnTo={retour} methods={methods} />
+      <LoginForm countries={countries} returnTo={retour} methods={methods} />
       </div>
     </div>
   );

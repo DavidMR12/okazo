@@ -129,8 +129,8 @@ export default async function ListPage({ params, searchParams }: { params: Param
 
       <section className="section stack">
         <h1>{heading(ctx.country, ctx.category, ctx.city, q)}</h1>
-        {/* Même en-tête que l'accueil : recherche avec le choix du pays, puis la grille d'icônes */}
-        <SearchForm action="/recherche" defaultQuery={q} countries={ctx.countries} country={p} category={ctx.category?.slug} city={ctx.city?.slug} />
+        {/* Même en-tête que l’accueil : recherche (dans ce pays), puis la grille d’icônes */}
+        <SearchForm action="/recherche" defaultQuery={q} country={p} category={ctx.category?.slug} city={ctx.city?.slug} />
 
         <CategoryGrid categories={ctx.categories} hrefFor={(slug) => href(p, slug, ctx.city?.slug)} othersHref={`/${p}/categories`} currentId={root?.id} showAll />
         {root?.children?.length ? (

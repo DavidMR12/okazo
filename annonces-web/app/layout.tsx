@@ -7,7 +7,8 @@ import { ConsentBanner, ManageCookiesLink } from '@/components/ConsentBanner';
 import { HeaderAccount } from '@/components/HeaderAccount';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ServiceWorker } from '@/components/ServiceWorker';
-import { getCountries } from '@/lib/api';
+import { RegionBar } from '@/components/RegionBar';
+import { getRegionCatalog } from '@/lib/api';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
 import { DialogHost } from '@/components/Dialog';
@@ -20,7 +21,7 @@ const outfitFont = Outfit({ weight: ['400', '700'], subsets: ['latin'], display:
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: `${SITE_NAME} : petites annonces au Cameroun, au Gabon et au Congo`, template: `%s | ${SITE_NAME}` },
+  title: { default: `${SITE_NAME} : petites annonces près de chez vous`, template: `%s | ${SITE_NAME}` },
   description: 'Achetez et vendez près de chez vous : téléphones, véhicules, immobilier, maison, mode. Annonces vérifiées avant publication.',
   openGraph: { siteName: SITE_NAME, locale: 'fr_FR', type: 'website' },
 };
@@ -29,11 +30,13 @@ export const viewport: Viewport = { themeColor: '#233A8F', width: 'device-width'
 
 // Aucune lecture de cookie ici : les pages restent en cache et s'affichent vite
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  // Pays du pied de page (donnée en cache une heure, aucune lecture de cookie)
-  const countries = await getCountries().catch(() => []);
+  // Pays ouverts et leurs villes, pour le choix de la ville (donnée en cache une heure, aucune lecture de cookie :
+  // la région du visiteur est lue dans son navigateur)
+  const catalog = await getRegionCatalog().catch(() => []);
   return (
     <html lang="fr" className={`${interFont.variable} ${outfitFont.variable}`}>
       <body>
+        <RegionBar catalog={catalog} />
         <header className="header">
           <div className="container header-inner">
             <Link href="/" className="logo logo-with-tagline" aria-label={`${SITE_NAME}, accueil`}>
@@ -55,14 +58,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 {/* eslint-disable-next-line @next/next/no-img-element -- petit logo fixe, servi tel quel */}
                 <img src="/okazo-logo.png" alt={SITE_NAME} width={426} height={123} />
               </Link>
-              <p>Petites annonces entre particuliers au Cameroun, au Gabon et au Congo. Chaque annonce est vérifiée avant sa mise en ligne.</p>
+              <p>Petites annonces entre particuliers, près de chez vous. Chaque annonce est vérifiée avant sa mise en ligne.</p>
             </div>
-            <nav aria-label="Pays">
-              <h2>Pays</h2>
-              {countries.map((c) => (
-                <Link key={c.code} href={`/${c.code.toLowerCase()}`}>{c.name}</Link>
-              ))}
-            </nav>
             <nav aria-label="Votre espace">
               <h2>Votre espace</h2>
               <Link href="/publier">Publier une annonce</Link>

@@ -1244,3 +1244,17 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 
 /* Catégories populaires dans la même police que les tuiles du dessus (Outfit, demande du porteur du 15/11) */
 .popular-body, .popular-body strong, .popular-body .muted { font-family: var(--font-title), var(--font-inter), sans-serif; }
+
+/* Ville du visiteur, ligne discrète tout en haut (comme Uber) : seules les villes de son pays sont proposées */
+.region-bar { position: relative; z-index: 20; background: var(--tint, #F1F5FE); border-bottom: 1px solid var(--line); font-family: var(--font-title), var(--font-inter), sans-serif; font-size: 0.85rem; }
+.region-inner { position: relative; display: flex; align-items: center; min-height: 32px; }
+.region-current { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.region-current .ion:first-child { color: var(--primary); }
+.region-current:hover { color: var(--primary); }
+.region-current.placeholder { cursor: default; }
+.region-list { position: absolute; top: 100%; left: 16px; z-index: 60; min-width: 220px; max-height: 60vh; overflow: auto; margin: 4px 0 0; padding: 6px; list-style: none; background: var(--bg, #fff); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(16, 24, 64, 0.14); }
+.region-list button { width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.region-list button:hover, .region-list button:focus-visible { background: var(--tint, #F1F5FE); color: var(--primary); }
+.region-list button[aria-current='true'] { color: var(--primary); font-weight: 700; }
+@media (min-width: 760px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr; } }
+.country-fixed { cursor: default; }
