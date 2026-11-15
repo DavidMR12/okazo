@@ -1346,15 +1346,15 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 .section-head h2 { flex: 1; min-width: 0; }
 .section-head .see-all { flex: none; }
 
-/* Catégories populaires sur ordinateur : cartes horizontales sur 3 colonnes (6 ronds étalés laissaient trop de vide, 15 novembre 2026) */
+/* Catégories populaires sur ordinateur : exactement les tuiles du dessus (108 × 84, écart 10 px, alignées à gauche), 15 novembre 2026 */
 @media (min-width: 760px) {
-  .popular-grid, .tile-grid.popular-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  .popular-card { flex-direction: row; align-items: center; text-align: left; gap: 14px; padding: 12px 16px; border-radius: 16px; background: var(--tint); transition: background .15s; }
+  .popular-grid, .tile-grid.popular-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .popular-card { flex: 0 0 108px; width: 108px; height: 84px; padding: 6px; gap: 3px; border-radius: 12px; background: var(--tint); flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: background .15s; }
   .popular-card:hover { background: var(--tint-line); }
   .popular-card:hover strong { text-decoration: none; }
-  .popular-media { width: 52px; height: 52px; flex: none; background: var(--bg); }
-  .popular-body { align-items: flex-start; min-width: 0; }
-  .popular-body strong { font-size: 1rem; }
-  .popular-body .muted { font-size: 0.85rem; }
+  .popular-media { width: 26px; height: 26px; background: none; border-radius: 0; flex: none; }
+  .popular-media .ion { width: 26px !important; height: 26px !important; }
+  .popular-body { align-items: center; gap: 0; max-width: 100%; }
+  .popular-body strong { font-size: 12px; line-height: 1.2; max-width: 96px; }
+  .popular-body .muted { font-size: 11px; line-height: 1.2; }
 }
-@media (min-width: 1100px) { .popular-grid, .tile-grid.popular-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } .popular-card { flex-direction: column; text-align: center; gap: 8px; padding: 16px 8px; } .popular-body { align-items: center; } }
