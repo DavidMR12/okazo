@@ -1258,3 +1258,5 @@ a.pill-row:hover, button.pill-row:hover { background: var(--tint); border-color:
 .region-list button[aria-current='true'] { color: var(--primary); font-weight: 700; }
 @media (min-width: 760px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr; } }
 .country-fixed { cursor: default; }
+/* Téléphone : sous le champ, appareil photo et « Rechercher » calés à droite, comme d'habitude (15/11) */
+@media (max-width: 759px) { .search .search-lens { margin-left: auto; } }
