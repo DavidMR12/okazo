@@ -207,4 +207,12 @@ describe('Audit de sécurité : failles corrigées', () => {
     expect(res.headers['cache-control']).toBe('private, no-store');
   });
 
+  // Audit du 8 novembre 2026
+  it('bloquer un compte inexistant renvoie 404, pas une erreur serveur', async () => {
+    const me = await login(ctx);
+    const res = await call(ctx, 'POST', `/users/${randomUUID()}/block`, { token: me.accessToken });
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('USER_NOT_FOUND');
+  });
+
 });

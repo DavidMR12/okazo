@@ -337,6 +337,9 @@ export class MessagingService {
 
   async block(userId: string, targetId: string) {
     if (userId === targetId) throw new ForbiddenException({ code: 'SELF_BLOCK', message: 'Action impossible.' });
+    // Cible inconnue : 404 au lieu d'une erreur 500 de clé étrangère (audit du 8 novembre 2026)
+    const [target] = await this.db.select({ id: users.id }).from(users).where(eq(users.id, targetId)).limit(1);
+    if (!target) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Ce compte n’existe pas.' });
     await this.db.insert(userBlocks).values({ blockerId: userId, blockedId: targetId }).onConflictDoNothing();
     return { blocked: true };
   }

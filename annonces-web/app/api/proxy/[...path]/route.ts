@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api';
-import { BODY_TOO_LARGE, clearSessionCookies, clientIp, COOKIE, isSameOrigin, readBody, refreshTokens, setSessionCookies, Tokens } from '@/lib/session';
+import { BODY_TOO_LARGE, clearSessionCookies, clientIp, COOKIE, isCrossSite, isSameOrigin, readBody, refreshTokens, setSessionCookies, Tokens } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ async function handler(req: NextRequest, ctx: { params: Promise<{ path: string[]
   if (path.some((s) => s === '.' || s === '..' || s === '')) {
     return NextResponse.json({ code: 'BAD_PATH', message: 'Chemin invalide.' }, { status: 400 });
   }
-  if (req.method !== 'GET' && !isSameOrigin(req)) {
+  if (isCrossSite(req) || (req.method !== 'GET' && !isSameOrigin(req))) {
     return NextResponse.json({ code: 'FORBIDDEN', message: 'Requête refusée.' }, { status: 403 });
   }
 
