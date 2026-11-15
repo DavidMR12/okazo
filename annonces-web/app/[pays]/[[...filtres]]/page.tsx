@@ -134,7 +134,7 @@ export default async function ListPage({ params, searchParams }: { params: Param
 
         <CategoryGrid categories={ctx.categories} hrefFor={(slug) => href(p, slug, ctx.city?.slug)} othersHref={`/${p}/categories`} currentId={root?.id} showAll />
         {root?.children?.length ? (
-          <nav className="chips" aria-label={`Sous-catégories de ${root.name}`}>
+          <nav className="chips f-pills" aria-label={`Sous-catégories de ${root.name}`}>
             {root.children.map((c) => (
               <Link key={c.id} href={href(p, c.slug, ctx.city?.slug)} className="chip" aria-current={ctx.category?.id === c.id ? 'page' : undefined}>
                 {c.name}
@@ -142,7 +142,7 @@ export default async function ListPage({ params, searchParams }: { params: Param
             ))}
           </nav>
         ) : null}
-        <nav className="chips" aria-label="Villes">
+        <nav className="chips f-pills" aria-label="Villes">
           <Link href={href(p, ctx.category?.slug)} className="chip" aria-current={!ctx.city ? 'page' : undefined}>Tout le pays</Link>
           {ctx.cities.map((c) => (
             <Link key={c.id} href={href(p, ctx.category?.slug, c.slug)} className="chip" aria-current={ctx.city?.id === c.id ? 'page' : undefined}>
