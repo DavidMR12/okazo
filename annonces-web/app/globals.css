@@ -586,11 +586,11 @@ body { overflow-x: clip; }
 @media (min-width: 640px) { .all-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 960px) { .all-cats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .all-cat { border: 1px solid var(--tint-line); border-radius: 14px; padding: 14px 16px; }
-.all-cat-head { display: flex; align-items: center; gap: 10px; font-weight: 800; text-decoration: none; color: var(--ink); }
+.all-cat-head { display: flex; align-items: center; gap: 10px; font-family: var(--font-title), var(--font-inter), sans-serif; font-weight: 700; text-decoration: none; color: var(--ink); }
 .all-cat-head:hover { color: var(--primary); }
 .all-cat-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--tint); color: var(--primary); display: grid; place-items: center; flex: none; }
 .all-cat ul { list-style: none; margin: 10px 0 0; padding: 0 0 0 46px; display: flex; flex-direction: column; gap: 6px; }
-.all-cat li a { color: var(--ink-muted); text-decoration: none; }
+.all-cat li a { font-family: var(--font-title), var(--font-inter), sans-serif; color: var(--ink-muted); text-decoration: none; }
 .all-cat li a:hover { color: var(--primary); text-decoration: underline; }
 .cat-grid .cat-tile span { overflow-wrap: normal; word-break: normal; hyphens: none; }
 @media (max-width: 639px) { .cat-grid .cat-tile { padding: 4px 2px; } .cat-grid .cat-tile span { font-size: 0.7rem; letter-spacing: -0.01em; } }
