@@ -10,6 +10,7 @@ import { DEFAULT_COUNTRY } from './site';
 export const REGION_COOKIE = 'okazo_region'; // choix du visiteur : « cm » (tout le pays) ou « cm.douala »
 export const AUTO_COOKIE = 'okazo_region_auto'; // région détectée, lue par le navigateur ; « ! » final = supposée
 export const TZ_COOKIE = 'okazo_region_tz'; // pays du fuseau horaire, quand l'adresse internet ne suffit pas
+export const ABROAD_COOKIE = 'okazo_abroad'; // « 1 » : visiteur hors des pays ouverts, qui a choisi son pays (il peut en changer)
 export const REGION_MAX_AGE = 60 * 60 * 24 * 400; // 400 jours, maximum des navigateurs
 
 export interface Region { country: string; city?: string } // codes en minuscules : { country: 'cm', city: 'douala' }

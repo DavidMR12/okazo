@@ -10,12 +10,13 @@ import { useAuth } from '../../src/auth/AuthProvider';
 import { BRAND_NAME } from '../../src/brand';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
 import { CityPicker } from '../../src/components/CityPicker';
+import { CountryChooser } from '../../src/components/CountryChooser';
 import { ListingFeed } from '../../src/components/ListingFeed';
 import { ListingTile } from '../../src/components/ListingTile';
 import { Text } from '../../src/components/Typography';
 import { setPendingAction } from '../../src/lib/pendingAction';
 import { Place, setPlace } from '../../src/lib/place';
-import { placeIn, useRegion } from '../../src/lib/region';
+import { placeIn, useRegionInfo } from '../../src/lib/region';
 import { colors, space } from '../../src/theme';
 import { dialog } from '../../src/components/Dialog';
 
@@ -29,9 +30,10 @@ export default function HomeScreen() {
   const categories = useCategories();
   const unread = useUnreadCount();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [changingCountry, setChangingCountry] = useState(false);
 
   // Comme Uber : seulement le pays de l'utilisateur, et par défaut sa ville (src/lib/region.ts)
-  const place = useRegion();
+  const { place, needsChoice } = useRegionInfo();
   const countryName = countries.data?.find((c) => c.code === place?.country)?.name.replace(/\s*\(.*\)$/, '');
 
   const filters = useMemo(() => ({ country: place?.country }), [place?.country]);
@@ -96,9 +98,27 @@ export default function HomeScreen() {
         current={place}
         onClose={() => setPickerOpen(false)}
         onPick={(p) => {
-          setPlace(p);
+          setPlace({ ...p, abroad: place?.abroad });
           setPickerOpen(false);
         }}
+        onChangeCountry={
+          place?.abroad && (countries.data?.length ?? 0) > 1
+            ? () => {
+                setPickerOpen(false);
+                setChangingCountry(true);
+              }
+            : undefined
+        }
+      />
+      {/* Hors des pays ouverts : on lui demande où il cherche (comme Louam) ; ensuite « Changer de pays » */}
+      <CountryChooser
+        visible={needsChoice || changingCountry}
+        current={changingCountry ? place?.country : undefined}
+        onPick={(p) => {
+          setPlace(p);
+          setChangingCountry(false);
+        }}
+        onClose={changingCountry ? () => setChangingCountry(false) : undefined}
       />
     </>
   );

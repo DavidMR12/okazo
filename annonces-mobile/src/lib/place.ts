@@ -9,6 +9,7 @@ export interface Place {
   country: string; // code ISO, ex. CM
   cityId?: number;
   cityName?: string;
+  abroad?: boolean; // choisi depuis l'étranger (hors des pays ouverts) : il peut changer de pays
 }
 
 const KEY = 'app.place';

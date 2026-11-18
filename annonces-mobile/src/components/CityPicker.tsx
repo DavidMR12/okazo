@@ -10,7 +10,7 @@ import { Text } from './Typography';
  * Choix de la ville de l'accueil, comme Uber : seulement les villes du pays de l'utilisateur, et « Tout le pays ».
  * Les autres pays ne sont jamais proposés.
  */
-export function CityPicker({ visible, current, onClose, onPick }: { visible: boolean; current: Place | null; onClose: () => void; onPick: (p: Place) => void }) {
+export function CityPicker({ visible, current, onClose, onPick, onChangeCountry }: { visible: boolean; current: Place | null; onClose: () => void; onPick: (p: Place) => void; onChangeCountry?: () => void }) {
   const insets = useSafeAreaInsets();
   const country = current?.country;
   const cities = useCities(country);
@@ -36,6 +36,14 @@ export function CityPicker({ visible, current, onClose, onPick }: { visible: boo
                 />
               ))}
             <Row label="Tout le pays" selected={!current?.cityId} onPress={() => onPick({ country })} />
+            {/* Seulement pour qui a choisi son pays depuis l'étranger (CountryChooser) */}
+            {onChangeCountry ? (
+              <Pressable onPress={onChangeCountry} style={styles.row} accessibilityRole="button">
+                <Ionicons name="globe-outline" size={18} color={colors.primary} />
+                <Text style={[type.body, { flex: 1, color: colors.primary, fontWeight: '700' }]}>Changer de pays</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+              </Pressable>
+            ) : null}
           </>
         ) : null}
       </ScrollView>

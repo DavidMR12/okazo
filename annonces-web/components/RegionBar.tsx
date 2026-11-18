@@ -4,6 +4,7 @@ import { chevronDown, location } from 'ionicons/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
+  ABROAD_COOKIE,
   AUTO_COOKIE,
   browserRegion,
   formatRegion,
@@ -17,12 +18,15 @@ import {
   TZ_COUNTRY,
   writeCookie,
 } from '@/lib/region';
+import { CountryChooser } from './CountryChooser';
 import { Ion } from './Ion';
 
 /**
  * Ligne discrète tout en haut du site, comme Uber : « 📍 Douala ▾ ». Le menu ne propose que les villes du pays
  * du visiteur et « Tout le pays » : les autres pays ne sont jamais montrés.
  * Corrige aussi la région supposée par le serveur avec le fuseau horaire du navigateur.
+ * Visiteur hors des pays ouverts (18 novembre 2026, comme Louam) : ni l'adresse internet ni le fuseau horaire ne
+ * donnent un pays ouvert, on lui demande où il cherche (CountryChooser) ; il garde ensuite « Changer de pays ».
  */
 export function RegionBar({ catalog }: { catalog: RegionCountry[] }) {
   const router = useRouter();
@@ -31,14 +35,18 @@ export function RegionBar({ catalog }: { catalog: RegionCountry[] }) {
   const raw = useSyncExternalStore(subscribe, () => readCookie(REGION_COOKIE) ?? readCookie(AUTO_COOKIE) ?? '', () => null);
   const region: Region | null = raw === null ? null : browserRegion() ?? fromPath(pathname, catalog);
   const [open, setOpen] = useState(false);
+  const [changing, setChanging] = useState(false);
+  const abroad = raw !== null && readCookie(ABROAD_COOKIE) === '1';
+  // Hors des pays ouverts (ni adresse internet ni fuseau horaire utiles) et pas encore de choix : on lui demande où il cherche
+  const mustChoose = raw !== null && !readCookie(REGION_COOKIE) && isGuess(readCookie(AUTO_COOKIE)) && !tzCountry(catalog);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const current = browserRegion() ?? fromPath(pathname, catalog);
     // Aucun indice sur le pays côté serveur (adresse étrangère, VPN) : le fuseau horaire du navigateur tranche
     if (!readCookie(REGION_COOKIE) && isGuess(readCookie(AUTO_COOKIE)) && !readCookie(TZ_COOKIE)) {
-      const tz = TZ_COUNTRY[Intl.DateTimeFormat().resolvedOptions().timeZone];
-      if (tz && catalog.some((c) => c.code === tz)) {
+      const tz = tzCountry(catalog);
+      if (tz) {
         writeCookie(TZ_COOKIE, tz);
         if (tz !== current?.country && pathname === '/') router.refresh();
       }
@@ -63,8 +71,10 @@ export function RegionBar({ catalog }: { catalog: RegionCountry[] }) {
   const country = region && catalog.find((c) => c.code === region.country);
   const city = country?.cities.find((c) => c.slug === region?.city);
 
-  const choose = (next: Region) => {
+  const choose = (next: Region, fromChooser = false) => {
     setOpen(false);
+    setChanging(false);
+    if (fromChooser) writeCookie(ABROAD_COOKIE, '1');
     writeCookie(REGION_COOKIE, formatRegion(next));
     changed();
     // Page de liste du même pays : même catégorie, dans la ville choisie ; accueil : rechargé pour la nouvelle ville
@@ -96,6 +106,11 @@ export function RegionBar({ catalog }: { catalog: RegionCountry[] }) {
                 <li>
                   <button type="button" aria-current={!region?.city ? 'true' : undefined} onClick={() => choose({ country: country.code })}>Tout le pays</button>
                 </li>
+                {abroad && catalog.length > 1 ? (
+                  <li className="region-change">
+                    <button type="button" onClick={() => { setOpen(false); setChanging(true); }}>Changer de pays</button>
+                  </li>
+                ) : null}
               </ul>
             ) : null}
           </>
@@ -103,6 +118,14 @@ export function RegionBar({ catalog }: { catalog: RegionCountry[] }) {
           <span className="region-current placeholder" aria-hidden>&nbsp;</span>
         )}
       </div>
+      {mustChoose || changing ? (
+        <CountryChooser
+          catalog={catalog}
+          current={changing ? country?.code : undefined}
+          onChoose={(c, city) => choose({ country: c, city }, true)}
+          onClose={changing ? () => setChanging(false) : undefined}
+        />
+      ) : null}
     </div>
   );
 }
@@ -114,6 +137,12 @@ const subscribe = (cb: () => void) => {
   return () => listeners.delete(cb);
 };
 const changed = () => listeners.forEach((l) => l());
+
+/** Pays ouvert du fuseau horaire du navigateur, s'il y en a un. */
+function tzCountry(catalog: RegionCountry[]): string | undefined {
+  const tz = TZ_COUNTRY[Intl.DateTimeFormat().resolvedOptions().timeZone];
+  return tz && catalog.some((c) => c.code === tz) ? tz : undefined;
+}
 
 /** Sans cookie (premier affichage d'une page de pays) : le pays de l'adresse, ville comprise. */
 function fromPath(pathname: string, catalog: RegionCountry[]): Region | null {
