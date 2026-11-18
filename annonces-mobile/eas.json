@@ -1,15 +1,24 @@
 {
-  "cli": { "appVersionSource": "remote" },
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
   "build": {
+    "base": {
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.okazo.org" }
+    },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
-      "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.votre-domaine.com" }
+      "android": { "buildType": "apk" }
     },
     "production": {
+      "extends": "base",
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.votre-domaine.com" }
+      "android": { "buildType": "app-bundle" }
     }
   },
-  "submit": { "production": {} }
+  "submit": {
+    "production": {
+      "android": { "track": "internal", "releaseStatus": "completed" },
+      "ios": {}
+    }
+  }
 }
