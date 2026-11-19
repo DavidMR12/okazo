@@ -16,6 +16,9 @@ export class ApiError extends Error {
 }
 
 const networkError = () => new ApiError(0, 'NETWORK', 'Pas de connexion. Vérifiez votre réseau et réessayez.');
+// Réponse qui n'est pas du JSON (page de connexion Cloudflare Access, page d'erreur d'un intermédiaire) : sans cette
+// erreur, l'écran recevait « rien » comme une réussite et le rond tournait sans fin (19/11/2026).
+const unavailable = () => new ApiError(0, 'UNAVAILABLE', 'Service momentanément indisponible. Réessayez dans un instant.');
 const notSignedIn = () => new ApiError(401, 'NOT_SIGNED_IN', 'Connectez-vous pour continuer.');
 
 async function timedFetch(url: string, init: RequestInit): Promise<Response> {
@@ -107,7 +110,18 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
   }
 
   if (res.status === 204) return undefined as T;
-  const data = (await res.json().catch(() => null)) as { code?: string; message?: string; retryAfterSec?: number } | null;
+  // Corps vide (route qui ne renvoie rien) : accepté ; corps non vide qui n'est pas du JSON : service indisponible
+  const text = await res.text().catch(() => '');
+  let data: { code?: string; message?: string; retryAfterSec?: number } | null = null;
+  let notJson = false;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      notJson = true;
+    }
+  }
+  if (notJson && (res.ok || res.status >= 500)) throw unavailable();
   if (!res.ok) {
     // CGU à accepter (nouveau compte ou nouvelle version), puis numéro à vérifier (compte e-mail ou Google)
     if (res.status === 403 && data?.code === 'TERMS_REQUIRED') router.push('/accept-terms');

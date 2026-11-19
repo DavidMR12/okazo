@@ -23,11 +23,14 @@ export function ListingFeed({
   header,
   onClearFilters,
   empty: emptyMessage,
+  blocked,
 }: {
   filters: FeedFilters;
   header?: ReactElement;
   onClearFilters?: () => void;
   empty?: { title: string; body?: string; actionLabel?: string; onAction?: () => void }; // remplace le message par défaut
+  /** Les filtres ne peuvent pas être établis (ex. liste des pays injoignable) : message et « Réessayer » au lieu du rond */
+  blocked?: { body?: string; onRetry: () => void };
 }) {
   const feed = useFeed(filters);
   const favoriteIds = useFavoriteIds();
@@ -97,7 +100,9 @@ export function ListingFeed({
   );
 
   let empty: ReactElement | undefined;
-  if (feed.isPending && feed.fetchStatus === 'paused') {
+  if (blocked && feed.isPending) {
+    empty = <Message title="Impossible de charger les annonces" body={blocked.body} actionLabel="Réessayer" onAction={blocked.onRetry} />;
+  } else if (feed.isPending && feed.fetchStatus === 'paused') {
     empty = <Message title="Pas de connexion" body="Ces articles n’ont pas encore été enregistrés sur cet appareil. Ils s’afficheront dès le retour du réseau." />;
   } else if (feed.isPending) {
     empty = <ActivityIndicator style={{ marginTop: space.xxl }} color={colors.primary} />;

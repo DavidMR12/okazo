@@ -86,6 +86,11 @@ export default function HomeScreen() {
       <ListingFeed
         filters={filters}
         header={header}
+        blocked={
+          !place && countries.isError
+            ? { body: countries.error instanceof ApiError ? countries.error.message : undefined, onRetry: () => void countries.refetch() }
+            : undefined
+        }
         empty={{
           title: `Pas encore d’annonce ${place?.cityName ? `à ${place.cityName}` : 'dans ce pays'}`,
           body: 'Soyez le premier à publier, ou cherchez ailleurs.',
