@@ -12,6 +12,9 @@ const BRAND = {
   appId: 'com.okazo.app', // à confirmer avant la première publication sur les stores (ne pourra plus changer)
 };
 
+/** Numéro de version Play Store : augmenté de 1 par annonces-deploy/deploie-android.sh à chaque envoi. */
+const ANDROID_VERSION_CODE = 1;
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: BRAND.name,
@@ -31,7 +34,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   // Textes des demandes d'autorisation en français (aussi pour un téléphone réglé dans une autre langue)
   locales: { fr: './src/locales/fr.json', en: './src/locales/fr.json' },
-  android: { package: BRAND.appId },
+  android: { package: BRAND.appId, versionCode: ANDROID_VERSION_CODE },
   plugins: [
     'expo-router',
     'expo-secure-store',
@@ -52,6 +55,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         cameraPermission: "Autorisez l'appareil photo pour photographier vos articles et vérifier votre identité.",
       },
     ],
+    // Construction Play Store sur l'ordinateur (comme Louam) : signature et retouches Windows
+    './plugins/with-upload-signing',
+    './plugins/with-windows-build',
   ],
   experiments: { typedRoutes: false },
   extra: { ...config.extra, brandName: BRAND.name },

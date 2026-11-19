@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Okazo : construit l'application et l'envoie aux stores, en une commande (EAS Build + EAS Submit, dans le cloud d'Expo).
+# Okazo : construit l'application et l'envoie aux stores, en une commande.
+#   Android : construit sur cet ordinateur et envoyé par la clé Google Play (deploie-android.sh, comme Louam, 19/11/2026) ;
+#   iOS : construit sur les Mac d'Expo et envoyé à TestFlight (EAS Build + EAS Submit).
 #
 #   bash annonces-deploy/deploie-stores.sh            # Android et iOS
 #   bash annonces-deploy/deploie-stores.sh android    # Play Store seulement
@@ -20,6 +22,12 @@ set -euo pipefail
 
 PLATFORM="${1:-all}"
 case "$PLATFORM" in android|ios|all) ;; *) echo "Usage : $0 [android|ios|all]" >&2; exit 1 ;; esac
+
+if [ "$PLATFORM" != "ios" ]; then
+  bash "$(dirname "$0")/deploie-android.sh"
+  [ "$PLATFORM" = "android" ] && exit 0
+  PLATFORM="ios"
+fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/annonces-mobile"

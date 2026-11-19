@@ -7,6 +7,13 @@
 *.pem
 *.key
 
+# Clés des stores (compte de service Google Play, clés Apple, keystore) : jamais sur GitHub
+/cles-android/
+/cles-apple/
+*.jks
+*.keystore
+*.p8
+
 # Dépendances et fichiers produits
 node_modules/
 dist/
@@ -31,3 +38,7 @@ Maquettes/photos-demo/*.jpg
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Fichiers .aab produits par annonces-deploy/deploie-android.sh
+/livraisons/
+*.aab
