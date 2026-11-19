@@ -9,7 +9,7 @@ const BRAND = {
   name: 'Okazo', // nom définitif (décision du porteur, 14 octobre 2026)
   slug: 'okazo',
   scheme: 'okazo',
-  appId: 'com.okazo.app', // à confirmer avant la première publication sur les stores (ne pourra plus changer)
+  appId: 'org.okazo.app', // fiche Play Console créée par le porteur avec ce nom (19/11/2026) : ne plus jamais le changer
 };
 
 /** Numéro de version Play Store : augmenté de 1 par annonces-deploy/deploie-android.sh à chaque envoi. */

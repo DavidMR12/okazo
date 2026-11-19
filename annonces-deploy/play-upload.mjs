@@ -15,7 +15,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 
 // Nom technique de l’application (BRAND.appId dans annonces-mobile/app.config.ts) : ne change plus après le premier envoi.
-const PACKAGE = "com.okazo.app";
+const PACKAGE = "org.okazo.app";
 const KEY_FILE = process.env.OKAZO_PLAY_KEY || "C:/Personnel/Kaba/cles-android/play-compte-service.json";
 const API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PACKAGE}`;
 const UPLOAD = `https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/${PACKAGE}`;

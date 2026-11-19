@@ -68,6 +68,10 @@ fi
 # 4. Dossier Android régénéré. L'adresse de l'API de production l'emporte sur le .env local (réseau de la maison).
 export EXPO_PUBLIC_API_URL="https://api.okazo.org"
 cd "K:/mobile"
+# Dossier android/ effacé d'abord : si un reste verrouillé (Gradle d'un essai interrompu) survivait,
+# prebuild échouerait sans le dire et la construction partirait sur un mélange ancien/nouveau
+rm -rf android
+[ ! -d android ] || { echo "✗ android/ verrouillé : fermez les processus java (Gradle) puis relancez"; false; }
 CI=1 npx expo prebuild --platform android --clean --no-install
 echo "sdk.dir=$SDK" > android/local.properties
 grep -q "okazo-chemins.js" android/settings.gradle
