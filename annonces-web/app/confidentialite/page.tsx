@@ -13,7 +13,8 @@ export default function PrivacyPage() {
     <div className="narrow stack">
       <h1>Confidentialité et cookies</h1>
       <h2>Données que nous utilisons</h2>
-      <p>Pour créer un compte : votre numéro de téléphone. Pour publier : le contenu de vos annonces et leurs photos. Pour la vérification d’identité : une photo de votre pièce d’identité et un selfie, consultés uniquement par notre équipe de vérification.</p>
+      <p>Pour créer un compte : votre numéro de téléphone, ou votre adresse e-mail, ou votre compte Google, et le nom que vous choisissez. Pour publier : le contenu de vos annonces et leurs photos. Pour la vérification d’identité : une photo de votre pièce d’identité et un selfie, consultés uniquement par notre équipe de vérification. Pour postuler à une offre d’emploi : le CV que vous joignez, transmis seulement à l’employeur. Vos messages, favoris, recherches enregistrées et avis. Un identifiant d’appareil haché, utilisé seulement contre la fraude.</p>
+      <p>{SITE_NAME} ne vend pas vos données et ne les partage pas à des fins publicitaires. L’application n’utilise ni votre position ni l’identifiant publicitaire de votre téléphone. Toutes les données circulent chiffrées (HTTPS).</p>
       <h2>Pourquoi</h2>
       <p>Faire fonctionner le service, mettre en relation acheteurs et vendeurs, et lutter contre la fraude (signalements, identifiant d’appareil, vérification des annonces).</p>
       <h2>Messagerie</h2>
@@ -22,7 +23,14 @@ export default function PrivacyPage() {
       <p>Cookies nécessaires : maintien de votre connexion et mémorisation de votre choix sur les cookies. Ils ne peuvent pas être désactivés.</p>
       <p>Publicité : {SITE_NAME} est financé par la publicité Google. Si vous acceptez, Google peut utiliser des cookies pour afficher des publicités adaptées à vos centres d’intérêt. Si vous refusez, les publicités ne sont pas personnalisées. Vous pouvez changer d’avis à tout moment avec le lien « Gérer les cookies » en bas de page.</p>
       <h2>Vos droits</h2>
-      <p>Vous pouvez modifier vos informations ou supprimer votre compte depuis « Mon compte ». La suppression efface votre numéro, votre nom, vos annonces, vos favoris et vos documents d’identité.</p>
-    </div>
+      <p>Vous pouvez modifier vos informations depuis « Mon compte ».</p>
+      <h2 id="suppression">Supprimer votre compte {SITE_NAME}</h2>
+      <ol>
+        <li>Dans l’application ou sur le site, ouvrez « Mon compte ».</li>
+        <li>Touchez « Supprimer mon compte ».</li>
+        <li>Saisissez le code reçu par SMS (ou par e-mail si votre compte n’a pas de numéro) : la suppression est immédiate et définitive.</li>
+      </ol>
+      <p>Sont effacés : votre numéro, votre adresse e-mail, votre mot de passe, votre nom, votre photo de profil, votre ville, les photos de vos annonces (retirées du site), vos pièces d’identité, vos CV et candidatures, vos favoris, votre panier, vos recherches enregistrées, les comptes Google liés, le texte de vos messages et de vos avis.</p>
+      <p>Sont conservés, sans lien avec votre identité : la note de vos avis (elle compte pour la personne évaluée), l’historique de modération, les empreintes des photos et de l’appareil (hachées), pour lutter contre la fraude. Un numéro sanctionné reste signalé, pour qu’une sanction ne puisse pas être effacée en supprimant son compte.</p>    </div>
   );
 }
