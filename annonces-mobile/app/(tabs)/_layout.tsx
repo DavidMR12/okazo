@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { View, type ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../src/components/Typography';
 import { BRAND_NAME } from '../../src/brand';
 import { useCartIds, useUnreadCount } from '../../src/api/hooks';
@@ -31,6 +32,8 @@ const label = (text: string) =>
 export default function TabsLayout() {
   const unread = useUnreadCount();
   const cartCount = useCartIds().size;
+  // Barre système d'Android (3 boutons ou geste) : la barre d'onglets se pose au-dessus, sinon elle est coupée (19/11/2026)
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -38,7 +41,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.inkMuted,
         tabBarLabelStyle: { fontSize: 12, fontFamily: FONT },
-        tabBarStyle: { height: 70, paddingTop: 6, borderTopColor: colors.line },
+        tabBarStyle: { height: 70 + insets.bottom, paddingTop: 6, paddingBottom: insets.bottom, borderTopColor: colors.line },
         headerShadowVisible: false,
         headerTitleStyle: { fontFamily: FONT, fontSize: 20, color: colors.ink },
       }}

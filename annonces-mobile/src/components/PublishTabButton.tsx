@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -22,
+    marginTop: -12, // moins surélevé (demande du porteur, 19/11/2026)
     borderWidth: 4,
     borderColor: colors.bg,
     shadowColor: colors.primary,
