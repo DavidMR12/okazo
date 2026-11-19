@@ -13,7 +13,7 @@ const BRAND = {
 };
 
 /** Numéro de version Play Store : augmenté de 1 par annonces-deploy/deploie-android.sh à chaque envoi. */
-const ANDROID_VERSION_CODE = 1;
+const ANDROID_VERSION_CODE = 2;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
