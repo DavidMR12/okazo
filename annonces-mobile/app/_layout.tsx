@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider } from '../src/auth/AuthProvider';
 import { PERSIST_MAX_AGE, persister, queryClient } from '../src/lib/queryClient';
 import { OfflineBanner } from '../src/components/OfflineBanner';
@@ -21,6 +22,10 @@ import { colors, FONT } from '../src/theme';
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
+  // Touches du téléphone en bas (|||, ○, <) : depuis le SDK 58, l'app est dessinée derrière. Chaque écran empilé
+  // garde une marge de leur hauteur pour que son dernier bouton reste au-dessus (19/11/2026). Les onglets, la fiche
+  // et la conversation gèrent cette place eux-mêmes (barre du bas fixe).
+  const insets = useSafeAreaInsets();
   // Police déjà embarquée dans l'app compilée ; chargée ici pour Expo Go et le web
   const [fontsLoaded, fontError] = useFonts({ Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold });
   useEffect(() => {
@@ -56,11 +61,11 @@ export default function RootLayout() {
             headerTitleStyle: { fontFamily: FONT },
             headerBackTitleStyle: { fontFamily: FONT },
             headerShadowVisible: false,
-            contentStyle: { backgroundColor: colors.bg },
+            contentStyle: { backgroundColor: colors.bg, paddingBottom: insets.bottom },
           }}
         >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="listing/[id]" options={{ title: '' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+          <Stack.Screen name="listing/[id]" options={{ title: '', contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="seller/[id]" options={{ title: 'Vendeur' }} />
           <Stack.Screen name="login" options={{ title: 'Connexion', presentation: 'modal' }} />
           <Stack.Screen name="verify" options={{ title: 'Code de vérification', presentation: 'modal' }} />
@@ -82,7 +87,7 @@ export default function RootLayout() {
           <Stack.Screen name="category/[id]" options={{ title: '' }} />
           <Stack.Screen name="delete-account" options={{ title: 'Supprimer mon compte' }} />
           <Stack.Screen name="verify-identity" options={{ title: 'Vérifier mon identité' }} />
-          <Stack.Screen name="conversation/[id]" options={{ title: '' }} />
+          <Stack.Screen name="conversation/[id]" options={{ title: '', contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="conversation/new" options={{ title: 'Écrire au vendeur' }} />
           <Stack.Screen name="listing/edit/[id]" options={{ title: 'Modifier l’annonce' }} />
         </Stack>
