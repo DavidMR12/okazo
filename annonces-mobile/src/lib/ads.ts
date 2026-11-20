@@ -19,6 +19,13 @@ const UNITS = {
   ios: { home: '', listing: '' },
 };
 
+/**
+ * Affichage des bannières. false pendant les tests (21/11/2026, demande du porteur) : AdMob reste branché et
+ * initialisé (consentement, SDK), mais aucune bannière n'apparaît, pour qu'aucun testeur ne clique sur une annonce
+ * (Google sanctionne les clics de l'entourage). Passer à true pour la sortie publique, puis nouvelle version.
+ */
+export const SHOW_ADS = false;
+
 export type AdPlacement = 'home' | 'listing';
 
 type AdsModule = typeof import('react-native-google-mobile-ads');
@@ -65,7 +72,7 @@ export async function startAds() {
 
 export function adUnitId(placement: AdPlacement): string | null {
   const ads = adsModule();
-  if (!ads) return null;
+  if (!ads || !SHOW_ADS) return null;
   const id = UNITS[Platform.OS === 'ios' ? 'ios' : 'android'][placement];
   return id || ads.TestIds.ADAPTIVE_BANNER;
 }
