@@ -12,6 +12,7 @@ import { PendingKind, setPendingAction, takePendingAction } from '../../src/lib/
 import { Button } from '../../src/components/Button';
 import { Message } from '../../src/components/Message';
 import { PriceTag } from '../../src/components/PriceTag';
+import { AdBanner } from '../../src/components/AdBanner';
 import { SafetyNotice } from '../../src/components/SafetyNotice';
 import { OfferSheet } from '../../src/components/OfferSheet';
 import { SimilarListings } from '../../src/components/SimilarListings';
@@ -286,6 +287,8 @@ export default function ListingScreen() {
           <Ionicons name="flag-outline" size={16} color={colors.danger} />
           <Text style={styles.reportText}>Signaler cette annonce</Text>
         </Pressable>
+
+        <AdBanner placement="listing" />
 
         <SimilarListings
           listingId={l.id}

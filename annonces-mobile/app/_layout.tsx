@@ -13,6 +13,7 @@ import { OfflineBanner } from '../src/components/OfflineBanner';
 import { PillTitle } from '../src/components/Blocks';
 import { DialogHost } from '../src/components/Dialog';
 import { startNetworkWatch } from '../src/lib/network';
+import { startAds } from '../src/lib/ads';
 
 // Réseau suivi dès le démarrage : React Query attend le retour de la connexion au lieu d'échouer
 startNetworkWatch();
@@ -29,7 +30,10 @@ export default function RootLayout() {
   // Police déjà embarquée dans l'app compilée ; chargée ici pour Expo Go et le web
   const [fontsLoaded, fontError] = useFonts({ Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold });
   useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => undefined);
+    if (!fontsLoaded && !fontError) return;
+    SplashScreen.hideAsync().catch(() => undefined);
+    // Publicité : consentement Google puis SDK AdMob, une fois l'écran affiché (src/lib/ads.ts)
+    void startAds();
   }, [fontsLoaded, fontError]);
 
   // Rafraîchit les données quand l’application revient au premier plan

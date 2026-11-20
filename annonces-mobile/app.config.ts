@@ -34,7 +34,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   // Textes des demandes d'autorisation en français (aussi pour un téléphone réglé dans une autre langue)
   locales: { fr: './src/locales/fr.json', en: './src/locales/fr.json' },
-  android: { package: BRAND.appId, versionCode: ANDROID_VERSION_CODE },
+  android: {
+    package: BRAND.appId,
+    versionCode: ANDROID_VERSION_CODE,
+    // Ajoutées par des modules mais jamais utilisées par Okazo (micro, fenêtre par-dessus les autres applis)
+    blockedPermissions: ['android.permission.RECORD_AUDIO', 'android.permission.SYSTEM_ALERT_WINDOW'],
+  },
   plugins: [
     'expo-router',
     'expo-secure-store',
@@ -55,6 +60,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         cameraPermission: "Autorisez l'appareil photo pour photographier vos articles et vérifier votre identité.",
       },
     ],
+    // Publicité AdMob (src/lib/ads.ts). iOS : ID de test de Google tant que l'appli iPhone n'est pas créée dans AdMob
+    [
+      'react-native-google-mobile-ads',
+      {
+        androidAppId: 'ca-app-pub-7249006535506723~9793735046',
+        iosAppId: 'ca-app-pub-3940256099942544~1458002511',
+        delayAppMeasurementInit: true,
+      },
+    ],
+    // R8 (WorkManager d'AdMob gardé), Wi-Fi et écran portrait facultatifs
+    './plugins/with-android-release-fixes',
     // Construction Play Store sur l'ordinateur (comme Louam) : signature et retouches Windows
     './plugins/with-upload-signing',
     './plugins/with-windows-build',

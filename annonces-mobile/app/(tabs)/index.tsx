@@ -11,6 +11,7 @@ import { BRAND_NAME } from '../../src/brand';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
 import { CityPicker } from '../../src/components/CityPicker';
 import { CountryChooser } from '../../src/components/CountryChooser';
+import { AdBanner } from '../../src/components/AdBanner';
 import { ListingFeed } from '../../src/components/ListingFeed';
 import { ListingTile } from '../../src/components/ListingTile';
 import { Text } from '../../src/components/Typography';
@@ -70,6 +71,7 @@ export default function HomeScreen() {
 
       {categories.data ? <CategoryGrid categories={categories.data} /> : null}
       {place?.cityId ? <Nearby place={place} /> : null}
+      <AdBanner placement="home" />
 
       <View style={[styles.sectionHead, { paddingHorizontal: space.lg }]}>
         <Text style={styles.sectionTitle}>Dernières annonces {placeIn(place?.country ? { country: place.country } : null, countryName)}</Text>
