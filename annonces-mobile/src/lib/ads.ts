@@ -14,7 +14,8 @@ import { Platform } from 'react-native';
 
 /** Identifiants des blocs d'annonces (AdMob > Okazo > Blocs d'annonces). Vides = annonces de test. */
 const UNITS = {
-  android: { home: '', listing: '' },
+  // Blocs « Okazo - Accueil » et « Okazo - Fiche annonce », créés le 21/11/2026
+  android: { home: 'ca-app-pub-7249006535506723/3602685038', listing: 'ca-app-pub-7249006535506723/9377755890' },
   ios: { home: '', listing: '' },
 };
 
