@@ -9,7 +9,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ServiceWorker } from '@/components/ServiceWorker';
 import { RegionBar } from '@/components/RegionBar';
 import { getRegionCatalog } from '@/lib/api';
-import { SITE_NAME, SITE_URL } from '@/lib/site';
+import { ADSENSE_CLIENT, SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
 import { DialogHost } from '@/components/Dialog';
 
@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   title: { default: `${SITE_NAME} : petites annonces près de chez vous`, template: `%s | ${SITE_NAME}` },
   description: 'Achetez et vendez près de chez vous : téléphones, véhicules, immobilier, maison, mode. Annonces vérifiées avant publication.',
   openGraph: { siteName: SITE_NAME, locale: 'fr_FR', type: 'website' },
+  // Vérification du site par Google AdSense (balise seule : aucune publicité n'est chargée avant le choix des cookies)
+  ...(ADSENSE_CLIENT ? { other: { 'google-adsense-account': ADSENSE_CLIENT } } : {}),
 };
 
 export const viewport: Viewport = { themeColor: '#233A8F', width: 'device-width', initialScale: 1 };
