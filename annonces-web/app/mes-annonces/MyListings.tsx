@@ -21,6 +21,7 @@ interface Mine {
   parentSlug: string | null; // « emploi » : offres avec candidatures
   applications: number;
   newApplications: number;
+  boostUntil: string | null; // mise à la une payée en cours
 }
 
 const STATUS: Record<ListingStatus, { label: string; className: string }> = {
@@ -37,6 +38,11 @@ export function MyListings({ justPublished, justEdited }: { justPublished: boole
   const signedIn = useSignedIn();
   const [items, setItems] = useState<Mine[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Achat « À la une » : bouton seulement si le paiement en ligne est ouvert
+  const [canBoost, setCanBoost] = useState(false);
+  useEffect(() => {
+    if (signedIn) call<{ enabled: boolean }>('/boosts/offers').then((o) => setCanBoost(o.enabled)).catch(() => setCanBoost(false));
+  }, [signedIn]);
 
   const load = useCallback(() => {
     call<{ items: Mine[] }>('/me/listings')
@@ -99,6 +105,9 @@ export function MyListings({ justPublished, justEdited }: { justPublished: boole
                 {visible ? <Link href={listingPath(item)} className="card-title">{item.title}</Link> : <span className="card-title">{item.title}</span>}
                 <PriceTag priceType={item.priceType} priceXaf={item.priceXaf} />
                 <span className={`status ${s.className}`}>{s.label}</span>
+                {item.status === 'active' && item.boostUntil && new Date(item.boostUntil) > new Date() ? (
+                  <span className="boost">À la une jusqu’au {new Date(item.boostUntil).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</span>
+                ) : null}
                 {item.status === 'rejected' && item.rejectionReason ? <span className="muted">{item.rejectionReason}</span> : null}
                 {item.parentSlug === 'emploi' && item.adType === 'offer' ? (
                   <Link href={`/mes-annonces/${item.id}/candidatures`} className="apps-link">
@@ -111,6 +120,7 @@ export function MyListings({ justPublished, justEdited }: { justPublished: boole
                 {['active', 'rejected', 'expired'].includes(item.status) ? (
                   <Link href={`/mes-annonces/${item.id}/modifier`} className="btn btn-secondary btn-sm">{item.status === 'expired' ? 'Republier' : item.status === 'rejected' ? 'Corriger' : 'Modifier'}</Link>
                 ) : null}
+                {item.status === 'active' && canBoost ? <Link href={`/mes-annonces/${item.id}/a-la-une`} className="btn btn-sm">À la une</Link> : null}
                 {item.status === 'active' ? <button type="button" className="btn btn-secondary btn-sm" onClick={() => void act(item, 'sold')}>Vendue</button> : null}
                 <button type="button" className="link-button" onClick={() => void act(item, 'delete')}>Supprimer</button>
               </div>

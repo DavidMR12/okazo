@@ -3,6 +3,7 @@ import { Queue, Worker } from 'bullmq';
 import { sql } from 'drizzle-orm';
 import { env } from '../config/env';
 import { Database, DB } from '../db/db.module';
+import { PaymentsService } from '../payments/payments.service';
 import { bullConnection } from '../redis/bull-connection';
 
 const QUEUE_NAME = 'maintenance';
@@ -10,7 +11,7 @@ const EVERY_MS = 15 * 60 * 1000;
 
 /**
  * Toutes les 15 minutes : expire les annonces de plus de 30 jours et lève les suspensions arrivées à terme
- * (fonctions SQL de db/schema.sql). Le planificateur est idempotent : plusieurs instances de l'API
+ * (fonctions SQL de db/schema.sql), et relit les paiements restés en attente (notification perdue). Le planificateur est idempotent : plusieurs instances de l'API
  * ne créent qu'une seule tâche récurrente.
  */
 @Injectable()
@@ -19,7 +20,10 @@ export class MaintenanceQueue implements OnModuleInit, OnModuleDestroy {
   private queue!: Queue;
   private worker?: Worker;
 
-  constructor(@Inject(DB) private readonly db: Database) {}
+  constructor(
+    @Inject(DB) private readonly db: Database,
+    private readonly payments: PaymentsService,
+  ) {}
 
   onModuleInit() {
     this.queue = new Queue(QUEUE_NAME, { connection: bullConnection() });
@@ -43,6 +47,7 @@ export class MaintenanceQueue implements OnModuleInit, OnModuleDestroy {
     const e = Number(expired?.n ?? 0);
     const l = Number(lifted?.n ?? 0);
     if (e || l) this.log.log(`${e} annonce(s) expirée(s), ${l} suspension(s) levée(s)`);
+    await this.payments.reconcile();
   }
 
   async onModuleDestroy() {

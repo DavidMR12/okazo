@@ -17,6 +17,8 @@ const defaults: Record<string, string> = {
   // Les workers sont pilotés à la main dans les tests
   RUN_MODERATION_WORKER: 'false',
   RUN_MAINTENANCE_WORKER: 'false',
+  // Paiement simulé (FakeGateway), issue choisie par chaque test
+  PAYMENT_PROVIDER: 'fake',
 };
 
 for (const [k, v] of Object.entries(defaults)) {

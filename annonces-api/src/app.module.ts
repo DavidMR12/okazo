@@ -5,6 +5,7 @@ import { SearchesModule } from './searches/searches.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { OffersModule } from './offers/offers.module';
+import { PaymentsModule } from './payments/payments.module';
 import { CategoriesModule } from './categories/categories.module';
 import { DbModule } from './db/db.module';
 import { FavoritesModule } from './favorites/favorites.module';
@@ -41,6 +42,7 @@ import { VerificationsModule } from './verifications/verifications.module';
     ApplicationsModule,
     ReviewsModule,
     OffersModule,
+    PaymentsModule,
     MessagingModule,
     MaintenanceModule,
   ],

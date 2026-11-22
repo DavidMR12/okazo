@@ -44,6 +44,12 @@ x-api-env: &api-env
   S3_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
   S3_FORCE_PATH_STYLE: "false"
   MEDIA_PUBLIC_BASE_URL: https://media.${DOMAIN}
+  # Paiements Mobile Money (pawaPay) : « none » tant que le compte pawaPay de la société n'est pas ouvert
+  PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
+  PAWAPAY_ENV: ${PAWAPAY_ENV:-sandbox}
+  PAWAPAY_API_TOKEN: ${PAWAPAY_API_TOKEN:-}
+  PAYMENT_RETURN_URL: https://${DOMAIN}/paiement/retour
+  BOOST_OFFERS: ${BOOST_OFFERS:-3:1000,7:2000,30:5000}
 
 services:
   # API publique (mobile et site). Ne fait pas tourner les tâches de fond.

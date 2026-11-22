@@ -379,3 +379,21 @@ export const userIdentities = pgTable('user_identities', {
   email: text('email'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Paiements Mobile Money (migration 022) : achat d'une mise « À la une ». id = depositId envoyé au prestataire. */
+export const payments = pgTable('payments', {
+  id: uuid('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  listingId: uuid('listing_id'),
+  product: text('product').$type<'boost'>().notNull(),
+  boostDays: smallint('boost_days').notNull(),
+  amountXaf: integer('amount_xaf').notNull(),
+  countryCode: char('country_code', { length: 2 }).notNull(),
+  provider: text('provider').notNull(),
+  status: text('status').$type<'pending' | 'completed' | 'failed' | 'expired'>().notNull().default('pending'),
+  failureCode: text('failure_code'),
+  providerTxId: text('provider_tx_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  checkedAt: timestamp('checked_at', { withTimezone: true }),
+});

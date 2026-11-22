@@ -85,6 +85,34 @@ const schema = z
     // Avant-première privée (site fermé par Cloudflare Access) : codes de connexion dans les journaux au lieu d'un SMS.
     // Seule exception tolérée en production ; à repasser à false avant l'ouverture au public.
     PREVIEW_MODE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+
+    // Paiements Mobile Money (22/11/2026) : pawaPay partout, CinetPay en plan B pour un pays que pawaPay ne couvre pas.
+    // « none » : achat désactivé (bouton masqué). « fake » : paiement simulé, développement et tests seulement.
+    PAYMENT_PROVIDER: z.enum(['none', 'fake', 'pawapay']).default('none'),
+    PAWAPAY_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
+    PAWAPAY_API_TOKEN: z.string().optional().or(z.literal('').transform(() => undefined)),
+    // Page du site où pawaPay renvoie le client après paiement (pawaPay y ajoute ?depositId=…)
+    PAYMENT_RETURN_URL: z.string().url().default('http://localhost:3001/paiement/retour'),
+    // Offres « À la une » : « jours:prix en FCFA », séparées par des virgules
+    BOOST_OFFERS: z
+      .string()
+      .default('3:1000,7:2000,30:5000')
+      .transform((s) =>
+        s.split(',').map((x) => x.trim()).filter(Boolean).map((x) => {
+          const [d, p] = x.split(':').map(Number);
+          return { days: d, priceXaf: p };
+        }),
+      )
+      .pipe(z.array(z.object({ days: z.number().int().min(1).max(90), priceXaf: z.number().int().min(100) })).min(1)),
+  })
+  .refine((e) => e.PAYMENT_PROVIDER !== 'pawapay' || e.PAWAPAY_API_TOKEN, {
+    message: 'PAWAPAY_API_TOKEN est requis avec PAYMENT_PROVIDER=pawapay',
+  })
+  .refine((e) => !(e.NODE_ENV === 'production' && e.PAYMENT_PROVIDER === 'fake'), {
+    message: 'PAYMENT_PROVIDER=fake est interdit en production',
+  })
+  .refine((e) => !(e.NODE_ENV === 'production' && e.PAYMENT_PROVIDER === 'pawapay' && !e.PAYMENT_RETURN_URL.startsWith('https://')), {
+    message: 'PAYMENT_RETURN_URL doit être en https en production',
   })
   .refine((e) => !(e.NODE_ENV === 'production' && e.WHATSAPP_PROVIDER === 'console'), {
     message: 'WHATSAPP_PROVIDER=console est interdit en production',

@@ -555,6 +555,7 @@ export class ListingsService {
         priceXaf: listings.priceXaf,
         createdAt: listings.createdAt,
         expiresAt: listings.expiresAt,
+        boostUntil: listings.boostUntil, // mise à la une payée (module payments)
         // Offres d'emploi : candidatures reçues, dont les nouvelles (pas encore vues). « listings.id » écrit en clair :
         // dans une requête sur une seule table, Drizzle n'écrit pas le nom de la table et « id » viserait la sous-requête.
         applications: sql<number>`(select count(*)::int from job_applications a where a.listing_id = listings.id)`,
