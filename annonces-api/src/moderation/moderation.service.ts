@@ -12,6 +12,7 @@ import { ImageError, ImageProcessorService } from '../media/image-processor.serv
 import { VisualSearchService } from '../media/visual-search.service';
 import { fullKey, thumbKey } from '../media/media-keys';
 import { StorageService } from '../media/storage.service';
+import { PushService } from '../push/push.service';
 import { RuleHit, RulesService } from './rules.service';
 
 // Messages montrés au vendeur en cas de refus automatique (jamais le détail des règles internes).
@@ -34,6 +35,7 @@ export class ModerationService {
     private readonly images: ImageProcessorService,
     private readonly visual: VisualSearchService,
     private readonly rules: RulesService,
+    private readonly push: PushService,
   ) {}
 
   /**
@@ -105,6 +107,7 @@ export class ModerationService {
     const reject = hits.find((h) => h.severity === 'reject');
     const base = { listingId: listing.id, userId: listing.userId, ruleHits: hits };
 
+    let decided: 'active' | 'rejected' | null = null;
     await this.db.transaction(async (tx) => {
       // "where status = pending_review" : ne jamais écraser la décision d'un modérateur humain
       const decide = async (status: 'active' | 'rejected', rejectionReason: string | null) =>
@@ -119,14 +122,17 @@ export class ModerationService {
       if (reject) {
         const message = REJECTION_MESSAGES[reject.rule] ?? DEFAULT_REJECTION;
         if (await decide('rejected', message)) {
+          decided = 'rejected';
           await tx.insert(moderationActions).values({ ...base, action: 'auto_reject', reasonCode: reject.rule.toUpperCase() });
         }
       } else if (hits.length > 0) {
         // Reste en attente : visible dans la file des modérateurs avec les règles déclenchées
         await tx.insert(moderationActions).values({ ...base, action: 'send_to_review', reasonCode: hits[0].rule.toUpperCase() });
       } else if (await decide('active', null)) {
+        decided = 'active';
         await tx.insert(moderationActions).values({ ...base, action: 'auto_approve' });
       }
     });
+    if (decided) this.push.listingDecided(listing.id, decided);
   }
 }

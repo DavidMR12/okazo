@@ -397,3 +397,12 @@ export const payments = pgTable('payments', {
   completedAt: timestamp('completed_at', { withTimezone: true }),
   checkedAt: timestamp('checked_at', { withTimezone: true }),
 });
+
+/** Notifications push (migration 023) : jeton Expo d'un téléphone, rattaché au compte connecté. */
+export const pushTokens = pgTable('push_tokens', {
+  token: text('token').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  platform: text('platform').$type<'android' | 'ios'>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+});

@@ -16,6 +16,7 @@ import { noStoreByDefault } from '../src/no-store';
 import { Database, DB } from '../src/db/db.module';
 import { StorageService } from '../src/media/storage.service';
 import { REDIS } from '../src/redis/redis.module';
+import { PUSH_SENDER, PushMessage, PushResult, PushSender } from '../src/push/push-sender';
 
 /** Remplace le fournisseur SMS : les messages sont gardés pour lire le code envoyé. */
 export class SmsInbox implements SmsProvider {
@@ -61,6 +62,16 @@ export class MailInbox implements MailProvider {
     const code = m?.text.match(/\b(\d{6})\b/)?.[1];
     if (!code) throw new Error(`Aucun code envoyé à ${to}`);
     return code;
+  }
+}
+
+/** Notifications push gardées pour les tests. Un jeton listé dans `gone` est refusé comme « appli désinstallée ». */
+export class PushInbox implements PushSender {
+  sent: PushMessage[] = [];
+  gone = new Set<string>();
+  async send(messages: PushMessage[]): Promise<PushResult[]> {
+    this.sent.push(...messages);
+    return messages.map((m) => (this.gone.has(m.to) ? 'gone' : 'ok'));
   }
 }
 
@@ -119,6 +130,7 @@ export interface Ctx {
   storage: MemoryStorage;
   whatsapp: WhatsAppInbox;
   mail: MailInbox;
+  push: PushInbox;
 }
 
 export async function createTestApp(): Promise<Ctx> {
@@ -126,6 +138,7 @@ export async function createTestApp(): Promise<Ctx> {
   const storage = new MemoryStorage();
   const whatsapp = new WhatsAppInbox();
   const mail = new MailInbox();
+  const push = new PushInbox();
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(SMS_PROVIDER)
     .useValue(sms)
@@ -137,6 +150,8 @@ export async function createTestApp(): Promise<Ctx> {
     .useClass(FakeOAuth)
     .overrideProvider(MAIL_PROVIDER)
     .useValue(mail)
+    .overrideProvider(PUSH_SENDER)
+    .useValue(push)
     .compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(
@@ -146,7 +161,7 @@ export async function createTestApp(): Promise<Ctx> {
   noStoreByDefault(app);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
-  return { app, db: app.get(DB), redis: app.get(REDIS), sms, storage, whatsapp, mail };
+  return { app, db: app.get(DB), redis: app.get(REDIS), sms, storage, whatsapp, mail, push };
 }
 
 let seedRules: { kind: string; value: string; action: string; reason: string | null }[] | null = null;
@@ -172,6 +187,8 @@ export async function resetState(ctx: Ctx) {
   ctx.sms.messages = [];
   ctx.sms.fail = false;
   ctx.storage.files.clear();
+  ctx.push.sent = [];
+  ctx.push.gone.clear();
 }
 
 // ------------------------------------------------------------------ HTTP

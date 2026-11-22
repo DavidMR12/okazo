@@ -34,6 +34,7 @@ services:
       - ./db/migrations/020_visual_search.sql:/docker-entrypoint-initdb.d/20-visual-search.sql:ro
       - ./db/migrations/021_reports_threshold_phone.sql:/docker-entrypoint-initdb.d/21-reports-threshold-phone.sql:ro
       - ./db/migrations/022_payments.sql:/docker-entrypoint-initdb.d/22-payments.sql:ro
+      - ./db/migrations/023_push_tokens.sql:/docker-entrypoint-initdb.d/23-push-tokens.sql:ro
       - pgdata:/var/lib/postgresql/data
   redis:
     image: redis:7-alpine

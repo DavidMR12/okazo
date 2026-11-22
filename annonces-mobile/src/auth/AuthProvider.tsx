@@ -3,6 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { api, refreshSession } from '../api/client';
 import { deviceFingerprint } from '../lib/device';
 import { PRIVATE_KEYS } from '../lib/queryClient';
+import { registerPush, unregisterPush } from '../lib/push';
 import { clearSession, getRefreshToken, loadSession, onSessionChange, setSession } from './session';
 
 type Status = 'loading' | 'signedIn' | 'signedOut';
@@ -50,6 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [dropPrivateData]);
 
+  // Notifications : jeton envoyé à chaque ouverture connectée (autorisation demandée une fois, expliquée d'abord)
+  useEffect(() => {
+    if (status !== 'signedIn') return;
+    const t = setTimeout(() => void registerPush(), 2500); // après l'écran d'accueil ou de connexion
+    return () => clearTimeout(t);
+  }, [status]);
+
   const requestCode = useCallback(
     (phone: string, channel: 'sms' | 'whatsapp' = 'sms') => api<{ resendAfterSec: number }>('/auth/otp/request', { method: 'POST', body: { phone, channel } }),
     [],
@@ -91,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    await unregisterPush(); // tant que la session est encore valide
     const token = getRefreshToken();
     if (token) await api('/auth/logout', { method: 'POST', body: { refreshToken: token } }).catch(() => undefined);
     await clearSession();

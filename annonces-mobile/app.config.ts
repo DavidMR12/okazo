@@ -69,6 +69,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         delayAppMeasurementInit: true,
       },
     ],
+    // Notifications push (src/lib/push.ts) : petite icône blanche du logo, teinte bleue Okazo
+    // google-services.json (Firebase) pris s'il est présent : plugins/with-google-services.js
+    './plugins/with-google-services',
+    ['expo-notifications', { icon: './src/assets/okazo-notification.png', color: '#1E5EDB', defaultChannel: 'default' }],
     // R8 (WorkManager d'AdMob gardé), Wi-Fi et écran portrait facultatifs
     './plugins/with-android-release-fixes',
     // Construction Play Store sur l'ordinateur (comme Louam) : signature et retouches Windows

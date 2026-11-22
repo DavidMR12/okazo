@@ -86,6 +86,11 @@ const schema = z
     // Seule exception tolérée en production ; à repasser à false avant l'ouverture au public.
     PREVIEW_MODE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
 
+    // Notifications push (22/11/2026) : Firebase Cloud Messaging, comme LocAr. « console » : écrites dans les
+    // journaux (développement). Compte de service Firebase : fichier sur le serveur, jamais dans Git.
+    PUSH_PROVIDER: z.enum(['none', 'console', 'fcm']).default('console'),
+    FIREBASE_SERVICE_ACCOUNT_FILE: z.string().optional().or(z.literal('').transform(() => undefined)),
+
     // Paiements Mobile Money (22/11/2026) : pawaPay partout, CinetPay en plan B pour un pays que pawaPay ne couvre pas.
     // « none » : achat désactivé (bouton masqué). « fake » : paiement simulé, développement et tests seulement.
     PAYMENT_PROVIDER: z.enum(['none', 'fake', 'pawapay']).default('none'),
@@ -104,6 +109,9 @@ const schema = z
         }),
       )
       .pipe(z.array(z.object({ days: z.number().int().min(1).max(90), priceXaf: z.number().int().min(100) })).min(1)),
+  })
+  .refine((e) => e.PUSH_PROVIDER !== 'fcm' || e.FIREBASE_SERVICE_ACCOUNT_FILE, {
+    message: 'FIREBASE_SERVICE_ACCOUNT_FILE est requis avec PUSH_PROVIDER=fcm',
   })
   .refine((e) => e.PAYMENT_PROVIDER !== 'pawapay' || e.PAWAPAY_API_TOKEN, {
     message: 'PAWAPAY_API_TOKEN est requis avec PAYMENT_PROVIDER=pawapay',

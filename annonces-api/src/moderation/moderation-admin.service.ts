@@ -4,6 +4,7 @@ import { Database, DB } from '../db/db.module';
 import { listingImages, listings, moderationActions, reports, users } from '../db/schema';
 import { thumbKey } from '../media/media-keys';
 import { StorageService } from '../media/storage.service';
+import { PushService } from '../push/push.service';
 
 interface QueueRow {
   listing_id: string;
@@ -22,6 +23,7 @@ export class ModerationAdminService {
   constructor(
     @Inject(DB) private readonly db: Database,
     private readonly storage: StorageService,
+    private readonly push: PushService,
   ) {}
 
   /** File d'attente triée : règles déclenchées d'abord, puis vendeurs les moins fiables, puis les plus anciennes. */
@@ -127,6 +129,7 @@ export class ModerationAdminService {
         .where(and(eq(reports.listingId, id), inArray(reports.status, ['open', 'reviewing'])));
       await tx.update(users).set({ trustScore: sql`least(${users.trustScore} + 2, 100)` }).where(eq(users.id, updated.userId));
     });
+    this.push.listingDecided(id, 'active');
     return { id, status: 'active' as const };
   }
 
@@ -157,6 +160,7 @@ export class ModerationAdminService {
         .where(and(eq(reports.listingId, id), inArray(reports.status, ['open', 'reviewing'])));
       await tx.update(users).set({ trustScore: sql`greatest(${users.trustScore} - 5, -100)` }).where(eq(users.id, updated.userId));
     });
+    this.push.listingDecided(id, 'rejected');
     return { id, status: 'rejected' as const };
   }
 }

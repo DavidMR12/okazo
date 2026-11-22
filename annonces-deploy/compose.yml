@@ -44,6 +44,10 @@ x-api-env: &api-env
   S3_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
   S3_FORCE_PATH_STYLE: "false"
   MEDIA_PUBLIC_BASE_URL: https://media.${DOMAIN}
+  # Notifications push (Firebase) : « none » tant que le projet Firebase Okazo n'est pas créé. Pour l'activer :
+  # PUSH_PROVIDER=fcm et le compte de service monté en lecture seule sur /run/secrets/firebase.json (api et worker)
+  PUSH_PROVIDER: ${PUSH_PROVIDER:-none}
+  FIREBASE_SERVICE_ACCOUNT_FILE: ${FIREBASE_SERVICE_ACCOUNT_FILE:-}
   # Paiements Mobile Money (pawaPay) : « none » tant que le compte pawaPay de la société n'est pas ouvert
   PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
   PAWAPAY_ENV: ${PAWAPAY_ENV:-sandbox}

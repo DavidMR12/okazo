@@ -6,6 +6,7 @@ import { ApplicationsModule } from './applications/applications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { OffersModule } from './offers/offers.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PushModule } from './push/push.module';
 import { CategoriesModule } from './categories/categories.module';
 import { DbModule } from './db/db.module';
 import { FavoritesModule } from './favorites/favorites.module';
@@ -26,6 +27,7 @@ import { VerificationsModule } from './verifications/verifications.module';
   imports: [
     DbModule,
     RedisModule,
+    PushModule,
     CategoriesModule,
     AuthModule,
     GeoModule,

@@ -6,6 +6,7 @@ import { RateLimitService } from '../common/rate-limit.service';
 import { Database, DB, Tx } from '../db/db.module';
 import { ConversationRow, conversations, listings, MessageKind, messages, offers, reports, userBlocks, users } from '../db/schema';
 import { ListingsService } from '../listings/listings.service';
+import { PushService } from '../push/push.service';
 import { scanMessage } from './message-rules';
 import { ConversationQuery, ReportConversationInput } from './messaging.schemas';
 
@@ -21,6 +22,7 @@ export class MessagingService {
     @Inject(DB) private readonly db: Database,
     private readonly rateLimit: RateLimitService,
     private readonly listingsService: ListingsService,
+    private readonly push: PushService,
   ) {}
 
   // ------------------------------------------------------------------ garde-fous communs
@@ -66,6 +68,7 @@ export class MessagingService {
     // Les messages d'offre sont écrits par l'application : pas d'analyse anti-arnaque
     const flags = extra.kind && extra.kind !== 'text' ? [] : scanMessage(body);
     const [m] = await tx.insert(messages).values({ conversationId: c.id, senderId, body, flags, kind: extra.kind ?? 'text', offerId: extra.offerId }).returning();
+    this.push.messageSent(m.id); // part après la validation de la transaction (message relu avant l'envoi)
     const now = new Date();
     await tx
       .update(conversations)

@@ -14,6 +14,7 @@ import { PillTitle } from '../src/components/Blocks';
 import { DialogHost } from '../src/components/Dialog';
 import { startNetworkWatch } from '../src/lib/network';
 import { startAds } from '../src/lib/ads';
+import { setupPush } from '../src/lib/push';
 
 // Réseau suivi dès le démarrage : React Query attend le retour de la connexion au lieu d'échouer
 startNetworkWatch();
@@ -34,6 +35,8 @@ export default function RootLayout() {
     SplashScreen.hideAsync().catch(() => undefined);
     // Publicité : consentement Google puis SDK AdMob, une fois l'écran affiché (src/lib/ads.ts)
     void startAds();
+    // Notifications : ouvrir l'écran concerné au toucher, même appli fermée (src/lib/push.ts)
+    setupPush();
   }, [fontsLoaded, fontError]);
 
   // Rafraîchit les données quand l’application revient au premier plan

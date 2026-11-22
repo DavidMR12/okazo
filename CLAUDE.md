@@ -198,6 +198,14 @@ Démonstration en partage d'écran (13 octobre 2026) : site sur http://localhost
 - **iOS** : EAS Build + `--auto-submit` vers TestFlight (`appVersionSource: remote`, `autoIncrement`, `EAS_NO_VCS=1` et `mobile/.easignore`). Prérequis : `npx eas-cli login` (le porteur a créé le compte Expo le 19/11/2026, pas encore connecté sur l'ordinateur), `npx eas-cli init` dans `mobile/` (projectId à reporter dans `app.config.ts`), Apple Developer Program (99 $/an), clé API App Store Connect (.p8).
 - **API hors de Cloudflare Access depuis le 19/11/2026** (accord du porteur) : l'application « Okazo avant-première » de Cloudflare Zero Trust ne protège plus que `okazo.org` et `www.okazo.org` ; `api.okazo.org` en a été retiré, sinon l'application installée recevait la redirection vers la page de connexion Cloudflare et tournait sans fin. Le site reste fermé. Pour refermer l'API : rajouter la destination `api.okazo.org` dans cette application. **À corriger dans l'application** : quand l'API ne répond pas (ou renvoie du HTML), afficher « Connexion impossible, réessayer » au lieu d'un rond qui tourne indéfiniment.
 
+**Notifications push (Firebase), 22-23/11/2026**
+- **Choix** : Firebase Cloud Messaging en direct, comme LocAr (pas le service d'Expo : Okazo se construit sur le PC, sans projet EAS). Seul le service d'envoi de Firebase est utilisé.
+- **Quand** : nouveau message (une par conversation et par minute), étapes d'une offre de prix, annonce en ligne ou refusée (modération automatique ou modérateur). **Vie privée** : jamais le contenu d'un message sur l'écran verrouillé, seulement l'expéditeur et le titre de l'annonce. Au toucher : la conversation, l'annonce ou Mes annonces (adresses autorisées seulement).
+- **API** : `api/src/push/` (`push.service.ts`, `push-sender.ts` : `FcmPushSender` signe l'assertion Google RS256 avec le compte de service, jeton d'accès gardé 1 h ; jeton périmé (UNREGISTERED) oublié), migration 023 `push_tokens` (10 téléphones au plus par compte ; un autre compte sur le même téléphone reprend le jeton). Routes `POST /me/push-tokens`, `POST /me/push-tokens/remove`. Envoi 1,5 s après l'action (après la validation de la transaction). Tests `test/e2e/push.spec.ts`, `test/unit/fcm.spec.ts`.
+- **Appli** : `src/lib/push.ts` (autorisation expliquée en français d'abord, « Plus tard » = redemandé dans 30 jours ; jeton envoyé à chaque ouverture connectée, retiré avant la déconnexion), icône blanche `src/assets/okazo-notification.png`, `plugins/with-google-services.js` (prend `google-services.json` s'il est à la racine ; sans lui, appli sans notifications).
+- **Réglages serveur** : `PUSH_PROVIDER=none` (défaut prod) → `fcm` ; `FIREBASE_SERVICE_ACCOUNT_FILE` (fichier du compte de service monté en lecture seule, jamais dans Git).
+- **Reste à faire (porteur)** : créer le projet Firebase « Okazo » (gratuit), y ajouter l'appli Android `org.okazo.app`, me donner `google-services.json` (à la racine de `annonces-mobile/`) ; je crée la clé du compte de service, la pose sur le serveur et active `fcm`. Puis une version Android. iOS : plus tard (clé APNs dans Firebase).
+
 **Paiements Mobile Money (pawaPay), 22/11/2026**
 - **Prestataire** (décision du porteur) : **pawaPay** dans tous les pays (Cameroun MTN/Orange, Gabon Airtel/Moov, Congo MTN/Airtel, et pays anglophones plus tard) ; **CinetPay en plan B** pour un pays que pawaPay ne couvre pas (nouvelle implémentation de `PaymentGateway`). PVit reste réservé à LocAr.
 - **Produit** : mise « À la une » (`listings.boost_until`, déjà affichée : badge, 3 annonces en tête du fil). Offres `BOOST_OFFERS` (« jours:prix », défaut `3:1000,7:2000,30:5000`, **prix à valider par le porteur**). Les jours achetés s'ajoutent à une mise à la une en cours.
@@ -224,7 +232,7 @@ Aucune mise en production finale ni publication sur les stores sans ce volet. Le
 - **Agent du porteur** : accès en lecture seule (journaux, configuration sans secrets, résultats d'analyse), périmètre écrit (ce qu'il peut scanner, quand, et ce qu'il ne doit pas toucher), canal d'alerte vers le porteur.
 
 **Après la bêta**
-- Notifications push (annonce en ligne ou refusée, nouveau message).
+- ~~Notifications push~~ : **codées le 22-23/11/2026**, voir « Notifications push (Firebase) ».
 - Photo de profil.
 - ~~Annonces boostées payées par Mobile Money~~ : **codé le 22/11/2026**, voir « Paiements Mobile Money (pawaPay) ». Puis paiement sécurisé (séquestre).
 - AdMob dans l'application : intégré le 21/11/2026 (voir « Publicité AdMob »), reste les blocs d'annonces réels.
