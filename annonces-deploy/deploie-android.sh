@@ -58,6 +58,8 @@ trap retour_arriere ERR
 rm -rf "$DEST/app" "$DEST/src" "$DEST/plugins"
 cp -R "$SRC/app" "$SRC/src" "$SRC/plugins" "$DEST/"
 cp "$SRC/app.config.ts" "$SRC/eas.json" "$DEST/"
+# Firebase (notifications push) : pris par plugins/with-google-services.js s'il est présent
+[ -f "$SRC/google-services.json" ] && cp "$SRC/google-services.json" "$DEST/"
 (cd "$DEST" && npx tsc --noEmit)
 
 # 3. Lecteur K: (chemins courts)

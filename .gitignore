@@ -42,3 +42,7 @@ desktop.ini
 # Fichiers .aab produits par annonces-deploy/deploie-android.sh
 /livraisons/
 *.aab
+
+# Firebase de l appli (google-services.json) : gardé hors de Git, copié par deploie-android.sh
+annonces-mobile/google-services.json
+mobile/google-services.json
