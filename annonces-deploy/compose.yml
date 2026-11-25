@@ -67,6 +67,8 @@ services:
       <<: *api-env
       RUN_MODERATION_WORKER: "false"
       RUN_MAINTENANCE_WORKER: "false"
+    # Compte de service Firebase (notifications), lecture seule ; /dev/null tant qu'il n'est pas posé
+    volumes: ["${FIREBASE_SERVICE_ACCOUNT_HOST_FILE:-/dev/null}:/run/secrets/firebase.json:ro"]
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -84,6 +86,8 @@ services:
       RUN_MODERATION_WORKER: "true"
       RUN_MAINTENANCE_WORKER: "true"
       MODERATION_CONCURRENCY: "2"
+    # Compte de service Firebase (notifications), lecture seule ; /dev/null tant qu'il n'est pas posé
+    volumes: ["${FIREBASE_SERVICE_ACCOUNT_HOST_FILE:-/dev/null}:/run/secrets/firebase.json:ro"]
     depends_on:
       api: { condition: service_healthy }
     logging: *logging
